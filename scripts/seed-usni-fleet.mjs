@@ -272,7 +272,7 @@ function parseArticle(html, articleUrl, articleDate, articleTitle) {
 // ─── Main ───
 
 async function fetchAll() {
-  const proxyAuth = process.env.RESIDENTIAL_PROXY_AUTH || process.env.OPENSKY_PROXY_AUTH || process.env.OREF_PROXY_AUTH || '';
+  const proxyAuth = process.env.RESIDENTIAL_PROXY_AUTH || '';
   const proxy = parseProxy(proxyAuth);
 
   let wpData;
