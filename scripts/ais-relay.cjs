@@ -18,6 +18,8 @@ const crypto = require('crypto');
 const v8 = require('v8');
 const { WebSocketServer, WebSocket } = require('ws');
 
+const httpsKeepAliveAgent = new https.Agent({ keepAlive: true, maxSockets: 6, timeout: 60_000 });
+
 function requireShared(name) {
   const candidates = [path.join(__dirname, '..', 'shared', name), path.join(__dirname, 'shared', name)];
   for (const p of candidates) { try { return require(p); } catch {} }
@@ -256,7 +258,7 @@ let upstreamPaused = false;
 let upstreamQueue = [];
 let upstreamQueueReadIndex = 0;
 let upstreamDrainScheduled = false;
-let clients = new Set();
+const clients = new Set();
 let messageCount = 0;
 let droppedMessages = 0;
 const requestRateBuckets = new Map(); // key: route:ip -> { count, resetAt }
@@ -274,37 +276,60 @@ function safeEnd(res, statusCode, headers, body) {
   }
 }
 
-// gzip compress & send a response (reduces egress ~80% for JSON)
+function _acceptsEncoding(header, encoding) {
+  if (!header) return false;
+  const tokens = header.split(',');
+  for (const token of tokens) {
+    const parts = token.trim().split(';');
+    if (parts[0].trim().toLowerCase() !== encoding) continue;
+    const qPart = parts.find(p => p.trim().startsWith('q='));
+    if (qPart && parseFloat(qPart.trim().substring(2)) === 0) return false;
+    return true;
+  }
+  return false;
+}
+
+function _varyHeader(res) {
+  const existing = String(res.getHeader('vary') || '');
+  return existing.toLowerCase().includes('accept-encoding')
+    ? existing
+    : (existing ? `${existing}, Accept-Encoding` : 'Accept-Encoding');
+}
+
+// Compress & send a response (Brotli preferred ~15-20% smaller than gzip on JSON)
 function sendCompressed(req, res, statusCode, headers, body) {
   if (res.headersSent || res.writableEnded) return;
-  const acceptEncoding = req.headers['accept-encoding'] || '';
-  if (acceptEncoding.includes('gzip')) {
-    zlib.gzip(typeof body === 'string' ? Buffer.from(body) : body, (err, compressed) => {
+  const ae = req.headers['accept-encoding'] || '';
+  const buf = typeof body === 'string' ? Buffer.from(body) : body;
+  if (_acceptsEncoding(ae, 'br')) {
+    zlib.brotliCompress(buf, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 } }, (err, compressed) => {
       if (err || res.headersSent || res.writableEnded) {
         safeEnd(res, statusCode, headers, body);
         return;
       }
-      const existingVary = String(res.getHeader('vary') || '');
-      const vary = existingVary.toLowerCase().includes('accept-encoding')
-        ? existingVary
-        : (existingVary ? `${existingVary}, Accept-Encoding` : 'Accept-Encoding');
-      safeEnd(res, statusCode, { ...headers, 'Content-Encoding': 'gzip', 'Vary': vary }, compressed);
+      safeEnd(res, statusCode, { ...headers, 'Content-Encoding': 'br', 'Vary': _varyHeader(res) }, compressed);
+    });
+  } else if (_acceptsEncoding(ae, 'gzip')) {
+    zlib.gzip(buf, (err, compressed) => {
+      if (err || res.headersSent || res.writableEnded) {
+        safeEnd(res, statusCode, headers, body);
+        return;
+      }
+      safeEnd(res, statusCode, { ...headers, 'Content-Encoding': 'gzip', 'Vary': _varyHeader(res) }, compressed);
     });
   } else {
     safeEnd(res, statusCode, headers, body);
   }
 }
 
-// Pre-gzipped response: serve a cached gzip buffer directly (zero CPU per request)
-function sendPreGzipped(req, res, statusCode, headers, rawBody, gzippedBody) {
+// Pre-compressed response: serve cached gzip/brotli buffer directly (zero CPU per request)
+function sendPreGzipped(req, res, statusCode, headers, rawBody, gzippedBody, brotliBody) {
   if (res.headersSent || res.writableEnded) return;
-  const acceptEncoding = req.headers['accept-encoding'] || '';
-  if (acceptEncoding.includes('gzip') && gzippedBody) {
-    const existingVary = String(res.getHeader('vary') || '');
-    const vary = existingVary.toLowerCase().includes('accept-encoding')
-      ? existingVary
-      : (existingVary ? `${existingVary}, Accept-Encoding` : 'Accept-Encoding');
-    safeEnd(res, statusCode, { ...headers, 'Content-Encoding': 'gzip', 'Vary': vary }, gzippedBody);
+  const ae = req.headers['accept-encoding'] || '';
+  if (_acceptsEncoding(ae, 'br') && brotliBody) {
+    safeEnd(res, statusCode, { ...headers, 'Content-Encoding': 'br', 'Vary': _varyHeader(res) }, brotliBody);
+  } else if (_acceptsEncoding(ae, 'gzip') && gzippedBody) {
+    safeEnd(res, statusCode, { ...headers, 'Content-Encoding': 'gzip', 'Vary': _varyHeader(res) }, gzippedBody);
   } else {
     safeEnd(res, statusCode, headers, rawBody);
   }
@@ -345,6 +370,8 @@ const orefState = {
   _persistVersion: 0,
   _lastPersistedVersion: 0,
   _persistInFlight: false,
+  _alertsCache: null,  // { json, gzip, brotli }
+  _historyCache: null, // { json, gzip, brotli }
 };
 
 function loadTelegramChannels() {
@@ -686,12 +713,36 @@ async function orefFetchAlerts() {
       return sum + h.alerts.reduce((s, a) => s + (Array.isArray(a.data) ? a.data.length : 1), 0);
     }, 0);
 
+    orefPreSerializeResponses();
     orefPersistHistory().catch(() => {});
   } catch (err) {
     const stderr = err.stderr ? err.stderr.toString().trim() : '';
     orefState.lastError = redactOrefError(stderr || err.message);
     console.warn('[Relay] OREF poll error:', orefState.lastError);
+    orefPreSerializeResponses();
   }
+}
+
+function orefPreSerializeResponses() {
+  const ts = orefState.lastPollAt ? new Date(orefState.lastPollAt).toISOString() : new Date().toISOString();
+  const alertsJson = JSON.stringify({
+    configured: OREF_ENABLED,
+    alerts: orefState.lastAlerts || [],
+    historyCount24h: orefState.historyCount24h,
+    totalHistoryCount: orefState.totalHistoryCount,
+    timestamp: ts,
+    ...(orefState.lastError ? { error: orefState.lastError } : {}),
+  });
+  orefState._alertsCache = { json: alertsJson, gzip: gzipSyncBuffer(alertsJson), brotli: brotliSyncBuffer(alertsJson) };
+
+  const historyJson = JSON.stringify({
+    configured: OREF_ENABLED,
+    history: orefState.history || [],
+    historyCount24h: orefState.historyCount24h,
+    totalHistoryCount: orefState.totalHistoryCount,
+    timestamp: ts,
+  });
+  orefState._historyCache = { json: historyJson, gzip: gzipSyncBuffer(historyJson), brotli: brotliSyncBuffer(historyJson) };
 }
 
 async function orefBootstrapHistoryFromUpstream() {
@@ -899,7 +950,7 @@ async function orefBootstrapHistoryWithRetry() {
       const msg = redactOrefError(err?.message || String(err));
       console.warn(`[Relay] OREF upstream bootstrap attempt ${attempt}/${MAX_ATTEMPTS} failed: ${msg}`);
       if (attempt < MAX_ATTEMPTS) {
-        const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1) + Math.random() * 1000;
+        const delay = BASE_DELAY_MS * 2 ** (attempt - 1) + Math.random() * 1000;
         await new Promise(r => setTimeout(r, delay));
       }
     }
@@ -1057,7 +1108,7 @@ async function startUcdpSeedLoop() {
 // ─────────────────────────────────────────────────────────────
 const SAT_SEED_INTERVAL_MS = 7_200_000;
 const SAT_SEED_TTL = 14_400;
-const SAT_GROUPS = ['military', 'resource', 'active'];
+const SAT_GROUPS = ['military', 'resource'];
 
 const SAT_NAME_FILTERS = [
   /^YAOGAN/i, /^GAOFEN/i, /^JILIN/i,
@@ -2048,9 +2099,9 @@ function cyberNormCountry(v) { const r = cyberClean(String(v ?? ''), 64); if (!r
 function cyberToMs(v) {
   if (!v) return 0;
   const raw = cyberClean(String(v), 80); if (!raw) return 0;
-  const d1 = new Date(raw); if (!isNaN(d1.getTime())) return d1.getTime();
+  const d1 = new Date(raw); if (!Number.isNaN(d1.getTime())) return d1.getTime();
   const d2 = new Date(raw.replace(' UTC', 'Z').replace(' GMT', 'Z').replace(' ', 'T'));
-  return isNaN(d2.getTime()) ? 0 : d2.getTime();
+  return Number.isNaN(d2.getTime()) ? 0 : d2.getTime();
 }
 function cyberNormTags(input, max) {
   const tags = Array.isArray(input) ? input : typeof input === 'string' ? input.split(/[;,|]/g) : [];
@@ -2510,7 +2561,42 @@ function classifyCacheKey(title) {
   return `classify:sebuf:v1:${hash}`;
 }
 
-function classifyFetchLlm(titles, apiKey, apiUrl, model) {
+// LLM provider fallback chain — mirrors seed-insights.mjs LLM_PROVIDERS
+// Order: ollama → groq → openrouter (canonical chain, mirrors server/_shared/llm.ts)
+const CLASSIFY_LLM_PROVIDERS = [
+  {
+    name: 'ollama',
+    envKey: 'OLLAMA_API_URL',
+    apiUrlFn: (baseUrl) => new URL('/v1/chat/completions', baseUrl).toString(),
+    model: () => process.env.OLLAMA_MODEL || 'llama3.1:8b',
+    headers: (_key) => {
+      const h = { 'Content-Type': 'application/json', 'User-Agent': CHROME_UA };
+      const apiKey = process.env.OLLAMA_API_KEY;
+      if (apiKey) h.Authorization = `Bearer ${apiKey}`;
+      return h;
+    },
+    extraBody: { think: false },
+    timeout: 30000,
+  },
+  {
+    name: 'groq',
+    envKey: 'GROQ_API_KEY',
+    apiUrl: 'https://api.groq.com/openai/v1/chat/completions',
+    model: 'llama-3.1-8b-instant',
+    headers: (key) => ({ Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'User-Agent': CHROME_UA }),
+    timeout: 30000,
+  },
+  {
+    name: 'openrouter',
+    envKey: 'OPENROUTER_API_KEY',
+    apiUrl: 'https://openrouter.ai/api/v1/chat/completions',
+    model: 'google/gemini-2.5-flash',
+    headers: (key) => ({ Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://worldmonitor.app', 'X-Title': 'World Monitor', 'User-Agent': CHROME_UA }),
+    timeout: 30000,
+  },
+];
+
+function classifyFetchLlmSingle(titles, apiKey, apiUrl, model, headers, extraBody, timeout) {
   return new Promise((resolve) => {
     const sanitized = titles.map((t) => t.replace(/[\n\r]/g, ' ').replace(/\|/g, '/').slice(0, 200).trim());
     const prompt = sanitized.map((t, i) => `${i}|${t}`).join('\n');
@@ -2522,19 +2608,15 @@ function classifyFetchLlm(titles, apiKey, apiUrl, model) {
       ],
       temperature: 0,
       max_tokens: titles.length * 40,
+      ...extraBody,
     });
 
     const parsed = new URL(apiUrl);
     const transport = parsed.protocol === 'http:' ? http : https;
     const req = transport.request(parsed, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'User-Agent': CHROME_UA,
-        'Content-Length': Buffer.byteLength(bodyStr),
-      },
-      timeout: 30000,
+      headers: { ...headers, 'Content-Length': Buffer.byteLength(bodyStr) },
+      timeout,
     }, (resp) => {
       if (resp.statusCode < 200 || resp.statusCode >= 300) {
         resp.resume();
@@ -2559,9 +2641,27 @@ function classifyFetchLlm(titles, apiKey, apiUrl, model) {
   });
 }
 
+async function classifyFetchLlm(titles) {
+  for (const provider of CLASSIFY_LLM_PROVIDERS) {
+    const envVal = process.env[provider.envKey];
+    if (!envVal) continue;
+
+    const apiUrl = provider.apiUrlFn ? provider.apiUrlFn(envVal) : provider.apiUrl;
+    const model = typeof provider.model === 'function' ? provider.model() : provider.model;
+    const headers = provider.headers(envVal);
+
+    const result = await classifyFetchLlmSingle(titles, envVal, apiUrl, model, headers, provider.extraBody || {}, provider.timeout);
+    if (result) {
+      return result;
+    }
+    console.warn(`[Classify] ${provider.name} failed, trying next provider...`);
+  }
+  return null;
+}
+
 let classifyInFlight = false;
 
-async function seedClassifyForVariant(variant, apiKey, apiUrl, model) {
+async function seedClassifyForVariant(variant) {
   const digestUrl = `https://api.worldmonitor.app/api/news/v1/list-feed-digest?variant=${variant}&lang=en`;
   let digest;
   try {
@@ -2610,7 +2710,7 @@ async function seedClassifyForVariant(variant, apiKey, apiUrl, model) {
 
   for (let b = 0; b < misses.length; b += CLASSIFY_BATCH_SIZE) {
     const chunk = misses.slice(b, b + CLASSIFY_BATCH_SIZE);
-    const llmResult = await classifyFetchLlm(chunk, apiKey, apiUrl, model);
+    const llmResult = await classifyFetchLlm(chunk);
 
     if (!Array.isArray(llmResult)) {
       for (const title of chunk) {
@@ -2649,16 +2749,9 @@ async function seedClassify() {
   classifyInFlight = true;
   const t0 = Date.now();
   try {
-    const apiKey = process.env.LLM_API_KEY || process.env.GROQ_API_KEY;
-    const apiUrl = process.env.LLM_API_URL || 'https://api.groq.com/openai/v1/chat/completions';
-    const model = process.env.LLM_MODEL || 'llama-3.1-8b-instant';
-    if (!apiKey) {
-      console.log('[Classify] Skipped — no LLM_API_KEY or GROQ_API_KEY');
-      return;
-    }
-    const isProd = process.env.RAILWAY_ENVIRONMENT === 'production';
-    if (isProd && !apiUrl.startsWith('https://') && !apiUrl.startsWith('http://localhost')) {
-      console.warn('[Classify] LLM_API_URL must be HTTPS in production — skipping');
+    const hasAnyProvider = CLASSIFY_LLM_PROVIDERS.some((p) => !!process.env[p.envKey]);
+    if (!hasAnyProvider) {
+      console.log('[Classify] Skipped — no LLM provider keys configured');
       return;
     }
 
@@ -2667,7 +2760,7 @@ async function seedClassify() {
     for (let v = 0; v < CLASSIFY_VARIANTS.length; v++) {
       if (v > 0) await new Promise((r) => setTimeout(r, CLASSIFY_VARIANT_STAGGER_MS));
       try {
-        const stats = await seedClassifyForVariant(CLASSIFY_VARIANTS[v], apiKey, apiUrl, model);
+        const stats = await seedClassifyForVariant(CLASSIFY_VARIANTS[v]);
         totalClassified += stats.classified;
         totalSkipped += stats.skipped;
         console.log(`[Classify] ${CLASSIFY_VARIANTS[v]}: ${stats.total} titles, ${stats.classified} classified, ${stats.skipped} skipped`);
@@ -2690,8 +2783,8 @@ async function startClassifySeedLoop() {
     console.log('[Classify] Disabled (no Upstash Redis)');
     return;
   }
-  const apiKey = process.env.LLM_API_KEY || process.env.GROQ_API_KEY;
-  console.log(`[Classify] Seed loop starting (interval ${CLASSIFY_SEED_INTERVAL_MS / 1000 / 60}min, apiKey:${apiKey ? 'yes' : 'no'})`);
+  const activeProviders = CLASSIFY_LLM_PROVIDERS.filter((p) => !!process.env[p.envKey]).map((p) => p.name);
+  console.log(`[Classify] Seed loop starting (interval ${CLASSIFY_SEED_INTERVAL_MS / 1000 / 60}min, providers:${activeProviders.length ? activeProviders.join(',') : 'none'})`);
   seedClassify().catch((e) => console.warn('[Classify] Initial seed error:', e?.message || e));
   setInterval(() => {
     seedClassify().catch((e) => console.warn('[Classify] Seed error:', e?.message || e));
@@ -3136,7 +3229,7 @@ async function seedUsaSpending() {
       recipientName: String(r['Recipient Name'] || 'Unknown'),
       amount: Number(r['Award Amount']) || 0,
       agency: String(r['Awarding Agency'] || 'Unknown'),
-      description: String(r['Description'] || '').slice(0, 200),
+      description: String(r.Description || '').slice(0, 200),
       startDate: String(r['Start Date'] || ''),
       awardType: AWARD_TYPE_MAP[String(r['Award Type'] || '')] || 'other',
     }));
@@ -3241,7 +3334,7 @@ function techEventsParseRSS(rssText) {
     let startDate = null;
     if (dateMatch) {
       const parsed = new Date(dateMatch[1]);
-      if (!isNaN(parsed.getTime())) startDate = parsed.toISOString().split('T')[0];
+      if (!Number.isNaN(parsed.getTime())) startDate = parsed.toISOString().split('T')[0];
     }
     if (!startDate) continue;
     if (new Date(startDate) < new Date(new Date().toISOString().split('T')[0])) continue;
@@ -3506,7 +3599,7 @@ async function wbFetchProgress() {
       const data = raw[1]
         .filter(e => e.value !== null && e.value !== undefined)
         .map(e => ({ year: parseInt(e.date, 10), value: e.value }))
-        .filter(d => !isNaN(d.year))
+        .filter(d => !Number.isNaN(d.year))
         .sort((a, b) => a.year - b.year);
       results.push({ id: ind.id, code: ind.code, data, invertTrend: ind.invertTrend });
     } catch (e) {
@@ -3537,7 +3630,7 @@ async function wbFetchRenewable() {
     }
     for (const arr of Object.values(byRegion)) arr.sort((a, b) => a.year - b.year);
 
-    const worldData = byRegion['WLD'] || byRegion['1W'] || [];
+    const worldData = byRegion.WLD || byRegion['1W'] || [];
     const latest = worldData.length ? worldData[worldData.length - 1] : null;
     const regions = [];
     for (const code of WB_RENEWABLE_REGIONS) {
@@ -3637,6 +3730,7 @@ const PORTWATCH_CHOKEPOINT_NAMES = [
   { name: 'Lombok Strait', id: 'lombok_strait' },
 ];
 let portwatchSeedInFlight = false;
+let latestPortwatchData = null;
 
 function pwFormatDate(ts) {
   const d = new Date(ts);
@@ -3654,12 +3748,18 @@ function pwComputeWowChangePct(history) {
   return Math.round(((thisWeek - lastWeek) / lastWeek) * 1000) / 10;
 }
 
+function pwEpochToTimestamp(epochMs) {
+  const d = new Date(epochMs);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `timestamp '${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}'`;
+}
+
 async function pwFetchAllPages(portname, sinceEpoch) {
   const all = [];
   let offset = 0;
   for (;;) {
     const params = new URLSearchParams({
-      where: `portname='${portname.replace(/'/g, "''")}' AND date >= ${sinceEpoch}`,
+      where: `portname='${portname.replace(/'/g, "''")}' AND date >= ${pwEpochToTimestamp(sinceEpoch)}`,
       outFields: 'date,n_tanker,n_cargo,n_total',
       f: 'json',
       resultOffset: String(offset),
@@ -3669,8 +3769,15 @@ async function pwFetchAllPages(portname, sinceEpoch) {
       headers: { 'User-Agent': CHROME_UA, Accept: 'application/json' },
       signal: AbortSignal.timeout(PORTWATCH_FETCH_TIMEOUT_MS),
     });
-    if (!resp.ok) return [];
+    if (!resp.ok) {
+      console.warn(`[PortWatch] ArcGIS error ${resp.status} for ${portname}`);
+      return [];
+    }
     const body = await resp.json();
+    if (body.error) {
+      console.warn(`[PortWatch] ArcGIS query error for ${portname}: ${body.error.message}`);
+      return [];
+    }
     if (body.features?.length) all.push(...body.features);
     if (!body.exceededTransferLimit) break;
     offset += PORTWATCH_PAGE_SIZE;
@@ -3713,9 +3820,11 @@ async function seedPortWatch() {
       console.warn('[PortWatch] No data fetched — skipping');
       return;
     }
+    latestPortwatchData = result;
     const ok = await upstashSet(PORTWATCH_REDIS_KEY, result, PORTWATCH_TTL);
     await upstashSet('seed-meta:supply_chain:portwatch', { fetchedAt: Date.now(), recordCount: Object.keys(result).length }, 604800);
     console.log(`[PortWatch] Seeded ${Object.keys(result).length} chokepoints (redis: ${ok ? 'OK' : 'FAIL'}) in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+    seedTransitSummaries().catch(e => console.warn('[TransitSummary] Post-PortWatch seed error:', e?.message || e));
   } catch (e) {
     console.warn('[PortWatch] Seed error:', e?.message || e);
   } finally {
@@ -3735,66 +3844,78 @@ async function startPortWatchSeedLoop() {
   }, PORTWATCH_SEED_INTERVAL_MS).unref?.();
 }
 
-const CORRIDOR_RISK_API_KEY = process.env.CORRIDOR_RISK_API_KEY || '';
-const CORRIDOR_RISK_BASE_URL = 'https://api.corridorrisk.io/v1/corridors';
+const CORRIDOR_RISK_BASE_URL = 'https://corridorrisk.io/api/corridors';
 const CORRIDOR_RISK_REDIS_KEY = 'supply_chain:corridorrisk:v1';
 const CORRIDOR_RISK_TTL = 7200;
 const CORRIDOR_RISK_SEED_INTERVAL_MS = 60 * 60 * 1000;
-const CORRIDOR_RISK_NAMES = [
-  { name: 'Suez', id: 'suez' },
-  { name: 'Malacca', id: 'malacca_strait' },
-  { name: 'Hormuz', id: 'hormuz_strait' },
-  { name: 'Bab el-Mandeb', id: 'bab_el_mandeb' },
-  { name: 'Panama', id: 'panama' },
-  { name: 'Taiwan', id: 'taiwan_strait' },
-  { name: 'Cape of Good Hope', id: 'cape_of_good_hope' },
+// API name -> canonical chokepoint ID (partial substring match)
+const CORRIDOR_RISK_NAME_MAP = [
+  { pattern: 'hormuz', id: 'hormuz_strait' },
+  { pattern: 'bab-el-mandeb', id: 'bab_el_mandeb' },
+  { pattern: 'red sea', id: 'bab_el_mandeb' },
+  { pattern: 'suez', id: 'suez' },
+  { pattern: 'south china sea', id: 'taiwan_strait' },
+  { pattern: 'black sea', id: 'bosphorus' },
 ];
 let corridorRiskSeedInFlight = false;
+let latestCorridorRiskData = null;
 
 async function seedCorridorRisk() {
-  if (!CORRIDOR_RISK_API_KEY) return;
-  if (corridorRiskSeedInFlight) return;
+  if (corridorRiskSeedInFlight) { console.log('[CorridorRisk] Skipped (already in-flight)'); return; }
   corridorRiskSeedInFlight = true;
+  console.log('[CorridorRisk] Fetching...');
   const t0 = Date.now();
   try {
     const resp = await fetch(CORRIDOR_RISK_BASE_URL, {
       headers: {
-        Authorization: `Bearer ${CORRIDOR_RISK_API_KEY}`,
         Accept: 'application/json',
         'User-Agent': CHROME_UA,
+        Referer: 'https://corridorrisk.io/dashboard.html',
       },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(15000),
     });
     if (!resp.ok) {
-      console.warn(`[CorridorRisk] HTTP ${resp.status}`);
+      const body = await resp.text().catch(() => '');
+      console.warn(`[CorridorRisk] HTTP ${resp.status} (${resp.headers.get('content-type') || 'unknown'}) — ${body.slice(0, 200)}`);
       return;
     }
-    const body = await resp.json();
-    const corridors = Array.isArray(body) ? body : body.data;
-    if (!corridors?.length) {
+    const text = await resp.text();
+    if (text.startsWith('<')) {
+      console.warn(`[CorridorRisk] Got HTML instead of JSON (Cloudflare challenge?) — ${text.slice(0, 150)}`);
+      return;
+    }
+    const corridors = JSON.parse(text);
+    if (!Array.isArray(corridors) || !corridors.length) {
       console.warn('[CorridorRisk] No corridors returned — skipping');
       return;
     }
-    const crNameMap = new Map(CORRIDOR_RISK_NAMES.map(c => [c.name.toLowerCase(), c.id]));
     const result = {};
     for (const corridor of corridors) {
-      const name = corridor.name;
-      if (!name) continue;
-      const id = crNameMap.get(name.toLowerCase());
-      if (!id) continue;
-      result[id] = {
-        riskLevel: String(corridor.risk_level ?? ''),
+      const name = (corridor.name || '').toLowerCase();
+      const mapping = CORRIDOR_RISK_NAME_MAP.find(m => name.includes(m.pattern));
+      if (!mapping) continue;
+      const score = Number(corridor.score ?? 0);
+      const riskLevel = score >= 70 ? 'critical' : score >= 50 ? 'high' : score >= 30 ? 'elevated' : 'normal';
+      result[mapping.id] = {
+        riskLevel,
+        riskScore: score,
         incidentCount7d: Number(corridor.incident_count_7d ?? 0),
+        eventCount7d: Number(corridor.event_count_7d ?? 0),
         disruptionPct: Number(corridor.disruption_pct ?? 0),
+        vesselCount: Number(corridor.vessel_count ?? 0),
+        riskSummary: String(corridor.risk_summary || '').slice(0, 200),
+        riskReportAction: String((corridor.risk_report?.action) || '').slice(0, 500),
       };
     }
     if (Object.keys(result).length === 0) {
       console.warn('[CorridorRisk] No matching corridors — skipping');
       return;
     }
+    latestCorridorRiskData = result;
     const ok = await upstashSet(CORRIDOR_RISK_REDIS_KEY, result, CORRIDOR_RISK_TTL);
     await upstashSet('seed-meta:supply_chain:corridorrisk', { fetchedAt: Date.now(), recordCount: Object.keys(result).length }, 604800);
     console.log(`[CorridorRisk] Seeded ${Object.keys(result).length} corridors (redis: ${ok ? 'OK' : 'FAIL'}) in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+    seedTransitSummaries().catch(e => console.warn('[TransitSummary] Post-CorridorRisk seed error:', e?.message || e));
   } catch (e) {
     console.warn('[CorridorRisk] Seed error:', e?.message || e);
   } finally {
@@ -3807,10 +3928,6 @@ async function startCorridorRiskSeedLoop() {
     console.log('[CorridorRisk] Disabled (no Upstash Redis)');
     return;
   }
-  if (!CORRIDOR_RISK_API_KEY) {
-    console.log('[CorridorRisk] Disabled (no CORRIDOR_RISK_API_KEY)');
-    return;
-  }
   console.log(`[CorridorRisk] Seed loop starting (interval ${CORRIDOR_RISK_SEED_INTERVAL_MS / 1000 / 60}min)`);
   seedCorridorRisk().catch(e => console.warn('[CorridorRisk] Initial seed error:', e?.message || e));
   setInterval(() => {
@@ -3818,9 +3935,262 @@ async function startCorridorRiskSeedLoop() {
   }, CORRIDOR_RISK_SEED_INTERVAL_MS).unref?.();
 }
 
+// ─────────────────────────────────────────────────────────────
+// USNI Fleet Tracker — seeded via relay (fixed IP for Froxy proxy)
+// ─────────────────────────────────────────────────────────────
+
+const USNI_URL = 'https://news.usni.org/wp-json/wp/v2/posts?categories=4137&per_page=1';
+const USNI_REDIS_KEY = 'usni-fleet:sebuf:v1';
+const USNI_STALE_KEY = 'usni-fleet:sebuf:stale:v1';
+const USNI_TTL = 25200; // 7h
+const USNI_STALE_TTL = 604800; // 7 days
+const USNI_SEED_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6h
+
+const HULL_TYPE_MAP = {
+  CVN: 'carrier', CV: 'carrier',
+  DDG: 'destroyer', CG: 'destroyer',
+  LHD: 'amphibious', LHA: 'amphibious', LPD: 'amphibious', LSD: 'amphibious', LCC: 'amphibious',
+  SSN: 'submarine', SSBN: 'submarine', SSGN: 'submarine',
+  FFG: 'frigate', LCS: 'frigate',
+  MCM: 'patrol', PC: 'patrol',
+  AS: 'auxiliary', ESB: 'auxiliary', ESD: 'auxiliary',
+  'T-AO': 'auxiliary', 'T-AKE': 'auxiliary', 'T-AOE': 'auxiliary',
+  'T-ARS': 'auxiliary', 'T-ESB': 'auxiliary', 'T-EPF': 'auxiliary',
+  'T-AGOS': 'research', 'T-AGS': 'research', 'T-AGM': 'research', AGOS: 'research',
+};
+
+const USNI_REGION_COORDS = {
+  'Philippine Sea': { lat: 18.0, lon: 130.0 }, 'South China Sea': { lat: 14.0, lon: 115.0 },
+  'East China Sea': { lat: 28.0, lon: 125.0 }, 'Sea of Japan': { lat: 40.0, lon: 135.0 },
+  'Arabian Sea': { lat: 18.0, lon: 63.0 }, 'Red Sea': { lat: 20.0, lon: 38.0 },
+  'Mediterranean Sea': { lat: 35.0, lon: 18.0 }, 'Eastern Mediterranean': { lat: 34.5, lon: 33.0 },
+  'Western Mediterranean': { lat: 37.0, lon: 3.0 }, 'Persian Gulf': { lat: 26.5, lon: 52.0 },
+  'Gulf of Oman': { lat: 24.5, lon: 58.5 }, 'Gulf of Aden': { lat: 12.0, lon: 47.0 },
+  'Caribbean Sea': { lat: 15.0, lon: -73.0 }, 'North Atlantic': { lat: 45.0, lon: -30.0 },
+  'Atlantic Ocean': { lat: 30.0, lon: -40.0 }, 'Western Atlantic': { lat: 30.0, lon: -60.0 },
+  'Pacific Ocean': { lat: 20.0, lon: -150.0 }, 'Eastern Pacific': { lat: 18.0, lon: -125.0 },
+  'Western Pacific': { lat: 20.0, lon: 140.0 }, 'Indian Ocean': { lat: -5.0, lon: 75.0 },
+  Antarctic: { lat: -70.0, lon: 20.0 }, 'Baltic Sea': { lat: 58.0, lon: 20.0 },
+  'Black Sea': { lat: 43.5, lon: 34.0 }, 'Bay of Bengal': { lat: 14.0, lon: 87.0 },
+  Yokosuka: { lat: 35.29, lon: 139.67 }, Japan: { lat: 35.29, lon: 139.67 },
+  Sasebo: { lat: 33.16, lon: 129.72 }, Guam: { lat: 13.45, lon: 144.79 },
+  'Pearl Harbor': { lat: 21.35, lon: -157.95 }, 'San Diego': { lat: 32.68, lon: -117.15 },
+  Norfolk: { lat: 36.95, lon: -76.30 }, Mayport: { lat: 30.39, lon: -81.40 },
+  Bahrain: { lat: 26.23, lon: 50.55 }, Rota: { lat: 36.63, lon: -6.35 },
+  'Diego Garcia': { lat: -7.32, lon: 72.42 }, Djibouti: { lat: 11.55, lon: 43.15 },
+  Singapore: { lat: 1.35, lon: 103.82 }, 'Souda Bay': { lat: 35.49, lon: 24.08 },
+  Naples: { lat: 40.84, lon: 14.25 },
+};
+
+function usniStripHtml(html) {
+  return html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#8217;/g, "'")
+    .replace(/&#8220;/g, '"').replace(/&#8221;/g, '"').replace(/&#8211;/g, '\u2013')
+    .replace(/\s+/g, ' ').trim();
+}
+
+function usniHullToType(hull) {
+  if (!hull) return 'unknown';
+  for (const [prefix, type] of Object.entries(HULL_TYPE_MAP)) { if (hull.startsWith(prefix)) return type; }
+  return 'unknown';
+}
+
+function usniDetectStatus(text) {
+  if (!text) return 'unknown';
+  const l = text.toLowerCase();
+  if (l.includes('deployed') || l.includes('deployment')) return 'deployed';
+  if (l.includes('underway') || l.includes('transiting')) return 'underway';
+  if (l.includes('homeport') || l.includes('in port') || l.includes('pierside')) return 'in-port';
+  return 'unknown';
+}
+
+function usniGetRegionCoords(regionText) {
+  const norm = regionText.replace(/^(In the|In|The)\s+/i, '').trim();
+  if (USNI_REGION_COORDS[norm]) return USNI_REGION_COORDS[norm];
+  const lower = norm.toLowerCase();
+  for (const [key, coords] of Object.entries(USNI_REGION_COORDS)) {
+    if (key.toLowerCase() === lower || lower.includes(key.toLowerCase())) return coords;
+  }
+  return null;
+}
+
+function usniParseLeadingInt(text) {
+  const m = text.match(/\d{1,3}(?:,\d{3})*/);
+  return m ? parseInt(m[0].replace(/,/g, ''), 10) : undefined;
+}
+
+function usniExtractBattleForceSummary(tableHtml) {
+  const rows = Array.from(tableHtml.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi));
+  if (rows.length < 2) return undefined;
+  const headers = Array.from(rows[0][1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)).map(m => usniStripHtml(m[1]).toLowerCase());
+  const values = Array.from(rows[1][1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)).map(m => usniParseLeadingInt(usniStripHtml(m[1])));
+  const summary = { totalShips: 0, deployed: 0, underway: 0 };
+  let matched = false;
+  for (let i = 0; i < headers.length; i++) {
+    const label = headers[i] || '';
+    const val = values[i];
+    if (!Number.isFinite(val)) continue;
+    if (label.includes('battle force') || label.includes('total')) { summary.totalShips = val; matched = true; }
+    else if (label.includes('deployed')) { summary.deployed = val; matched = true; }
+    else if (label.includes('underway')) { summary.underway = val; matched = true; }
+  }
+  return matched ? summary : undefined;
+}
+
+function usniParseArticle(html, articleUrl, articleDate, articleTitle) {
+  const warnings = [];
+  const vessels = [];
+  const vesselByKey = new Map();
+  const strikeGroups = [];
+  const regionsSet = new Set();
+
+  let battleForceSummary;
+  const tableMatch = html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
+  if (tableMatch) battleForceSummary = usniExtractBattleForceSummary(tableMatch[1]);
+
+  const h2Parts = html.split(/<h2[^>]*>/i);
+  for (let i = 1; i < h2Parts.length; i++) {
+    const part = h2Parts[i];
+    const h2End = part.indexOf('</h2>');
+    if (h2End === -1) continue;
+    const regionName = usniStripHtml(part.substring(0, h2End)).replace(/^(In the|In|The)\s+/i, '').trim();
+    if (!regionName) continue;
+    regionsSet.add(regionName);
+    const coords = usniGetRegionCoords(regionName);
+    if (!coords) warnings.push(`Unknown region: "${regionName}"`);
+    const regionLat = coords?.lat ?? 0;
+    const regionLon = coords?.lon ?? 0;
+    const regionContent = part.substring(h2End + 5);
+    const h3Parts = regionContent.split(/<h3[^>]*>/i);
+    let currentSG = null;
+    for (let j = 0; j < h3Parts.length; j++) {
+      const section = h3Parts[j];
+      if (j > 0) {
+        const h3End = section.indexOf('</h3>');
+        if (h3End !== -1) {
+          const sgName = usniStripHtml(section.substring(0, h3End));
+          if (sgName) { currentSG = { name: sgName, carrier: '', airWing: '', destroyerSquadron: '', escorts: [] }; strikeGroups.push(currentSG); }
+        }
+      }
+      const shipRegex = /(USS|USNS)\s+(?:<[^>]+>)?([^<(]+?)(?:<\/[^>]+>)?\s*\(([^)]+)\)/gi;
+      let match;
+      const sectionText = usniStripHtml(section);
+      const deploymentStatus = usniDetectStatus(sectionText);
+      const homePort = (sectionText.match(/homeported (?:at|in) ([^.,]+)/i) || [])[1]?.trim() || '';
+      const activityDesc = sectionText.length > 10 ? sectionText.substring(0, 200).trim() : '';
+      while ((match = shipRegex.exec(section)) !== null) {
+        const prefix = match[1].toUpperCase();
+        const shipName = match[2].trim();
+        const hullNumber = match[3].trim();
+        const vesselType = usniHullToType(hullNumber);
+        if (prefix === 'USS' && vesselType === 'carrier' && currentSG) currentSG.carrier = `USS ${shipName} (${hullNumber})`;
+        if (currentSG) currentSG.escorts.push(`${prefix} ${shipName} (${hullNumber})`);
+        const key = `${regionName}|${hullNumber.toUpperCase()}`;
+        if (!vesselByKey.has(key)) {
+          const v = { name: `${prefix} ${shipName}`, hullNumber, vesselType, region: regionName, regionLat, regionLon, deploymentStatus, homePort, strikeGroup: currentSG?.name || '', activityDescription: activityDesc, articleUrl, articleDate };
+          vessels.push(v);
+          vesselByKey.set(key, v);
+        }
+      }
+    }
+  }
+
+  for (const sg of strikeGroups) {
+    const wingMatch = html.match(new RegExp(sg.name + '[\\s\\S]{0,500}Carrier Air Wing\\s*(\\w+)', 'i'));
+    if (wingMatch) sg.airWing = `Carrier Air Wing ${wingMatch[1]}`;
+    const desronMatch = html.match(new RegExp(sg.name + '[\\s\\S]{0,500}Destroyer Squadron\\s*(\\w+)', 'i'));
+    if (desronMatch) sg.destroyerSquadron = `Destroyer Squadron ${desronMatch[1]}`;
+    sg.escorts = [...new Set(sg.escorts)];
+  }
+
+  return {
+    articleUrl, articleDate, articleTitle,
+    battleForceSummary: battleForceSummary || { totalShips: 0, deployed: 0, underway: 0 },
+    vessels, strikeGroups, regions: [...regionsSet],
+    parsingWarnings: warnings,
+    timestamp: Date.now(),
+  };
+}
+
+let usniSeedInFlight = false;
+
+async function seedUsniFleet() {
+  if (usniSeedInFlight) { console.log('[USNI] Skipped (already in-flight)'); return; }
+  usniSeedInFlight = true;
+  console.log('[USNI] Fetching fleet tracker...');
+  const t0 = Date.now();
+  try {
+    const proxyAuth = process.env.RESIDENTIAL_PROXY_AUTH || OREF_PROXY_AUTH;
+    if (!proxyAuth) { console.warn('[USNI] No proxy auth configured, skipping'); return; }
+
+    let raw;
+    try {
+      raw = orefCurlFetch(proxyAuth, USNI_URL);
+    } catch (e) {
+      console.warn(`[USNI] curl+proxy failed: ${e.message}, trying direct...`);
+      try {
+        const { execFileSync } = require('child_process');
+        raw = execFileSync('curl', ['-sS', '--compressed', '--max-time', '15',
+          '-H', 'Accept: application/json', '-H', `User-Agent: ${CHROME_UA}`, USNI_URL],
+          { encoding: 'utf8', timeout: 20000, stdio: ['pipe', 'pipe', 'pipe'] });
+      } catch (e2) {
+        throw new Error(`All curl attempts failed: ${e2.message}`);
+      }
+    }
+
+    const wpData = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!Array.isArray(wpData) || !wpData.length) throw new Error('No fleet tracker articles');
+
+    const post = wpData[0];
+    const articleUrl = post.link || `https://news.usni.org/?p=${post.id}`;
+    const articleDate = post.date || new Date().toISOString();
+    const articleTitle = usniStripHtml(post.title?.rendered || 'USNI Fleet Tracker');
+    const htmlContent = post.content?.rendered || '';
+    if (!htmlContent) throw new Error('Empty article content');
+
+    const report = usniParseArticle(htmlContent, articleUrl, articleDate, articleTitle);
+    if (!report.vessels.length) { console.warn('[USNI] No vessels parsed, skipping write'); return; }
+
+    const ok = await upstashSet(USNI_REDIS_KEY, report, USNI_TTL);
+    await upstashSet(USNI_STALE_KEY, report, USNI_STALE_TTL);
+    await upstashSet('seed-meta:military:usni-fleet', { fetchedAt: Date.now(), recordCount: report.vessels.length }, 604800);
+
+    console.log(`[USNI] ${report.vessels.length} vessels, ${report.strikeGroups.length} CSGs, ${report.regions.length} regions (redis: ${ok ? 'OK' : 'FAIL'}) in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+    if (report.parsingWarnings.length > 0) console.warn('[USNI] Warnings:', report.parsingWarnings.join('; '));
+  } catch (e) {
+    console.warn('[USNI] Seed error:', e?.message || e);
+  } finally {
+    usniSeedInFlight = false;
+  }
+}
+
+async function startUsniFleetSeedLoop() {
+  if (!UPSTASH_ENABLED) {
+    console.log('[USNI] Disabled (no Upstash Redis)');
+    return;
+  }
+  console.log(`[USNI] Seed loop starting (interval ${USNI_SEED_INTERVAL_MS / 1000 / 60 / 60}h)`);
+  seedUsniFleet().catch(e => console.warn('[USNI] Initial seed error:', e?.message || e));
+  setInterval(() => {
+    seedUsniFleet().catch(e => console.warn('[USNI] Seed error:', e?.message || e));
+  }, USNI_SEED_INTERVAL_MS).unref?.();
+}
+
+
 function gzipSyncBuffer(body) {
   try {
     return zlib.gzipSync(typeof body === 'string' ? Buffer.from(body) : body);
+  } catch {
+    return null;
+  }
+}
+
+function brotliSyncBuffer(body) {
+  try {
+    return zlib.brotliCompressSync(
+      typeof body === 'string' ? Buffer.from(body) : body,
+      { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 } }
+    );
   } catch {
     return null;
   }
@@ -3995,7 +4365,7 @@ function getRelayMetricsBucket(nowSec = getMetricsNowSec()) {
 function incrementRelayMetric(field, amount = 1) {
   const bucket = getRelayMetricsBucket();
   bucket[field] = (bucket[field] || 0) + amount;
-  if (Object.prototype.hasOwnProperty.call(relayMetricsLifetime, field)) {
+  if (Object.hasOwn(relayMetricsLifetime, field)) {
     relayMetricsLifetime[field] += amount;
   }
 }
@@ -4089,8 +4459,10 @@ let lastSnapshotAt = 0;
 // Pre-serialized cache: avoids JSON.stringify + gzip per request
 let lastSnapshotJson = null;       // cached JSON string (no candidates)
 let lastSnapshotGzip = null;       // cached gzip buffer (no candidates)
+let lastSnapshotBrotli = null;     // cached brotli buffer (no candidates)
 let lastSnapshotWithCandJson = null;
 let lastSnapshotWithCandGzip = null;
+let lastSnapshotWithCandBrotli = null;
 
 // Chokepoint spatial index: bucket vessels into grid cells at ingest time
 // instead of O(chokepoints * vessels) on every snapshot
@@ -4100,14 +4472,14 @@ const vesselChokepoints = new Map(); // key: MMSI -> Set of chokepoint names
 const CHOKEPOINTS = [
   { name: 'Strait of Hormuz', lat: 26.5, lon: 56.5, radius: 2 },
   { name: 'Suez Canal', lat: 30.0, lon: 32.5, radius: 1 },
-  { name: 'Strait of Malacca', lat: 2.5, lon: 101.5, radius: 2 },
-  { name: 'Bab el-Mandeb', lat: 12.5, lon: 43.5, radius: 1.5 },
+  { name: 'Malacca Strait', lat: 2.5, lon: 101.5, radius: 2 },
+  { name: 'Bab el-Mandeb Strait', lat: 12.5, lon: 43.5, radius: 1.5 },
   { name: 'Panama Canal', lat: 9.0, lon: -79.5, radius: 1 },
   { name: 'Taiwan Strait', lat: 24.5, lon: 119.5, radius: 2 },
   { name: 'South China Sea', lat: 15.0, lon: 115.0, radius: 5 },
   { name: 'Black Sea', lat: 43.5, lon: 34.0, radius: 3 },
   { name: 'Cape of Good Hope', lat: -34.36, lon: 18.49, radius: 2 },
-  { name: 'Strait of Gibraltar', lat: 35.96, lon: -5.35, radius: 1 },
+  { name: 'Gibraltar Strait', lat: 35.96, lon: -5.35, radius: 1 },
   { name: 'Bosporus Strait', lat: 40.70, lon: 28.0, radius: 1.5 },
   { name: 'Korea Strait', lat: 34.0, lon: 129.0, radius: 1.5 },
   { name: 'Dover Strait', lat: 51.05, lon: 1.45, radius: 0.5 },
@@ -4590,13 +4962,13 @@ function buildSnapshot() {
   const withCandPayload = { ...lastSnapshot, candidateReports: getCandidateReportsSnapshot() };
   lastSnapshotWithCandJson = JSON.stringify(withCandPayload);
 
-  // Pre-gzip both variants asynchronously (zero CPU on request path)
-  zlib.gzip(Buffer.from(lastSnapshotJson), (err, buf) => {
-    if (!err) lastSnapshotGzip = buf;
-  });
-  zlib.gzip(Buffer.from(lastSnapshotWithCandJson), (err, buf) => {
-    if (!err) lastSnapshotWithCandGzip = buf;
-  });
+  // Pre-compress both variants asynchronously (zero CPU on request path)
+  const baseBuf = Buffer.from(lastSnapshotJson);
+  const candBuf = Buffer.from(lastSnapshotWithCandJson);
+  zlib.gzip(baseBuf, (err, buf) => { if (!err) lastSnapshotGzip = buf; });
+  zlib.gzip(candBuf, (err, buf) => { if (!err) lastSnapshotWithCandGzip = buf; });
+  zlib.brotliCompress(baseBuf, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 } }, (err, buf) => { if (!err) lastSnapshotBrotli = buf; });
+  zlib.brotliCompress(candBuf, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 } }, (err, buf) => { if (!err) lastSnapshotWithCandBrotli = buf; });
 
   return lastSnapshot;
 }
@@ -4633,6 +5005,125 @@ setTimeout(() => {
 setInterval(() => {
   seedChokepointTransits().catch(err => console.error('[Transit] Seed error:', err.message));
 }, CHOKEPOINT_TRANSIT_INTERVAL_MS).unref?.();
+
+// --- Pre-assembled Transit Summaries (Railway advantage: avoids large Redis reads on Vercel) ---
+const TRANSIT_SUMMARY_REDIS_KEY = 'supply_chain:transit-summaries:v1';
+const TRANSIT_SUMMARY_TTL = 900; // 15 min
+const TRANSIT_SUMMARY_INTERVAL_MS = 10 * 60 * 1000;
+
+// Threat levels for anomaly detection.
+// IMPORTANT: Must stay in sync with CHOKEPOINTS[].threatLevel in
+// server/worldmonitor/supply-chain/v1/get-chokepoint-status.ts
+// Only war_zone and critical trigger anomaly signals.
+const CHOKEPOINT_THREAT_LEVELS = {
+  suez: 'high', malacca_strait: 'normal', hormuz_strait: 'war_zone',
+  bab_el_mandeb: 'critical', panama: 'normal', taiwan_strait: 'elevated',
+  cape_of_good_hope: 'normal', gibraltar: 'normal', bosphorus: 'elevated',
+  korea_strait: 'normal', dover_strait: 'normal', kerch_strait: 'war_zone',
+  lombok_strait: 'normal',
+};
+
+// ID mapping: relay geofence name -> canonical ID
+const RELAY_NAME_TO_ID = {
+  'Suez Canal': 'suez', 'Malacca Strait': 'malacca_strait',
+  'Strait of Hormuz': 'hormuz_strait', 'Bab el-Mandeb Strait': 'bab_el_mandeb',
+  'Panama Canal': 'panama', 'Taiwan Strait': 'taiwan_strait',
+  'Cape of Good Hope': 'cape_of_good_hope', 'Gibraltar Strait': 'gibraltar',
+  'Bosporus Strait': 'bosphorus', 'Korea Strait': 'korea_strait',
+  'Dover Strait': 'dover_strait', 'Kerch Strait': 'kerch_strait',
+  'Lombok Strait': 'lombok_strait',
+  'South China Sea': null, 'Black Sea': null, // area geofences, not chokepoints
+};
+
+// Duplicated from server/worldmonitor/supply-chain/v1/_scoring.mjs because
+// ais-relay.cjs is CJS and cannot import .mjs modules. Keep in sync.
+function detectTrafficAnomalyRelay(history, threatLevel) {
+  if (!history || history.length < 37) return { dropPct: 0, signal: false };
+  const sorted = [...history].sort((a, b) => b.date.localeCompare(a.date));
+  let recent7 = 0, baseline30 = 0;
+  for (let i = 0; i < 7 && i < sorted.length; i++) recent7 += sorted[i].total;
+  for (let i = 7; i < 37 && i < sorted.length; i++) baseline30 += sorted[i].total;
+  const baselineAvg7 = (baseline30 / Math.min(30, sorted.length - 7)) * 7;
+  if (baselineAvg7 < 14) return { dropPct: 0, signal: false };
+  const dropPct = Math.round(((baselineAvg7 - recent7) / baselineAvg7) * 100);
+  const isHighThreat = threatLevel === 'war_zone' || threatLevel === 'critical';
+  return { dropPct, signal: dropPct >= 50 && isHighThreat };
+}
+
+async function seedTransitSummaries() {
+  // Hydrate from Redis on cold start (in-memory state lost after relay restart)
+  if (!latestPortwatchData) {
+    const persisted = await upstashGet(PORTWATCH_REDIS_KEY);
+    if (persisted && typeof persisted === 'object' && Object.keys(persisted).length > 0) {
+      latestPortwatchData = persisted;
+      console.log(`[TransitSummary] Hydrated PortWatch from Redis (${Object.keys(persisted).length} chokepoints)`);
+    }
+  }
+  if (!latestCorridorRiskData) {
+    const persisted = await upstashGet(CORRIDOR_RISK_REDIS_KEY);
+    if (persisted && typeof persisted === 'object' && Object.keys(persisted).length > 0) {
+      latestCorridorRiskData = persisted;
+      console.log(`[TransitSummary] Hydrated CorridorRisk from Redis (${Object.keys(persisted).length} corridors)`);
+    }
+  }
+
+  const pw = latestPortwatchData;
+  if (!pw || Object.keys(pw).length === 0) return;
+
+  const now = Date.now();
+  const summaries = {};
+
+  for (const [cpId, cpData] of Object.entries(pw)) {
+    const threatLevel = CHOKEPOINT_THREAT_LEVELS[cpId] || 'normal';
+    const anomaly = detectTrafficAnomalyRelay(cpData.history, threatLevel);
+
+    // Get relay transit counts for this chokepoint
+    let relayTransit = null;
+    for (const [relayName, canonicalId] of Object.entries(RELAY_NAME_TO_ID)) {
+      if (canonicalId === cpId) {
+        const crossings = chokepointCrossings.get(relayName) || [];
+        const recent = crossings.filter(c => now - c.ts < TRANSIT_WINDOW_MS);
+        if (recent.length > 0) {
+          relayTransit = {
+            tanker: recent.filter(c => c.type === 'tanker').length,
+            cargo: recent.filter(c => c.type === 'cargo').length,
+            other: recent.filter(c => c.type === 'other').length,
+            total: recent.length,
+          };
+        }
+        break;
+      }
+    }
+
+    const cr = latestCorridorRiskData?.[cpId];
+    summaries[cpId] = {
+      todayTotal: relayTransit?.total ?? 0,
+      todayTanker: relayTransit?.tanker ?? 0,
+      todayCargo: relayTransit?.cargo ?? 0,
+      todayOther: relayTransit?.other ?? 0,
+      wowChangePct: cpData.wowChangePct ?? 0,
+      history: cpData.history ?? [],
+      riskLevel: cr?.riskLevel ?? '',
+      incidentCount7d: cr?.incidentCount7d ?? 0,
+      disruptionPct: cr?.disruptionPct ?? 0,
+      riskSummary: cr?.riskSummary ?? '',
+      riskReportAction: cr?.riskReportAction ?? '',
+      anomaly,
+    };
+  }
+
+  const ok = await upstashSet(TRANSIT_SUMMARY_REDIS_KEY, { summaries, fetchedAt: now }, TRANSIT_SUMMARY_TTL);
+  await upstashSet('seed-meta:supply_chain:transit-summaries', { fetchedAt: now, recordCount: Object.keys(summaries).length }, 604800);
+  console.log(`[TransitSummary] Seeded ${Object.keys(summaries).length} summaries (redis: ${ok ? 'OK' : 'FAIL'})`);
+}
+
+// Seed transit summaries every 10 min (same as transit counter)
+setTimeout(() => {
+  seedTransitSummaries().catch(e => console.warn('[TransitSummary] Initial seed error:', e?.message || e));
+}, 35_000);
+setInterval(() => {
+  seedTransitSummaries().catch(e => console.warn('[TransitSummary] Seed error:', e?.message || e));
+}, TRANSIT_SUMMARY_INTERVAL_MS).unref?.();
 
 // UCDP GED Events cache (persistent in-memory — Railway advantage)
 const UCDP_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -4832,6 +5323,7 @@ const OPENSKY_BBOX_DECIMALS = OPENSKY_BBOX_QUANT_STEP > 0
   : 6;
 const OPENSKY_DEDUP_EMPTY_RESPONSE_JSON = JSON.stringify({ states: [], time: 0 });
 const OPENSKY_DEDUP_EMPTY_RESPONSE_GZIP = gzipSyncBuffer(OPENSKY_DEDUP_EMPTY_RESPONSE_JSON);
+const OPENSKY_DEDUP_EMPTY_RESPONSE_BROTLI = brotliSyncBuffer(OPENSKY_DEDUP_EMPTY_RESPONSE_JSON);
 const rssResponseCache = new Map(); // key: feed URL → { data, contentType, timestamp, statusCode }
 const rssInFlight = new Map(); // key: feed URL → Promise (dedup concurrent requests)
 const rssFailureCount = new Map(); // key: feed URL → consecutive failure count (for exponential backoff)
@@ -4843,7 +5335,7 @@ const RSS_CACHE_MAX_ENTRIES = 200; // hard cap — ~20 allowed domains × ~5 pat
 
 function rssRecordFailure(feedUrl) {
   const prev = rssFailureCount.get(feedUrl) || 0;
-  const ttl = Math.min(RSS_NEGATIVE_CACHE_TTL_MS * Math.pow(2, prev), RSS_MAX_NEGATIVE_CACHE_TTL_MS);
+  const ttl = Math.min(RSS_NEGATIVE_CACHE_TTL_MS * 2 ** prev, RSS_MAX_NEGATIVE_CACHE_TTL_MS);
   rssFailureCount.set(feedUrl, prev + 1);
   rssBackoffUntil.set(feedUrl, Date.now() + ttl);
   return { failures: prev + 1, backoffSec: Math.round(ttl / 1000) };
@@ -4871,6 +5363,7 @@ function cacheOpenSkyPositive(cacheKey, data) {
   setBoundedCacheEntry(openskyResponseCache, cacheKey, {
     data,
     gzip: gzipSyncBuffer(data),
+    brotli: brotliSyncBuffer(data),
     timestamp: Date.now(),
   }, OPENSKY_CACHE_MAX_ENTRIES);
 }
@@ -4883,6 +5376,7 @@ function cacheOpenSkyNegative(cacheKey, status) {
     timestamp: now,
     body,
     gzip: gzipSyncBuffer(body),
+    brotli: brotliSyncBuffer(body),
   }, OPENSKY_NEGATIVE_CACHE_MAX_ENTRIES);
 }
 
@@ -5130,10 +5624,25 @@ async function _fetchOpenSkyToken(clientId, clientSecret) {
 }
 
 // Promisified upstream OpenSky fetch (single request)
+function _collectDecompressed(response) {
+  return new Promise((resolve, reject) => {
+    const enc = (response.headers['content-encoding'] || '').trim().toLowerCase();
+    let stream = response;
+    if (enc === 'gzip' || enc === 'x-gzip') stream = response.pipe(zlib.createGunzip());
+    else if (enc === 'deflate') stream = response.pipe(zlib.createInflate());
+    else if (enc === 'br') stream = response.pipe(zlib.createBrotliDecompress());
+    const chunks = [];
+    stream.on('data', chunk => chunks.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(chunks).toString()));
+    stream.on('error', (err) => reject(new Error(`decompression failed (${enc}): ${err.message}`)));
+  });
+}
+
 function _openskyRawFetch(url, token) {
   const parsed = new URL(url);
   const reqHeaders = {
     'Accept': 'application/json',
+    'Accept-Encoding': 'gzip, deflate, br',
     'User-Agent': 'WorldMonitor/1.0',
     'Authorization': `Bearer ${token}`,
   };
@@ -5148,9 +5657,9 @@ function _openskyRawFetch(url, token) {
           headers: reqHeaders,
           timeout: 15000,
         }, (response) => {
-          let data = '';
-          response.on('data', chunk => data += chunk);
-          response.on('end', () => resolve({ status: response.statusCode || 502, data }));
+          _collectDecompressed(response)
+            .then(data => resolve({ status: response.statusCode || 502, data }))
+            .catch(err => resolve({ status: 0, data: null, error: err }));
         });
         request.on('error', (err) => resolve({ status: 0, data: null, error: err }));
         request.on('timeout', () => { request.destroy(); resolve({ status: 504, data: null, error: new Error('timeout') }); });
@@ -5162,11 +5671,12 @@ function _openskyRawFetch(url, token) {
     const request = https.get(url, {
       family: 4,
       headers: reqHeaders,
+      agent: httpsKeepAliveAgent,
       timeout: 15000,
     }, (response) => {
-      let data = '';
-      response.on('data', chunk => data += chunk);
-      response.on('end', () => resolve({ status: response.statusCode || 502, data }));
+      _collectDecompressed(response)
+        .then(data => resolve({ status: response.statusCode || 502, data }))
+        .catch(err => resolve({ status: 0, data: null, error: err }));
     });
     request.on('error', (err) => resolve({ status: 0, data: null, error: err }));
     request.on('timeout', () => { request.destroy(); resolve({ status: 504, data: null, error: new Error('timeout') }); });
@@ -5220,7 +5730,7 @@ async function handleOpenSkyRequest(req, res, PORT) {
         'Cache-Control': 'public, max-age=30',
         'CDN-Cache-Control': 'public, max-age=15',
         'X-Cache': 'HIT',
-      }, cached.data, cached.gzip);
+      }, cached.data, cached.gzip, cached.brotli);
     }
 
     // 2. Check negative cache — prevents retry storms when upstream returns 429/5xx
@@ -5233,7 +5743,7 @@ async function handleOpenSkyRequest(req, res, PORT) {
         'Cache-Control': 'no-cache',
         'CDN-Cache-Control': 'no-store',
         'X-Cache': 'NEG',
-      }, negCached.body, negCached.gzip);
+      }, negCached.body, negCached.gzip, negCached.brotli);
     }
 
     // 2b. Global 429 cooldown — blocks ALL bbox queries when OpenSky is rate-limiting.
@@ -5265,7 +5775,7 @@ async function handleOpenSkyRequest(req, res, PORT) {
           'Cache-Control': 'public, max-age=30',
           'CDN-Cache-Control': 'public, max-age=15',
           'X-Cache': 'DEDUP',
-        }, deduped.data, deduped.gzip);
+        }, deduped.data, deduped.gzip, deduped.brotli);
       }
       const dedupNeg = openskyNegativeCache.get(cacheKey);
       if (dedupNeg && Date.now() - dedupNeg.timestamp < OPENSKY_NEGATIVE_CACHE_TTL_MS) {
@@ -5276,7 +5786,7 @@ async function handleOpenSkyRequest(req, res, PORT) {
           'Cache-Control': 'no-cache',
           'CDN-Cache-Control': 'no-store',
           'X-Cache': 'DEDUP-NEG',
-        }, dedupNeg.body, dedupNeg.gzip);
+        }, dedupNeg.body, dedupNeg.gzip, dedupNeg.brotli);
       }
       // In-flight completed but no cache entry (upstream failed) — return empty instead of thundering herd
       incrementRelayMetric('openskyDedupEmpty');
@@ -5285,7 +5795,7 @@ async function handleOpenSkyRequest(req, res, PORT) {
         'Cache-Control': 'no-cache',
         'CDN-Cache-Control': 'no-store',
         'X-Cache': 'DEDUP-EMPTY',
-      }, OPENSKY_DEDUP_EMPTY_RESPONSE_JSON, OPENSKY_DEDUP_EMPTY_RESPONSE_GZIP);
+      }, OPENSKY_DEDUP_EMPTY_RESPONSE_JSON, OPENSKY_DEDUP_EMPTY_RESPONSE_GZIP, OPENSKY_DEDUP_EMPTY_RESPONSE_BROTLI);
     }
 
     incrementRelayMetric('openskyMiss');
@@ -5350,7 +5860,7 @@ async function handleOpenSkyRequest(req, res, PORT) {
 
     // Serve stale cache on network errors
     if (result.error && cached) {
-      return sendPreGzipped(req, res, 200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'CDN-Cache-Control': 'no-store', 'X-Cache': 'STALE' }, cached.data, cached.gzip);
+      return sendPreGzipped(req, res, 200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'CDN-Cache-Control': 'no-store', 'X-Cache': 'STALE' }, cached.data, cached.gzip, cached.brotli);
     }
 
     const responseData = result.data || JSON.stringify({ error: result.error?.message || 'upstream error', time: Date.now(), states: null });
@@ -5447,7 +5957,7 @@ function handleWorldBankRequest(req, res) {
   const country = wbParams.get('country');
   const countries = wbParams.get('countries');
   const years = parseInt(wbParams.get('years') || '5', 10);
-  let countryList = country || (countries ? countries.split(',').join(';') : [
+  const countryList = country || (countries ? countries.split(',').join(';') : [
     'USA','CHN','JPN','DEU','KOR','GBR','IND','ISR','SGP','TWN',
     'FRA','CAN','SWE','NLD','CHE','FIN','IRL','AUS','BRA','IDN',
     'ARE','SAU','QAT','BHR','EGY','TUR','MYS','THA','VNM','PHL',
@@ -5813,7 +6323,7 @@ setInterval(() => {
 // ── Yahoo Finance Chart Proxy ──────────────────────────────────────
 const YAHOO_CHART_CACHE_TTL_MS = 300_000; // 5 min
 const yahooChartCache = new Map(); // key: symbol:range:interval → { json, gzip, ts }
-const YAHOO_SYMBOL_RE = /^[A-Za-z0-9^=\-\.]{1,15}$/;
+const YAHOO_SYMBOL_RE = /^[A-Za-z0-9^=\-.]{1,15}$/;
 
 function handleYahooChartRequest(req, res) {
   const url = new URL(req.url, `http://localhost:${PORT}`);
@@ -6313,13 +6823,14 @@ const server = http.createServer(async (req, res) => {
     const includeCandidates = url.searchParams.get('candidates') === 'true';
     const json = includeCandidates ? lastSnapshotWithCandJson : lastSnapshotJson;
     const gz = includeCandidates ? lastSnapshotWithCandGzip : lastSnapshotGzip;
+    const br = includeCandidates ? lastSnapshotWithCandBrotli : lastSnapshotBrotli;
 
     if (json) {
       sendPreGzipped(req, res, 200, {
         'Content-Type': 'application/json',
         'Cache-Control': 'public, max-age=2',
         'CDN-Cache-Control': 'public, max-age=10',
-      }, json, gz);
+      }, json, gz, br);
     } else {
       // Cold start fallback
       const payload = { ...lastSnapshot, candidateReports: includeCandidates ? getCandidateReportsSnapshot() : [] };
@@ -6607,7 +7118,7 @@ const server = http.createServer(async (req, res) => {
             }
             rssResponseCache.set(feedUrl, {
               data, contentType: 'application/xml', statusCode: response.statusCode, timestamp: Date.now(),
-              etag: response.headers['etag'] || null,
+              etag: response.headers.etag || null,
               lastModified: response.headers['last-modified'] || null,
             });
             if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -6673,28 +7184,44 @@ const server = http.createServer(async (req, res) => {
       }
     }
   } else if (pathname === '/oref/alerts') {
-    sendCompressed(req, res, 200, {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=5, s-maxage=5, stale-while-revalidate=3',
-    }, JSON.stringify({
-      configured: OREF_ENABLED,
-      alerts: orefState.lastAlerts || [],
-      historyCount24h: orefState.historyCount24h,
-      totalHistoryCount: orefState.totalHistoryCount,
-      timestamp: orefState.lastPollAt ? new Date(orefState.lastPollAt).toISOString() : new Date().toISOString(),
-      ...(orefState.lastError ? { error: orefState.lastError } : {}),
-    }));
+    const c = orefState._alertsCache;
+    if (c) {
+      sendPreGzipped(req, res, 200, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=5, s-maxage=5, stale-while-revalidate=3',
+      }, c.json, c.gzip, c.brotli);
+    } else {
+      sendCompressed(req, res, 200, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=5, s-maxage=5, stale-while-revalidate=3',
+      }, JSON.stringify({
+        configured: OREF_ENABLED,
+        alerts: orefState.lastAlerts || [],
+        historyCount24h: orefState.historyCount24h,
+        totalHistoryCount: orefState.totalHistoryCount,
+        timestamp: orefState.lastPollAt ? new Date(orefState.lastPollAt).toISOString() : new Date().toISOString(),
+        ...(orefState.lastError ? { error: orefState.lastError } : {}),
+      }));
+    }
   } else if (pathname === '/oref/history') {
-    sendCompressed(req, res, 200, {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=30, s-maxage=30, stale-while-revalidate=10',
-    }, JSON.stringify({
-      configured: OREF_ENABLED,
-      history: orefState.history || [],
-      historyCount24h: orefState.historyCount24h,
-      totalHistoryCount: orefState.totalHistoryCount,
-      timestamp: orefState.lastPollAt ? new Date(orefState.lastPollAt).toISOString() : new Date().toISOString(),
-    }));
+    const c = orefState._historyCache;
+    if (c) {
+      sendPreGzipped(req, res, 200, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=30, s-maxage=30, stale-while-revalidate=10',
+      }, c.json, c.gzip, c.brotli);
+    } else {
+      sendCompressed(req, res, 200, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=30, s-maxage=30, stale-while-revalidate=10',
+      }, JSON.stringify({
+        configured: OREF_ENABLED,
+        history: orefState.history || [],
+        historyCount24h: orefState.historyCount24h,
+        totalHistoryCount: orefState.totalHistoryCount,
+        timestamp: orefState.lastPollAt ? new Date(orefState.lastPollAt).toISOString() : new Date().toISOString(),
+      }));
+    }
   } else if (pathname.startsWith('/ucdp-events')) {
     handleUcdpEventsRequest(req, res);
   } else if (pathname.startsWith('/opensky')) {
@@ -6840,6 +7367,7 @@ server.listen(PORT, () => {
   startTechEventsSeedLoop();
   startPortWatchSeedLoop();
   startCorridorRiskSeedLoop();
+  startUsniFleetSeedLoop();
 });
 
 wss.on('connection', (ws, req) => {

@@ -361,6 +361,7 @@ export class EventHandlerManager implements AppModule {
       this.boundFullscreenHandler = () => {
         fullscreenBtn.textContent = document.fullscreenElement ? '\u26F6' : '\u26F6';
         fullscreenBtn.classList.toggle('active', !!document.fullscreenElement);
+        this.syncMapAfterLayoutChange();
       };
       document.addEventListener('fullscreenchange', this.boundFullscreenHandler);
     }
@@ -396,7 +397,7 @@ export class EventHandlerManager implements AppModule {
     document.addEventListener('visibilitychange', this.boundVisibilityHandler);
 
     this.boundFocalPointsReadyHandler = () => {
-      (this.ctx.panels['cii'] as CIIPanel)?.refresh(true);
+      (this.ctx.panels.cii as CIIPanel)?.refresh(true);
       this.callbacks.refreshOpenCountryBrief?.();
     };
     window.addEventListener('focal-points-ready', this.boundFocalPointsReadyHandler);
@@ -733,6 +734,16 @@ export class EventHandlerManager implements AppModule {
     };
   }
 
+  private syncMapAfterLayoutChange(delayMs = 320): void {
+    const sync = () => {
+      this.ctx.map?.setIsResizing(false);
+      this.ctx.map?.resize();
+    };
+
+    requestAnimationFrame(sync);
+    window.setTimeout(sync, delayMs);
+  }
+
   private async exitFullscreenForNavigation(): Promise<void> {
     const fullscreenDocument = this.getFullscreenDocument();
     if (!fullscreenDocument.fullscreenElement && !fullscreenDocument.webkitFullscreenElement) return;
@@ -961,7 +972,7 @@ export class EventHandlerManager implements AppModule {
       liquidity: 0,
     }));
     this.ctx.latestPredictions = predictions;
-    (this.ctx.panels['polymarket'] as PredictionPanel | undefined)?.renderPredictions(predictions);
+    (this.ctx.panels.polymarket as PredictionPanel | undefined)?.renderPredictions(predictions);
 
     this.ctx.map?.setHotspotLevels(snapshot.hotspotLevels);
   }
@@ -1228,8 +1239,7 @@ export class EventHandlerManager implements AppModule {
       document.body.classList.toggle('live-news-fullscreen-active', isFullscreen);
       btn.innerHTML = isFullscreen ? shrinkSvg : expandSvg;
       btn.title = isFullscreen ? 'Exit fullscreen' : 'Fullscreen';
-      // Notify map so globe (and deck.gl) can resize after CSS transition completes
-      setTimeout(() => this.ctx.map?.setIsResizing(false), 320);
+      this.syncMapAfterLayoutChange();
     };
 
     btn.addEventListener('click', toggle);

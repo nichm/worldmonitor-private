@@ -5,6 +5,9 @@
   "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
+    "lint": "biome lint ./src ./server ./api ./tests ./e2e ./scripts ./middleware.ts",
+    "lint:fix": "biome check ./src ./server ./api ./tests ./e2e ./scripts ./middleware.ts --fix",
+    "lint:boundaries": "node scripts/lint-boundaries.mjs",
     "lint:md": "markdownlint-cli2 '**/*.md' '!**/node_modules/**' '!.agent/**' '!.agents/**' '!.claude/**' '!.factory/**' '!.windsurf/**' '!skills/**' '!docs/internal/**' '!docs/Docs_To_Review/**'",
     "version:sync": "node scripts/sync-desktop-version.mjs",
     "version:check": "node scripts/sync-desktop-version.mjs --check",
@@ -58,6 +61,7 @@
     "desktop:package": "node scripts/desktop-package.mjs"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.7",
     "@bufbuild/buf": "^1.66.0",
     "@playwright/test": "^1.52.0",
     "@tauri-apps/cli": "^2.10.0",
@@ -102,7 +106,6 @@
     "globe.gl": "^2.45.0",
     "i18next": "^25.8.10",
     "i18next-browser-languagedetector": "^8.2.1",
-    "lightweight-charts": "^5.0.5",
     "maplibre-gl": "^5.16.0",
     "marked": "^17.0.3",
     "onnxruntime-web": "^1.23.2",

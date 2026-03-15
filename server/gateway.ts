@@ -62,7 +62,6 @@ const RPC_CACHE_TIER: Record<string, CacheTier> = {
   '/api/infrastructure/v1/list-service-statuses': 'slow',
   '/api/seismology/v1/list-earthquakes': 'slow',
   '/api/infrastructure/v1/list-internet-outages': 'slow',
-  '/api/infrastructure/v1/list-temporal-anomalies': 'slow',
 
   '/api/unrest/v1/list-unrest-events': 'slow',
   '/api/cyber/v1/list-cyber-threats': 'slow',
@@ -122,15 +121,19 @@ const RPC_CACHE_TIER: Record<string, CacheTier> = {
   '/api/military/v1/list-military-bases': 'static',
   '/api/economic/v1/get-macro-signals': 'medium',
   '/api/prediction/v1/list-prediction-markets': 'medium',
+  '/api/forecast/v1/get-forecasts': 'medium',
   '/api/supply-chain/v1/get-chokepoint-status': 'medium',
   '/api/news/v1/list-feed-digest': 'slow',
   '/api/intelligence/v1/classify-event': 'static',
   '/api/intelligence/v1/get-country-facts': 'daily',
+  '/api/intelligence/v1/list-security-advisories': 'slow',
   '/api/news/v1/summarize-article-cache': 'slow',
 
   '/api/imagery/v1/search-imagery': 'static',
-  '/api/webcam/v1/list-webcams': 'static',
-  '/api/webcam/v1/get-webcam-image': 'static',
+
+  '/api/infrastructure/v1/list-temporal-anomalies': 'medium',
+  '/api/webcam/v1/get-webcam-image': 'no-store',
+  '/api/webcam/v1/list-webcams': 'no-store',
 };
 
 const PREMIUM_RPC_PATHS = new Set([

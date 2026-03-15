@@ -1930,7 +1930,7 @@ export class DeckGLMap {
       id: 'earthquakes-layer',
       data: earthquakes,
       getPosition: (d) => [d.location?.longitude ?? 0, d.location?.latitude ?? 0],
-      getRadius: (d) => Math.pow(2, d.magnitude) * 1000,
+      getRadius: (d) => 2 ** d.magnitude * 1000,
       getFillColor: (d) => {
         const mag = d.magnitude;
         if (mag >= 6) return [255, 0, 0, 200] as [number, number, number, number];
@@ -3817,7 +3817,7 @@ export class DeckGLMap {
   // Utility methods
   private hexToRgba(hex: string, alpha: number): [number, number, number, number] {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (result && result[1] && result[2] && result[3]) {
+    if (result?.[1] && result[2] && result[3]) {
       return [
         parseInt(result[1], 16),
         parseInt(result[2], 16),
@@ -4707,7 +4707,7 @@ export class DeckGLMap {
     if (Math.abs(zoom - this.lastAircraftFetchZoom) >= 1) return true;
     const [prevLng, prevLat] = this.lastAircraftFetchCenter;
     // Threshold scales with zoom — higher zoom = smaller movement triggers fetch
-    const threshold = Math.max(0.1, 2 / Math.pow(2, Math.max(0, zoom - 3)));
+    const threshold = Math.max(0.1, 2 / 2 ** Math.max(0, zoom - 3));
     return Math.abs(center.lat - prevLat) > threshold || Math.abs(center.lng - prevLng) > threshold;
   }
 
@@ -5342,6 +5342,13 @@ export class DeckGLMap {
     });
   }
 
+  private countryPulseRaf: number | null = null;
+
+  private getHighlightRestOpacity(): { fill: number; border: number } {
+    const theme = isLightMapTheme(getMapTheme(getMapProvider())) ? 'light' : 'dark';
+    return { fill: theme === 'light' ? 0.18 : 0.12, border: 0.5 };
+  }
+
   public highlightCountry(code: string): void {
     this.highlightedCountryCode = code;
     if (!this.maplibreMap || !this.countryGeoJsonLoaded) return;
@@ -5350,16 +5357,51 @@ export class DeckGLMap {
       this.maplibreMap.setFilter('country-highlight-fill', filter);
       this.maplibreMap.setFilter('country-highlight-border', filter);
     } catch { /* layer not ready yet */ }
+    this.pulseCountryHighlight();
   }
 
   public clearCountryHighlight(): void {
     this.highlightedCountryCode = null;
+    if (this.countryPulseRaf) { cancelAnimationFrame(this.countryPulseRaf); this.countryPulseRaf = null; }
     if (!this.maplibreMap) return;
+    const rest = this.getHighlightRestOpacity();
     const noMatch = ['==', ['get', 'ISO3166-1-Alpha-2'], ''] as maplibregl.FilterSpecification;
     try {
       this.maplibreMap.setFilter('country-highlight-fill', noMatch);
       this.maplibreMap.setFilter('country-highlight-border', noMatch);
+      this.maplibreMap.setPaintProperty('country-highlight-fill', 'fill-opacity', rest.fill);
+      this.maplibreMap.setPaintProperty('country-highlight-border', 'line-opacity', rest.border);
     } catch { /* layer not ready */ }
+  }
+
+  private pulseCountryHighlight(): void {
+    if (this.countryPulseRaf) { cancelAnimationFrame(this.countryPulseRaf); this.countryPulseRaf = null; }
+    const map = this.maplibreMap;
+    if (!map) return;
+    const rest = this.getHighlightRestOpacity();
+    const start = performance.now();
+    const duration = 3000;
+    const step = (now: number) => {
+      const t = (now - start) / duration;
+      if (t >= 1) {
+        this.countryPulseRaf = null;
+        try {
+          map.setPaintProperty('country-highlight-fill', 'fill-opacity', rest.fill);
+          map.setPaintProperty('country-highlight-border', 'line-opacity', rest.border);
+        } catch { /* ignore */ }
+        return;
+      }
+      const pulse = Math.sin(t * Math.PI * 3) ** 2;
+      const fade = 1 - t * t;
+      const fillOp = rest.fill + 0.25 * pulse * fade;
+      const borderOp = rest.border + 0.5 * pulse * fade;
+      try {
+        map.setPaintProperty('country-highlight-fill', 'fill-opacity', fillOp);
+        map.setPaintProperty('country-highlight-border', 'line-opacity', borderOp);
+      } catch { /* ignore */ }
+      this.countryPulseRaf = requestAnimationFrame(step);
+    };
+    this.countryPulseRaf = requestAnimationFrame(step);
   }
 
   private switchBasemap(): void {
@@ -5472,6 +5514,11 @@ export class DeckGLMap {
     if (this.renderRafId !== null) {
       cancelAnimationFrame(this.renderRafId);
       this.renderRafId = null;
+    }
+
+    if (this.countryPulseRaf !== null) {
+      cancelAnimationFrame(this.countryPulseRaf);
+      this.countryPulseRaf = null;
     }
 
     if (this.moveTimeoutId) {
