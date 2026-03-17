@@ -2322,7 +2322,6 @@ function computeSituationSimilarity(currentCluster, priorCluster) {
     overlapCount(currentCluster.forecastIds || [], priorCluster.forecastIds || []) * 0.5
   );
 }
-
 function buildSituationClusters(predictions) {
   const clusters = [];
 

@@ -365,7 +365,6 @@ describe('forecast run world state', () => {
     assert.ok(nextWorldState.report.continuitySummary.includes('Situations:'));
     assert.ok(nextWorldState.report.situationWatchlist.length >= 1);
   });
-
   it('keeps situation continuity stable when a cluster expands with a new earlier-sorting actor', () => {
     const a = makePrediction('conflict', 'Iran', 'Escalation risk: Iran', 0.72, 0.63, '7d', [
       { type: 'cii', value: 'Iran CII 79 (high)', weight: 0.4 },
