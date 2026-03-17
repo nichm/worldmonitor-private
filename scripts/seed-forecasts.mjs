@@ -2515,6 +2515,13 @@ function resolveForecastLlmProviders(options = {}) {
   return providers.length > 0 ? providers : FORECAST_LLM_PROVIDERS;
 }
 
+function summarizeForecastLlmOptions(options = {}) {
+  return {
+    providerOrder: Array.isArray(options.providerOrder) ? options.providerOrder : [],
+    modelOverrides: options.modelOverrides || {},
+  };
+}
+
 const SCENARIO_SYSTEM_PROMPT = `You are a senior geopolitical intelligence analyst writing scenario briefs.
 
 RULES:
