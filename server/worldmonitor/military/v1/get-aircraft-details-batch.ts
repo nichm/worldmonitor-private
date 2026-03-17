@@ -37,7 +37,7 @@ export async function getAircraftDetailsBatch(
       const icao24 = limitedList[i]!;
       const cached = cachedMap.get(cacheKeys[i]!);
       if (cached && typeof cached === 'object' && 'details' in cached) {
-        const details = (cached as { details?: AircraftDetails | null }).details;
+        const details = (cached as { details?: CachedAircraftDetails['details'] }).details;
         if (details) {
           results[icao24] = details;
         }
