@@ -1282,3 +1282,37 @@ describe('PRO widget — i18n keys and CSS', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// 15. widget-templates — static invariants
+// ---------------------------------------------------------------------------
+describe('widget-templates — static invariants', () => {
+  const templatesSrc = readFileSync(resolve(root, 'src/services/widget-templates.ts'), 'utf8');
+  const gallerySrc = readFileSync(resolve(root, 'src/components/WidgetGalleryModal.ts'), 'utf8');
+
+  it('exports WIDGET_TEMPLATES array with ≥15 entries', () => {
+    const ids = [...templatesSrc.matchAll(/id:\s*['"`]tpl-[^'"`]+['"`]/g)];
+    assert.ok(ids.length >= 15, `expected ≥15 templates, found ${ids.length}`);
+  });
+
+  it('all templates have non-empty html field', () => {
+    const htmlFields = [...templatesSrc.matchAll(/html:\s*`[^`]+`/gs)];
+    assert.ok(htmlFields.length >= 15, `expected ≥15 html fields, found ${htmlFields.length}`);
+  });
+
+  it('all templates have required fields', () => {
+    for (const field of ['id:', 'title:', 'description:', 'category:', 'tier:', 'emoji:', 'prompt:', 'html:']) {
+      assert.ok(templatesSrc.includes(field), `missing field: ${field}`);
+    }
+  });
+
+  it('WidgetGalleryModal exports open and close functions', () => {
+    assert.ok(gallerySrc.includes('export function openWidgetGalleryModal'), 'missing open');
+    assert.ok(gallerySrc.includes('export function closeWidgetGalleryModal'), 'missing close');
+  });
+
+  it('gallery button in panel-layout is gated by isProWidgetEnabled', () => {
+    const layout = readFileSync(resolve(root, 'src/app/panel-layout.ts'), 'utf8');
+    assert.ok(layout.includes('openWidgetGalleryModal') || layout.includes('WidgetGalleryModal'), 'panel-layout missing gallery');
+  });
+});

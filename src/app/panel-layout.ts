@@ -62,6 +62,7 @@ import { trackCriticalBannerAction } from '@/services/analytics';
 import { getSecretState } from '@/services/runtime-config';
 import { CustomWidgetPanel } from '@/components/CustomWidgetPanel';
 import { openWidgetChatModal } from '@/components/WidgetChatModal';
+import { openWidgetGalleryModal } from '@/components/WidgetGalleryModal';
 import { isWidgetFeatureEnabled, isProWidgetEnabled, loadWidgets, saveWidget } from '@/services/widget-store';
 import type { CustomWidgetSpec } from '@/services/widget-store';
 
@@ -993,6 +994,25 @@ export class PanelLayoutManager implements AppModule {
     }
 
     if (isProWidgetEnabled()) {
+      const galleryBlock = document.createElement('button');
+      galleryBlock.className = 'add-panel-block ai-widget-block';
+      galleryBlock.setAttribute('aria-label', t('widgets.gallery.openGallery'));
+      const galleryIcon = document.createElement('span');
+      galleryIcon.className = 'add-panel-block-icon';
+      galleryIcon.textContent = '\uD83D\uDDC2\uFE0F';
+      const galleryLabel = document.createElement('span');
+      galleryLabel.className = 'add-panel-block-label';
+      galleryLabel.textContent = t('widgets.gallery.openGallery');
+      galleryBlock.appendChild(galleryIcon);
+      galleryBlock.appendChild(galleryLabel);
+      galleryBlock.addEventListener('click', () => {
+        openWidgetGalleryModal({
+          onAddInstant: (spec) => this.addCustomWidget(spec),
+          onComplete: (spec) => this.addCustomWidget(spec),
+        });
+      });
+      panelsGrid.appendChild(galleryBlock);
+
       const proBlock = document.createElement('button');
       proBlock.className = 'add-panel-block ai-widget-block ai-widget-block-pro';
       proBlock.setAttribute('aria-label', t('widgets.createInteractive'));

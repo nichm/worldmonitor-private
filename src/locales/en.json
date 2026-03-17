@@ -62,6 +62,21 @@
       "sortableTable": "Sortable crypto price table with search filter",
       "animatedCounters": "Animated counters for key economic indicators",
       "tabbedComparison": "Tabbed comparison of conflict events by region"
+    },
+    "gallery": {
+      "openGallery": "Widget Templates",
+      "title": "Widget Templates",
+      "tabAll": "All",
+      "tabMarkets": "Markets",
+      "tabGeopolitics": "Geopolitics",
+      "tabAviation": "Aviation",
+      "tabSecurity": "Security",
+      "tabEnvironment": "Environment",
+      "tabResearch": "Research",
+      "addInstantly": "Add instantly",
+      "customize": "Customize",
+      "tierFree": "FREE",
+      "tierPro": "PRO"
     }
   },
   "countryBrief": {
