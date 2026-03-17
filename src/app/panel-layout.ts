@@ -61,7 +61,7 @@ import { trackCriticalBannerAction } from '@/services/analytics';
 import { getSecretState } from '@/services/runtime-config';
 import { CustomWidgetPanel } from '@/components/CustomWidgetPanel';
 import { openWidgetChatModal } from '@/components/WidgetChatModal';
-import { isWidgetFeatureEnabled, loadWidgets, saveWidget } from '@/services/widget-store';
+import { isWidgetFeatureEnabled, isProWidgetEnabled, loadWidgets, saveWidget } from '@/services/widget-store';
 import type { CustomWidgetSpec } from '@/services/widget-store';
 
 export interface PanelLayoutCallbacks {
@@ -983,10 +983,37 @@ export class PanelLayoutManager implements AppModule {
       aiBlock.addEventListener('click', () => {
         openWidgetChatModal({
           mode: 'create',
+          tier: 'basic',
           onComplete: (spec) => this.addCustomWidget(spec),
         });
       });
       panelsGrid.appendChild(aiBlock);
+
+      if (isProWidgetEnabled()) {
+        const proBlock = document.createElement('button');
+        proBlock.className = 'add-panel-block ai-widget-block ai-widget-block-pro';
+        proBlock.setAttribute('aria-label', t('widgets.createInteractive'));
+        const proIcon = document.createElement('span');
+        proIcon.className = 'add-panel-block-icon';
+        proIcon.textContent = '\u26a1';
+        const proLabel = document.createElement('span');
+        proLabel.className = 'add-panel-block-label';
+        proLabel.textContent = t('widgets.createInteractive');
+        const proBadge = document.createElement('span');
+        proBadge.className = 'widget-pro-badge';
+        proBadge.textContent = t('widgets.proBadge');
+        proBlock.appendChild(proIcon);
+        proBlock.appendChild(proLabel);
+        proBlock.appendChild(proBadge);
+        proBlock.addEventListener('click', () => {
+          openWidgetChatModal({
+            mode: 'create',
+            tier: 'pro',
+            onComplete: (spec) => this.addCustomWidget(spec),
+          });
+        });
+        panelsGrid.appendChild(proBlock);
+      }
     }
 
     const bottomGrid = document.getElementById('mapBottomGrid');
