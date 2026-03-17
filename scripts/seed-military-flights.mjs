@@ -806,6 +806,15 @@ async function fetchAllStates() {
   const seenIds = new Set();
   const allStates = [];
   let source = 'none';
+  const oauthConfigured = Boolean(process.env.OPENSKY_CLIENT_ID && process.env.OPENSKY_CLIENT_SECRET);
+  const fetchSources = {
+    wingbitsUsed: false,
+    oauthConfigured,
+    proxyEnabled: PROXY_ENABLED,
+    openSkyAuthSuccess: false,
+    openSkyAnonFallbackUsed: false,
+    regions: [],
+  };
 
   // Tier 1: Wingbits — no proxy needed, fast, reliable
   try {
@@ -818,6 +827,7 @@ async function fetchAllStates() {
     }
     if (wbStates.length > 0) {
       source = 'wingbits';
+      fetchSources.wingbitsUsed = true;
       console.log(`  [Wingbits] ${wbStates.length} unique aircraft loaded`);
     }
   } catch (e) {
@@ -827,14 +837,27 @@ async function fetchAllStates() {
   // Tier 2: OpenSky (auth via proxy) — supplements with aircraft Wingbits may miss
   for (const region of QUERY_REGIONS) {
     let states = null;
+    const regionSource = {
+      name: region.name,
+      authStatus: oauthConfigured ? 'pending' : 'not_configured',
+      anonStatus: 'not_needed',
+      statesSeen: 0,
+      statesAdded: 0,
+    };
 
     try {
       states = await fetchOpenSkyAuthenticated(region);
       if (states && states.length > 0) {
         if (source === 'none') source = 'opensky-auth';
+        fetchSources.openSkyAuthSuccess = true;
+        regionSource.authStatus = 'success';
+        regionSource.statesSeen = states.length;
         console.log(`  [OpenSky Auth] ${region.name}: ${states.length} states`);
+      } else if (oauthConfigured) {
+        regionSource.authStatus = 'empty';
       }
     } catch (e) {
+      regionSource.authStatus = `error:${redactProxy(e.message)}`;
       console.warn(`  [OpenSky Auth] ${region.name}: ${redactProxy(e.message)}`);
     }
 
@@ -844,9 +867,15 @@ async function fetchAllStates() {
         states = await fetchOpenSkyAnonymous(region);
         if (states && states.length > 0) {
           if (source === 'none') source = 'opensky-anon';
+          fetchSources.openSkyAnonFallbackUsed = true;
+          regionSource.anonStatus = 'success';
+          regionSource.statesSeen = states.length;
           console.log(`  [OpenSky Anon] ${region.name}: ${states.length} states`);
+        } else {
+          regionSource.anonStatus = 'empty';
         }
       } catch (e) {
+        regionSource.anonStatus = `error:${redactProxy(e.message)}`;
         console.warn(`  [OpenSky Anon] ${region.name}: ${redactProxy(e.message)}`);
       }
     }
@@ -860,11 +889,14 @@ async function fetchAllStates() {
         allStates.push(state);
         added++;
       }
+      regionSource.statesAdded = added;
       if (added > 0) console.log(`  [OpenSky] +${added} new from ${region.name} (total: ${allStates.length})`);
     }
+
+    fetchSources.regions.push(regionSource);
   }
 
-  return { allStates, source };
+  return { allStates, source, fetchSources };
 }
 
 // ── Filter & Build Military Flights ────────────────────────
@@ -1225,16 +1257,23 @@ async function main() {
     process.exit(0);
   }
 
-  let allStates, source, flights, byType, classificationAudit;
+  let allStates, source, flights, byType, classificationAudit, fetchSources;
   try {
     console.log('  Fetching from all sources...');
-    ({ allStates, source } = await fetchAllStates());
+    ({ allStates, source, fetchSources } = await fetchAllStates());
     console.log(`  Raw states: ${allStates.length} (source: ${source})`);
 
     ({ flights, byType, audit: classificationAudit } = filterMilitaryFlights(allStates));
+    classificationAudit.fetchSources = fetchSources;
     console.log(`  Military: ${flights.length} (${Object.entries(byType).map(([t, n]) => `${t}:${n}`).join(', ')})`);
     if (classificationAudit) {
       console.log(`  [Audit] unknownRate=${classificationAudit.unknownTypeRate} hexOnly=${classificationAudit.hexOnlyAdmissions} rejected=${classificationAudit.rejectedFlights}`);
+      console.log(
+        `  [Source] wingbits=${fetchSources.wingbitsUsed ? 'yes' : 'no'} oauthConfigured=${fetchSources.oauthConfigured ? 'yes' : 'no'} authSuccess=${fetchSources.openSkyAuthSuccess ? 'yes' : 'no'} anonFallback=${fetchSources.openSkyAnonFallbackUsed ? 'yes' : 'no'}`,
+      );
+      console.log(
+        `  [Source] regions=${fetchSources.regions.map((region) => `${region.name}:auth=${region.authStatus},anon=${region.anonStatus},seen=${region.statesSeen},added=${region.statesAdded}`).join(' | ')}`,
+      );
       console.log(
         `  [Audit] waterfall raw=${classificationAudit.stageWaterfall.rawStates} pos=${classificationAudit.stageWaterfall.positionEligible} candidate=${classificationAudit.stageWaterfall.candidateStates} admitted=${classificationAudit.stageWaterfall.admittedFlights} typed=${classificationAudit.stageWaterfall.typedFlights}`,
       );
