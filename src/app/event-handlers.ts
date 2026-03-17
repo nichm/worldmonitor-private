@@ -328,7 +328,7 @@ export class EventHandlerManager implements AppModule {
       const { panelId } = e.detail;
 
       if (panelId.startsWith('cw-')) {
-        if (!window.confirm('Remove this widget permanently?')) return;
+        if (!window.confirm(t('widgets.confirmDelete'))) return;
         deleteWidget(panelId);
         const panel = this.ctx.panels[panelId];
         panel?.destroy();

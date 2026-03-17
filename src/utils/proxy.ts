@@ -21,6 +21,11 @@ export function widgetAgentUrl(): string {
   return `${WIDGET_RELAY_BASE}/widget-agent`;
 }
 
+export function widgetAgentHealthUrl(): string {
+  if (isDev) return '/widget-agent/health';
+  return `${WIDGET_RELAY_BASE}/widget-agent/health`;
+}
+
 export function rssProxyUrl(feedUrl: string): string {
   if (isDesktopRuntime()) return proxyUrl(feedUrl);
   if (RSS_PROXY_BASE) {

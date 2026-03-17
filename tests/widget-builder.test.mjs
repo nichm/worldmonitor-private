@@ -54,18 +54,28 @@ describe('widget-agent relay — security', () => {
     );
     assert.ok(
       relay.includes('WIDGET_AGENT_KEY'),
-      'Must compare against process.env.WIDGET_AGENT_KEY',
+      'Must compare against configured WIDGET_AGENT_KEY',
     );
+  });
+
+  it('widget-agent fails closed when WIDGET_AGENT_KEY is missing', () => {
+    assert.ok(
+      relay.includes('!status.widgetKeyConfigured'),
+      'Shared widget-agent auth helper must reject requests when WIDGET_AGENT_KEY is unset',
+    );
+    const missingKeyIdx = relay.indexOf('!status.widgetKeyConfigured');
+    const region = relay.slice(missingKeyIdx, missingKeyIdx + 200);
+    assert.ok(region.includes('503'), 'Missing WIDGET_AGENT_KEY should return 503');
   });
 
   it('auth 403 response is sent before any processing on bad key', () => {
     const handlerStart = relay.indexOf('async function handleWidgetAgentRequest');
     assert.ok(handlerStart !== -1, 'handleWidgetAgentRequest not found');
-    // Use 1200 chars to reach both the auth check and the SSE headers
+    // Use 1200 chars to reach both the auth helper and the SSE headers
     const handlerBody = relay.slice(handlerStart, handlerStart + 1200);
-    const authCheckIdx = handlerBody.indexOf("x-widget-key");
+    const authCheckIdx = handlerBody.indexOf('requireWidgetAgentAccess(req, res)');
     const sseHeaderIdx = handlerBody.indexOf("text/event-stream");
-    assert.ok(authCheckIdx !== -1, "x-widget-key auth check not found in handler start");
+    assert.ok(authCheckIdx !== -1, 'Auth helper call not found in handler start');
     assert.ok(sseHeaderIdx !== -1, "text/event-stream SSE header not found within handler");
     assert.ok(authCheckIdx < sseHeaderIdx, 'Auth check must come before SSE headers');
   });
@@ -130,11 +140,11 @@ describe('widget-agent relay — security', () => {
   });
 
   it('CORS for /widget-agent: POST in Allow-Methods, X-Widget-Key in Allow-Headers', () => {
-    const widgetCorsIdx = relay.indexOf("pathname === '/widget-agent'");
+    const widgetCorsIdx = relay.indexOf("pathname.startsWith('/widget-agent')");
     assert.ok(widgetCorsIdx !== -1);
     const corsBlock = relay.slice(widgetCorsIdx, widgetCorsIdx + 500);
     assert.ok(
-      corsBlock.includes('POST'),
+      corsBlock.includes('GET, POST, OPTIONS'),
       'CORS must include POST in Allow-Methods for /widget-agent',
     );
     assert.ok(
@@ -144,7 +154,7 @@ describe('widget-agent relay — security', () => {
   });
 
   it('CORS reuses getCorsOrigin (not a narrow hardcoded origin list)', () => {
-    const widgetCorsIdx = relay.indexOf("pathname === '/widget-agent'");
+    const widgetCorsIdx = relay.indexOf("pathname.startsWith('/widget-agent')");
     const corsBlock = relay.slice(widgetCorsIdx, widgetCorsIdx + 600);
     // Must NOT define a hardcoded origins array for this specific route
     assert.ok(
@@ -159,6 +169,13 @@ describe('widget-agent relay — security', () => {
       corsBlock.includes('Access-Control-Allow-Headers'),
       'CORS block for /widget-agent must set Allow-Methods or Allow-Headers',
     );
+  });
+
+  it('registers GET /widget-agent/health before the 404 catch-all', () => {
+    const healthRouteIdx = relay.indexOf("pathname === '/widget-agent/health' && req.method === 'GET'");
+    const catchAllIdx = relay.lastIndexOf('res.writeHead(404)');
+    assert.ok(healthRouteIdx !== -1, 'widget-agent health route registration not found');
+    assert.ok(healthRouteIdx < catchAllIdx, 'widget-agent health route must appear before 404 catch-all');
   });
 
   it('uses raw @anthropic-ai/sdk (not agent SDK)', () => {
@@ -413,6 +430,10 @@ describe('panel guardrails — cw- prefix handling', () => {
       "event-handlers must detect cw- prefix for custom widget panels",
     );
     assert.ok(
+      events.includes("t('widgets.confirmDelete')"),
+      'Custom widget delete confirmation must use localized widgets.confirmDelete copy',
+    );
+    assert.ok(
       events.includes('confirm') || events.includes('window.confirm'),
       'Must show a confirm dialog before deleting custom widgets',
     );
@@ -531,6 +552,12 @@ describe('WidgetChatModal — SSE client protocol', () => {
     );
   });
 
+  it('runs preflight against widget-agent health route on open', () => {
+    assert.ok(modal.includes('widgetAgentHealthUrl'), 'Modal must import widgetAgentHealthUrl()');
+    assert.ok(modal.includes('runPreflight'), 'Modal must define runPreflight()');
+    assert.ok(modal.includes("fetch(widgetAgentHealthUrl()"), 'Modal must fetch widgetAgentHealthUrl() during preflight');
+  });
+
   it('AbortController used for cancellation', () => {
     assert.ok(modal.includes('AbortController'), 'Must use AbortController for stream cancellation');
   });
@@ -579,8 +606,20 @@ describe('WidgetChatModal — SSE client protocol', () => {
   });
 
   it('action button says "Add to Dashboard" (create) or "Apply Changes" (modify)', () => {
-    assert.ok(modal.includes('Add to Dashboard'), 'Create mode button must say "Add to Dashboard"');
-    assert.ok(modal.includes('Apply Changes'), 'Modify mode button must say "Apply Changes"');
+    assert.ok(modal.includes("t('widgets.addToDashboard')"), 'Create mode button must use widgets.addToDashboard');
+    assert.ok(modal.includes("t('widgets.applyChanges')"), 'Modify mode button must use widgets.applyChanges');
+  });
+
+  it('uses split layout and sticky footer action bar structure', () => {
+    assert.ok(modal.includes('widget-chat-layout'), 'Modal must render widget-chat-layout');
+    assert.ok(modal.includes('widget-chat-sidebar'), 'Modal must render widget-chat-sidebar');
+    assert.ok(modal.includes('widget-chat-main'), 'Modal must render widget-chat-main');
+    assert.ok(modal.includes('widget-chat-footer'), 'Modal must render widget-chat-footer');
+  });
+
+  it('renders prompt example chips', () => {
+    assert.ok(modal.includes('EXAMPLE_PROMPT_KEYS'), 'Modal must define prompt example keys');
+    assert.ok(modal.includes('widget-chat-example-chip'), 'Modal must render prompt example chips');
   });
 
   it('conversationHistory entries use literal role types (user | assistant)', () => {
@@ -592,6 +631,25 @@ describe('WidgetChatModal — SSE client protocol', () => {
     assert.ok(
       modal.includes("'assistant' as const") || modal.includes('"assistant" as const'),
       "role must be typed as literal 'assistant' with `as const`",
+    );
+  });
+
+  it('multi-turn requests reuse mutable sessionHistory instead of original spec history', () => {
+    assert.ok(
+      modal.includes('const sessionHistory = [...(options.existingSpec?.conversationHistory ?? [])]'),
+      'Modal must keep a mutable sessionHistory array for iterative requests',
+    );
+    assert.ok(
+      modal.includes('conversationHistory: sessionHistory'),
+      'Outgoing request body must use the mutable sessionHistory array',
+    );
+    assert.ok(
+      modal.includes('sessionHistory.push('),
+      'Modal must append new user/assistant turns back into sessionHistory after success',
+    );
+    assert.ok(
+      modal.includes('conversationHistory: [...sessionHistory]'),
+      'Saved widget spec must persist the updated sessionHistory',
     );
   });
 });
@@ -643,6 +701,11 @@ describe('proxy routing — widgetAgentUrl', () => {
       'Vite proxy target must be proxy.worldmonitor.app',
     );
   });
+
+  it('widgetAgentHealthUrl() exists and targets /widget-agent/health', () => {
+    assert.ok(proxy.includes('widgetAgentHealthUrl'), 'widgetAgentHealthUrl() must be defined');
+    assert.ok(proxy.includes('/widget-agent/health'), 'widgetAgentHealthUrl() must target /widget-agent/health');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -659,6 +722,42 @@ describe('i18n — widgets section completeness', () => {
     'inputPlaceholder',
     'addToDashboard',
     'applyChanges',
+    'send',
+    'changeAccent',
+    'modifyWithAi',
+    'ready',
+    'fetching',
+    'requestTimedOut',
+    'serverError',
+    'unknownError',
+    'generatedWidget',
+    'checkingConnection',
+    'preflightConnected',
+    'preflightInvalidKey',
+    'preflightUnavailable',
+    'preflightAiUnavailable',
+    'readyToGenerate',
+    'readyToApply',
+    'modifyHint',
+    'generating',
+    'examplesTitle',
+    'previewTitle',
+    'phaseChecking',
+    'phaseReadyToPrompt',
+    'phaseFetching',
+    'phaseComposing',
+    'phaseComplete',
+    'phaseError',
+    'previewCheckingHeading',
+    'previewReadyHeading',
+    'previewFetchingHeading',
+    'previewComposingHeading',
+    'previewErrorHeading',
+    'previewCheckingCopy',
+    'previewReadyCopy',
+    'previewFetchingCopy',
+    'previewComposingCopy',
+    'previewErrorCopy',
   ];
 
   for (const key of REQUIRED_KEYS) {
@@ -678,6 +777,28 @@ describe('i18n — widgets section completeness', () => {
       'confirmDelete must convey permanence — not just hide',
     );
   });
+
+  it('widget UI sources labels from i18n keys instead of hardcoded English copy', () => {
+    const modal = src('src/components/WidgetChatModal.ts');
+    const panel = src('src/components/CustomWidgetPanel.ts');
+    const events = src('src/app/event-handlers.ts');
+    assert.ok(modal.includes("t('widgets.chatTitle')"), 'WidgetChatModal must use widgets.chatTitle');
+    assert.ok(modal.includes("t('widgets.modifyTitle')"), 'WidgetChatModal must use widgets.modifyTitle');
+    assert.ok(modal.includes("t('widgets.inputPlaceholder')"), 'WidgetChatModal must use widgets.inputPlaceholder');
+    assert.ok(panel.includes("t('widgets.changeAccent')"), 'CustomWidgetPanel must use widgets.changeAccent');
+    assert.ok(panel.includes("t('widgets.modifyWithAi')"), 'CustomWidgetPanel must use widgets.modifyWithAi');
+    assert.ok(events.includes("t('widgets.confirmDelete')"), 'Delete confirmation must use widgets.confirmDelete');
+  });
+
+  it('prompt examples are defined and non-empty', () => {
+    const exampleKeys = ['oilGold', 'cryptoMovers', 'flightDelays', 'conflictHotspots'];
+    for (const key of exampleKeys) {
+      assert.ok(
+        typeof en.widgets.examples[key] === 'string' && en.widgets.examples[key].length > 0,
+        `en.json must have non-empty widgets.examples.${key}`,
+      );
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -685,6 +806,7 @@ describe('i18n — widgets section completeness', () => {
 // ---------------------------------------------------------------------------
 describe('CustomWidgetPanel — header buttons and events', () => {
   const panel = src('src/components/CustomWidgetPanel.ts');
+  const sanitizer = src('src/utils/widget-sanitizer.ts');
 
   it('dispatches wm:widget-modify event from chat button', () => {
     assert.ok(
@@ -716,10 +838,18 @@ describe('CustomWidgetPanel — header buttons and events', () => {
     );
   });
 
-  it('renderWidget uses sanitizeWidgetHtml', () => {
+  it('renderWidget uses shared wrapped widget HTML helper', () => {
     assert.ok(
-      panel.includes('sanitizeWidgetHtml'),
-      'renderWidget must sanitize HTML via sanitizeWidgetHtml()',
+      panel.includes('wrapWidgetHtml'),
+      'renderWidget must use wrapWidgetHtml() for shell + sanitization',
+    );
+    assert.ok(
+      sanitizer.includes('sanitizeWidgetHtml'),
+      'wrapWidgetHtml() must sanitize HTML internally',
+    );
+    assert.ok(
+      sanitizer.includes('wm-widget-generated'),
+      'wrapWidgetHtml() must provide a contained generated-widget wrapper',
     );
   });
 

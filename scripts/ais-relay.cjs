@@ -6817,8 +6817,8 @@ const server = http.createServer(async (req, res) => {
   } else if (isRssRoute) {
     res.setHeader('Vary', 'Origin');
   }
-  if (pathname === '/widget-agent') {
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  if (pathname.startsWith('/widget-agent')) {
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Widget-Key');
   } else {
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -6835,7 +6835,7 @@ const server = http.createServer(async (req, res) => {
   // served to unauthenticated requests from edge cache. This is acceptable — all proxied data
   // is public (RSS, WorldBank, UCDP, Polymarket, OpenSky, AIS). Auth exists for abuse
   // prevention (rate limiting), not data protection. Cloudflare WAF provides edge-level protection.
-  const isPublicRoute = pathname === '/health' || pathname === '/' || isRssRoute || pathname === '/widget-agent';
+  const isPublicRoute = pathname === '/health' || pathname === '/' || isRssRoute || pathname.startsWith('/widget-agent');
   if (!isPublicRoute) {
     if (!isAuthorizedRequest(req)) {
       return safeEnd(res, 401, { 'Content-Type': 'application/json' },
@@ -7344,6 +7344,8 @@ const server = http.createServer(async (req, res) => {
     handleNotamProxyRequest(req, res);
   } else if (pathname === '/aviationstack') {
     handleAviationStackRequest(req, res);
+  } else if (pathname === '/widget-agent/health' && req.method === 'GET') {
+    handleWidgetAgentHealthRequest(req, res);
   } else if (pathname === '/widget-agent' && req.method === 'POST') {
     handleWidgetAgentRequest(req, res);
   } else {
@@ -7429,10 +7431,44 @@ Use var(--widget-accent, var(--accent)) for themed highlights.
 5. Tables use class="trade-tariffs-table". Lists use class="trade-restrictions-list".
 6. Always include a source footer: <div class="economic-footer"><span class="economic-source">Source: WorldMonitor</span></div>
 7. If no data available: <div class="economic-empty">No data available</div>
+8. The dashboard already provides the outer widget shell. Generate only the inner widget body markup.
 
 For modify requests: make targeted changes to improve the widget as requested.`;
 
 const WIDGET_MAX_HTML = 50_000;
+const WIDGET_AGENT_KEY = (process.env.WIDGET_AGENT_KEY || '').trim();
+const WIDGET_ANTHROPIC_KEY = (process.env.ANTHROPIC_API_KEY || '').trim();
+
+function getWidgetAgentStatus() {
+  return {
+    ok: Boolean(WIDGET_AGENT_KEY && WIDGET_ANTHROPIC_KEY),
+    agentEnabled: true,
+    widgetKeyConfigured: Boolean(WIDGET_AGENT_KEY),
+    anthropicConfigured: Boolean(WIDGET_ANTHROPIC_KEY),
+  };
+}
+
+function getWidgetAgentProvidedKey(req) {
+  return typeof req.headers['x-widget-key'] === 'string'
+    ? req.headers['x-widget-key'].trim()
+    : '';
+}
+
+function requireWidgetAgentAccess(req, res) {
+  const status = getWidgetAgentStatus();
+  if (!status.widgetKeyConfigured) {
+    safeEnd(res, 503, { 'Content-Type': 'application/json' }, JSON.stringify({ ...status, error: 'Widget agent unavailable' }));
+    return null;
+  }
+
+  const providedKey = getWidgetAgentProvidedKey(req);
+  if (!providedKey || providedKey !== WIDGET_AGENT_KEY) {
+    safeEnd(res, 403, { 'Content-Type': 'application/json' }, JSON.stringify({ ...status, error: 'Forbidden' }));
+    return null;
+  }
+
+  return status;
+}
 
 function sendWidgetSSE(res, type, data) {
   if (!res.writableEnded) {
@@ -7454,9 +7490,22 @@ async function readRequestBody(req, maxBytes) {
   });
 }
 
+function handleWidgetAgentHealthRequest(req, res) {
+  const status = requireWidgetAgentAccess(req, res);
+  if (!status) return;
+
+  if (!status.anthropicConfigured) {
+    return safeEnd(res, 503, { 'Content-Type': 'application/json' }, JSON.stringify({ ...status, error: 'AI backend unavailable' }));
+  }
+
+  return safeEnd(res, 200, { 'Content-Type': 'application/json' }, JSON.stringify(status));
+}
+
 async function handleWidgetAgentRequest(req, res) {
-  if (req.headers['x-widget-key'] !== process.env.WIDGET_AGENT_KEY) {
-    return safeEnd(res, 403, { 'Content-Type': 'application/json' }, JSON.stringify({ error: 'Forbidden' }));
+  const status = requireWidgetAgentAccess(req, res);
+  if (!status) return;
+  if (!status.anthropicConfigured) {
+    return safeEnd(res, 503, { 'Content-Type': 'application/json' }, JSON.stringify({ ...status, error: 'AI backend unavailable' }));
   }
 
   const contentLength = parseInt(req.headers['content-length'] || '0', 10);
@@ -7494,7 +7543,7 @@ async function handleWidgetAgentRequest(req, res) {
 
   try {
     const { default: Anthropic } = await import('@anthropic-ai/sdk');
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const client = new Anthropic({ apiKey: WIDGET_ANTHROPIC_KEY });
 
     const messages = [
       ...conversationHistory

@@ -17,9 +17,23 @@ const PURIFY_CONFIG = {
   FORCE_BODY: true,
 };
 
+// NOTE: Inline styles remain enabled so generated widgets can adjust layout.
+// Revisit this before widening widget capabilities further; panel-escape risks
+// should be reviewed if we keep accepting arbitrary style properties.
 const UNSAFE_STYLE_RE = /style\s*=\s*["'][^"']*(?:url\s*\(|expression\s*\(|javascript\s*:)[^"']*["']/gi;
 
 export function sanitizeWidgetHtml(html: string): string {
   const purified = DOMPurify.sanitize(html, PURIFY_CONFIG) as unknown as string;
   return purified.replace(UNSAFE_STYLE_RE, '');
+}
+
+export function wrapWidgetHtml(html: string, extraClass = ''): string {
+  const shellClass = ['wm-widget-shell', extraClass].filter(Boolean).join(' ');
+  return `
+    <div class="${shellClass}">
+      <div class="wm-widget-body">
+        <div class="wm-widget-generated">${sanitizeWidgetHtml(html)}</div>
+      </div>
+    </div>
+  `;
 }

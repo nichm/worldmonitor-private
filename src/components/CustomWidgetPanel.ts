@@ -1,7 +1,8 @@
 import { Panel } from './Panel';
 import type { CustomWidgetSpec } from '@/services/widget-store';
 import { saveWidget } from '@/services/widget-store';
-import { sanitizeWidgetHtml } from '@/utils/widget-sanitizer';
+import { t } from '@/services/i18n';
+import { wrapWidgetHtml } from '@/utils/widget-sanitizer';
 import { h } from '@/utils/dom-utils';
 
 const ACCENT_COLORS: Array<string | null> = [
@@ -29,9 +30,9 @@ export class CustomWidgetPanel extends Panel {
     const closeBtn = this.header.querySelector('.panel-close-btn');
 
     const colorBtn = h('button', {
-      className: 'icon-btn widget-color-btn',
-      title: 'Change accent color',
-      'aria-label': 'Change accent color',
+      className: 'icon-btn widget-color-btn widget-header-btn',
+      title: t('widgets.changeAccent'),
+      'aria-label': t('widgets.changeAccent'),
     });
     colorBtn.style.setProperty('background', this.spec.accentColor ?? 'var(--accent)');
     colorBtn.addEventListener('click', (e) => {
@@ -40,9 +41,9 @@ export class CustomWidgetPanel extends Panel {
     });
 
     const chatBtn = h('button', {
-      className: 'icon-btn panel-widget-chat-btn',
-      title: 'Modify widget with AI',
-      'aria-label': 'Modify widget with AI',
+      className: 'icon-btn panel-widget-chat-btn widget-header-btn',
+      title: t('widgets.modifyWithAi'),
+      'aria-label': t('widgets.modifyWithAi'),
     }, '\u2726');
     chatBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -72,8 +73,7 @@ export class CustomWidgetPanel extends Panel {
   }
 
   renderWidget(): void {
-    const sanitized = sanitizeWidgetHtml(this.spec.html);
-    this.setContent(sanitized);
+    this.setContent(wrapWidgetHtml(this.spec.html));
     this.applyAccentColor();
   }
 
