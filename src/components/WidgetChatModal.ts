@@ -45,8 +45,8 @@ export function openWidgetChatModal(options: WidgetChatOptions): void {
 
   modal.innerHTML = `
     <div class="modal-header">
-      <span class="modal-title">${titleText}</span>
-      <button class="modal-close" aria-label="${t('common.close')}">\u2715</button>
+      <span class="modal-title">${escapeHtml(titleText)}</span>
+      <button class="modal-close" aria-label="${escapeHtml(t('common.close'))}">\u2715</button>
     </div>
     <div class="widget-chat-layout">
       <section class="widget-chat-sidebar">

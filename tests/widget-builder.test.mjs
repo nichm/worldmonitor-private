@@ -71,8 +71,8 @@ describe('widget-agent relay — security', () => {
   it('auth 403 response is sent before any processing on bad key', () => {
     const handlerStart = relay.indexOf('async function handleWidgetAgentRequest');
     assert.ok(handlerStart !== -1, 'handleWidgetAgentRequest not found');
-    // Use 1200 chars to reach both the auth helper and the SSE headers
-    const handlerBody = relay.slice(handlerStart, handlerStart + 1200);
+    // Use 1600 chars to reach both the auth helper, rate limiter, and the SSE headers
+    const handlerBody = relay.slice(handlerStart, handlerStart + 1600);
     const authCheckIdx = handlerBody.indexOf('requireWidgetAgentAccess(req, res)');
     const sseHeaderIdx = handlerBody.indexOf("text/event-stream");
     assert.ok(authCheckIdx !== -1, 'Auth helper call not found in handler start');

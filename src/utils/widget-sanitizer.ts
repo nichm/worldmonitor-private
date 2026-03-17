@@ -14,17 +14,20 @@ const PURIFY_CONFIG = {
     'xmlns',
   ],
   FORBID_TAGS: ['button', 'input', 'form', 'select', 'textarea', 'script', 'iframe', 'object', 'embed'],
+  ALLOW_DATA_ATTR: false,
   FORCE_BODY: true,
 };
 
-// NOTE: Inline styles remain enabled so generated widgets can adjust layout.
-// Revisit this before widening widget capabilities further; panel-escape risks
-// should be reviewed if we keep accepting arbitrary style properties.
-const UNSAFE_STYLE_RE = /style\s*=\s*["'][^"']*(?:url\s*\(|expression\s*\(|javascript\s*:)[^"']*["']/gi;
+const UNSAFE_STYLE_PATTERN = /url\s*\(|expression\s*\(|javascript\s*:|@import|behavior\s*:/i;
+
+DOMPurify.addHook('uponSanitizeAttribute', (_node, data) => {
+  if (data.attrName === 'style' && UNSAFE_STYLE_PATTERN.test(data.attrValue)) {
+    data.keepAttr = false;
+  }
+});
 
 export function sanitizeWidgetHtml(html: string): string {
-  const purified = DOMPurify.sanitize(html, PURIFY_CONFIG) as unknown as string;
-  return purified.replace(UNSAFE_STYLE_RE, '');
+  return DOMPurify.sanitize(html, PURIFY_CONFIG) as unknown as string;
 }
 
 export function wrapWidgetHtml(html: string, extraClass = ''): string {

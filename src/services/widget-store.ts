@@ -1,4 +1,5 @@
 import { loadFromStorage, saveToStorage } from '@/utils';
+import { sanitizeWidgetHtml } from '@/utils/widget-sanitizer';
 
 const STORAGE_KEY = 'wm-custom-widgets';
 const PANEL_SPANS_KEY = 'worldmonitor-panel-spans';
@@ -25,7 +26,7 @@ export function loadWidgets(): CustomWidgetSpec[] {
 export function saveWidget(spec: CustomWidgetSpec): void {
   const trimmed: CustomWidgetSpec = {
     ...spec,
-    html: spec.html.slice(0, MAX_HTML_CHARS),
+    html: sanitizeWidgetHtml(spec.html.slice(0, MAX_HTML_CHARS)),
     conversationHistory: spec.conversationHistory.slice(-MAX_HISTORY),
   };
   const existing = loadWidgets().filter(w => w.id !== trimmed.id);
