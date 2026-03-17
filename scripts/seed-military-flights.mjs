@@ -504,7 +504,7 @@ function parseProxyAuth() {
   };
 }
 
-function proxyFetchJson(url, { headers = {}, timeout = 15000 } = {}) {
+function proxyFetchJson(url, { headers = {}, timeout = 15000, method = 'GET', body = null } = {}) {
   const parsed = new URL(url);
   const proxy = parseProxyAuth();
   if (!proxy) return Promise.reject(new Error('No proxy config'));
@@ -529,12 +529,16 @@ function proxyFetchJson(url, { headers = {}, timeout = 15000 } = {}) {
         return reject(new Error(`CONNECT ${res.statusCode}`));
       }
       const tlsSocket = tls.connect({ socket, servername: parsed.hostname }, () => {
+        const requestHeaders = { ...headers, 'Accept': 'application/json', 'User-Agent': CHROME_UA };
+        if (body != null && !Object.keys(requestHeaders).some((k) => k.toLowerCase() === 'content-length')) {
+          requestHeaders['Content-Length'] = Buffer.byteLength(body);
+        }
         const req = https.request({
           socket: tlsSocket,
           hostname: parsed.hostname,
           path: parsed.pathname + parsed.search,
-          method: 'GET',
-          headers: { ...headers, 'Accept': 'application/json', 'User-Agent': CHROME_UA },
+          method,
+          headers: requestHeaders,
           timeout,
         }, (resp) => {
           let data = '';
@@ -550,6 +554,7 @@ function proxyFetchJson(url, { headers = {}, timeout = 15000 } = {}) {
         });
         req.on('error', (e) => { clearTimeout(timer); reject(e); });
         req.on('timeout', () => { req.destroy(); clearTimeout(timer); reject(new Error('TIMEOUT')); });
+        if (body != null) req.write(body);
         req.end();
       });
       tlsSocket.on('error', (e) => { clearTimeout(timer); reject(e); });
@@ -563,34 +568,136 @@ function proxyFetchJson(url, { headers = {}, timeout = 15000 } = {}) {
 // ── Data Sources ───────────────────────────────────────────
 const OPENSKY_BASE = 'https://opensky-network.org/api';
 const WINGBITS_BASE = 'https://customer-api.wingbits.com/v1/flights';
+const OPENSKY_TOKEN_URL = 'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token';
+const OPENSKY_AUTH_COOLDOWN_MS = 60_000;
+const OPENSKY_AUTH_RETRY_DELAYS = [0, 2_000, 5_000];
+let openskyToken = null;
+let openskyTokenExpiry = 0;
+let openskyTokenPromise = null;
+let openskyAuthCooldownUntil = 0;
+
+function clearOpenSkyToken() {
+  openskyToken = null;
+  openskyTokenExpiry = 0;
+}
+
+function isOpenSkyUnauthorizedError(error) {
+  return /HTTP 401\b/i.test(String(error?.message || error || ''));
+}
+
+async function getOpenSkyToken() {
+  const clientId = process.env.OPENSKY_CLIENT_ID;
+  const clientSecret = process.env.OPENSKY_CLIENT_SECRET;
+  if (!clientId || !clientSecret) return null;
+
+  if (openskyToken && Date.now() < openskyTokenExpiry - 60_000) {
+    return openskyToken;
+  }
+  if (Date.now() < openskyAuthCooldownUntil) {
+    return null;
+  }
+  if (openskyTokenPromise) return openskyTokenPromise;
+
+  openskyTokenPromise = (async () => {
+    let lastError = null;
+
+    for (let attempt = 0; attempt < OPENSKY_AUTH_RETRY_DELAYS.length; attempt += 1) {
+      const delay = OPENSKY_AUTH_RETRY_DELAYS[attempt];
+      if (delay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+
+      const postData = `grant_type=client_credentials&client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}`;
+      const headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': CHROME_UA,
+      };
+
+      try {
+        let data;
+        if (PROXY_ENABLED) {
+          data = await proxyFetchJson(OPENSKY_TOKEN_URL, {
+            method: 'POST',
+            headers,
+            body: postData,
+            timeout: 15_000,
+          });
+        } else {
+          const resp = await fetch(OPENSKY_TOKEN_URL, {
+            method: 'POST',
+            headers,
+            body: postData,
+            signal: AbortSignal.timeout(15_000),
+          });
+          if (!resp.ok) {
+            const body = await resp.text().catch(() => '');
+            throw new Error(`OpenSky token HTTP ${resp.status}: ${body.substring(0, 200)}`);
+          }
+          data = await resp.json();
+        }
+
+        if (!data?.access_token) {
+          throw new Error('OpenSky token response missing access_token');
+        }
+        openskyToken = data.access_token;
+        openskyTokenExpiry = Date.now() + (Number(data.expires_in) || 1800) * 1000;
+        openskyAuthCooldownUntil = 0;
+        return openskyToken;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    clearOpenSkyToken();
+    openskyAuthCooldownUntil = Date.now() + OPENSKY_AUTH_COOLDOWN_MS;
+    throw lastError || new Error('OpenSky token acquisition failed');
+  })();
+
+  try {
+    return await openskyTokenPromise;
+  } finally {
+    openskyTokenPromise = null;
+  }
+}
 
 async function fetchOpenSkyAuthenticated(region) {
-  const username = process.env.OPENSKY_USERNAME;
-  const password = process.env.OPENSKY_PASSWORD;
-  if (!username || !password) return null;
-
-  const params = `lamin=${region.lamin}&lamax=${region.lamax}&lomin=${region.lomin}&lomax=${region.lomax}`;
+  const params = `lamin=${region.lamin}&lamax=${region.lamax}&lomin=${region.lomin}&lomax=${region.lomax}&extended=1`;
   const url = `${OPENSKY_BASE}/states/all?${params}`;
 
-  if (PROXY_ENABLED) {
-    const authHeader = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
-    const data = await proxyFetchJson(url, {
-      headers: { Authorization: authHeader },
-    });
-    return data.states || [];
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const token = await getOpenSkyToken();
+    if (!token) return null;
+    const headers = { Authorization: `Bearer ${token}` };
+
+    try {
+      if (PROXY_ENABLED) {
+        const data = await proxyFetchJson(url, { headers });
+        return data.states || [];
+      }
+
+      const resp = await fetch(url, {
+        headers: { ...headers, 'User-Agent': CHROME_UA, Accept: 'application/json' },
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!resp.ok) {
+        const body = await resp.text().catch(() => '');
+        if (resp.status === 401) {
+          clearOpenSkyToken();
+        }
+        throw new Error(`OpenSky auth HTTP ${resp.status}: ${body.substring(0, 200)}`);
+      }
+      const data = await resp.json();
+      return data.states || [];
+    } catch (error) {
+      if (isOpenSkyUnauthorizedError(error)) {
+        clearOpenSkyToken();
+        if (attempt === 0) continue;
+      }
+      throw error;
+    }
   }
 
-  const authHeader = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
-  const resp = await fetch(url, {
-    headers: { Authorization: authHeader, 'User-Agent': CHROME_UA, Accept: 'application/json' },
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!resp.ok) {
-    const body = await resp.text().catch(() => '');
-    throw new Error(`OpenSky auth HTTP ${resp.status}: ${body.substring(0, 200)}`);
-  }
-  const data = await resp.json();
-  return data.states || [];
+  return null;
 }
 
 async function fetchOpenSkyAnonymous(region) {
