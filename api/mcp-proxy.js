@@ -147,7 +147,7 @@ async function mcpCallTool(serverUrl, toolName, toolArgs, customHeaders) {
 
 function isSseTransport(url) {
   const p = url.pathname;
-  return p === '/sse' || p.endsWith('/sse') || p.includes('/sse/');
+  return p === '/sse' || p.endsWith('/sse');
 }
 
 function makeDeferred() {
@@ -188,7 +188,14 @@ class SseSession {
       try {
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            // Stream closed — if endpoint never arrived, reject so connect() throws
+            if (!self._endpointUrl) {
+              self._endpointDeferred.reject(new Error('SSE stream closed before endpoint event'));
+            }
+            for (const [, d] of self._pending) d.reject(new Error('SSE stream closed'));
+            break;
+          }
           buf += dec.decode(value, { stream: true });
           const lines = buf.split('\n');
           buf = lines.pop() ?? '';
@@ -198,10 +205,24 @@ class SseSession {
             } else if (line.startsWith('data: ')) {
               const data = line.slice(6).trim();
               if (eventType === 'endpoint') {
-                // Endpoint may be an absolute URL or a relative path
-                self._endpointUrl = data.startsWith('http')
-                  ? data
-                  : new URL(data, self._sseUrl).toString();
+                // Resolve endpoint URL (relative path or absolute) then re-validate
+                // to prevent SSRF: a malicious server could emit an RFC1918 address.
+                let resolved;
+                try {
+                  resolved = new URL(data.startsWith('http') ? data : data, self._sseUrl);
+                } catch {
+                  self._endpointDeferred.reject(new Error('SSE endpoint event contains invalid URL'));
+                  return;
+                }
+                if (resolved.protocol !== 'https:' && resolved.protocol !== 'http:') {
+                  self._endpointDeferred.reject(new Error('SSE endpoint protocol not allowed'));
+                  return;
+                }
+                if (BLOCKED_HOST_PATTERNS.some(p => p.test(resolved.hostname))) {
+                  self._endpointDeferred.reject(new Error('SSE endpoint host is blocked'));
+                  return;
+                }
+                self._endpointUrl = resolved.toString();
                 self._endpointDeferred.resolve();
               } else {
                 try {
