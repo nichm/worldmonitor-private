@@ -95,7 +95,7 @@ const SEED_META = {
   commodityQuotes:  { key: 'seed-meta:market:commodities',    maxStaleMin: 30 },
   // RPC/warm-ping keys — seed-meta written by relay loops or handlers
   // serviceStatuses: moved to ON_DEMAND — RPC-populated, no dedicated seed, goes stale when no users visit
-  cableHealth:      { key: 'seed-meta:cable-health',              maxStaleMin: 60 },
+  cableHealth:      { key: 'seed-meta:cable-health',              maxStaleMin: 10080 }, // on-demand handler writes seed-meta with 7-day TTL; alert only if key goes missing entirely
   macroSignals:     { key: 'seed-meta:economic:macro-signals',    maxStaleMin: 60 },
   bisPolicy:        { key: 'seed-meta:economic:bis:policy',       maxStaleMin: 10080 },
   bisExchange:      { key: 'seed-meta:economic:bis:eer',          maxStaleMin: 10080 },
@@ -115,7 +115,7 @@ const SEED_META = {
   weatherAlerts:    { key: 'seed-meta:weather:alerts',             maxStaleMin: 30 },
   spending:         { key: 'seed-meta:economic:spending',          maxStaleMin: 120 },
   techEvents:       { key: 'seed-meta:research:tech-events',       maxStaleMin: 480 },
-  gdeltIntel:       { key: 'seed-meta:intelligence:gdelt-intel',   maxStaleMin: 300 },
+  gdeltIntel:       { key: 'seed-meta:intelligence:gdelt-intel',   maxStaleMin: 150 }, // 2h cron + 30min grace; CACHE_TTL is 24h so merge fallback always survives
   forecasts:        { key: 'seed-meta:forecast:predictions',       maxStaleMin: 90 },
   sectors:          { key: 'seed-meta:market:sectors',             maxStaleMin: 30 },
   techReadiness:    { key: 'seed-meta:economic:worldbank-techreadiness:v1', maxStaleMin: 10080 },
