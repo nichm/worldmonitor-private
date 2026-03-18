@@ -4,7 +4,7 @@ import { jsonResponse } from './_json-response.js';
 export const config = { runtime: 'edge' };
 
 const TIMEOUT_MS = 15_000;
-const MCP_PROTOCOL_VERSION = '2024-11-05';
+const MCP_PROTOCOL_VERSION = '2025-03-26';
 
 const BLOCKED_HOST_PATTERNS = [
   /^localhost$/i,
@@ -90,6 +90,19 @@ async function parseJsonRpcResponse(resp) {
   return resp.json();
 }
 
+// Send notifications/initialized as required by the MCP lifecycle.
+// Servers that enforce the lifecycle will reject tool requests until this is sent.
+// Fire-and-forget: we await the network send but ignore the response body/status.
+async function sendInitialized(serverUrl, headers, sessionId) {
+  try {
+    await postJson(serverUrl, {
+      jsonrpc: '2.0',
+      method: 'notifications/initialized',
+      params: {},
+    }, headers, sessionId);
+  } catch { /* non-fatal — server may not respond to notifications */ }
+}
+
 async function mcpListTools(serverUrl, customHeaders) {
   const headers = buildHeaders(customHeaders);
 
@@ -99,6 +112,9 @@ async function mcpListTools(serverUrl, customHeaders) {
   const sessionId = initResp.headers.get('Mcp-Session-Id') || initResp.headers.get('mcp-session-id');
   const initData = await parseJsonRpcResponse(initResp);
   if (initData.error) throw new Error(`Initialize error: ${initData.error.message}`);
+
+  // Notify server that client-side initialization is complete (MCP lifecycle requirement)
+  await sendInitialized(serverUrl, headers, sessionId);
 
   // List tools
   const listResp = await postJson(serverUrl, {
@@ -119,6 +135,9 @@ async function mcpCallTool(serverUrl, toolName, toolArgs, customHeaders) {
   const sessionId = initResp.headers.get('Mcp-Session-Id') || initResp.headers.get('mcp-session-id');
   const initData = await parseJsonRpcResponse(initResp);
   if (initData.error) throw new Error(`Initialize error: ${initData.error.message}`);
+
+  // Notify server that client-side initialization is complete (MCP lifecycle requirement)
+  await sendInitialized(serverUrl, headers, sessionId);
 
   // Call tool
   const callResp = await postJson(serverUrl, {
