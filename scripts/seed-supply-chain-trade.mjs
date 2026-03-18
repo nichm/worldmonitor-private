@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { loadEnvFile, CHROME_UA, runSeed, writeExtraKeyWithMeta, sleep, verifySeedKey } from './_seed-utils.mjs';
+import { BUDGET_LAB_TARIFFS_URL, htmlToPlainText, toIsoDate, parseBudgetLabEffectiveTariffHtml } from './_trade-parse-utils.mjs';
 
 loadEnvFile(import.meta.url);
 
@@ -23,8 +24,6 @@ const WTO_MEMBER_CODES = {
   '076': 'Brazil', '410': 'South Korea', '036': 'Australia', '124': 'Canada',
   '484': 'Mexico', '380': 'Italy', '528': 'Netherlands', '000': 'World',
 };
-
-const BUDGET_LAB_TARIFFS_URL = 'https://budgetlab.yale.edu/research/tracking-economic-effects-tariffs';
 
 // ─── Shipping Rates (FRED) ───
 
@@ -234,54 +233,6 @@ async function wtoFetch(path, params) {
   if (resp.status === 204) return { Dataset: [] };
   if (!resp.ok) { console.warn(`[WTO] HTTP ${resp.status} for ${path}`); return null; }
   return resp.json();
-}
-
-function htmlToPlainText(html) {
-  return String(html ?? '')
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, '\'')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function toIsoDate(value) {
-  const text = String(value ?? '').trim();
-  if (!text) return '';
-  const parsed = /^\d{4}-\d{2}-\d{2}/.test(text) ? new Date(text) : new Date(`${text} UTC`);
-  return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString().slice(0, 10);
-}
-
-function parseBudgetLabEffectiveTariffHtml(html) {
-  const text = htmlToPlainText(html);
-  if (!text) return null;
-
-  const updatedAt = toIsoDate(text.match(/\bUpdated:\s*([A-Za-z]+\s+\d{1,2},\s+\d{4})/i)?.[1] ?? '');
-  const patterns = [
-    /effective tariff rate reaching\s+(\d+(?:\.\d+)?)%\s+in\s+([A-Za-z]+\s+\d{4})/i,
-    /average effective (?:u\.s\.\s*)?tariff rate[^.]{0,180}?\bto\s+(\d+(?:\.\d+)?)%[^.]{0,180}?\b(?:in|by)\s+([A-Za-z]+\s+\d{4})/i,
-    /average effective (?:u\.s\.\s*)?tariff rate[^.]{0,180}?\bto\s+(\d+(?:\.\d+)?)%/i,
-  ];
-
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (!match) continue;
-    const tariffRate = parseFloat(match[1]);
-    if (!Number.isFinite(tariffRate)) continue;
-    return {
-      sourceName: 'Yale Budget Lab',
-      sourceUrl: BUDGET_LAB_TARIFFS_URL,
-      observationPeriod: match[2] ?? '',
-      updatedAt,
-      tariffRate: Math.round(tariffRate * 100) / 100,
-    };
-  }
-
-  return null;
 }
 
 async function fetchBudgetLabEffectiveTariffRate() {
