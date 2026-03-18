@@ -6,6 +6,18 @@ export const config = { runtime: 'edge' };
 const TIMEOUT_MS = 15_000;
 const MCP_PROTOCOL_VERSION = '2024-11-05';
 
+const BLOCKED_HOST_PATTERNS = [
+  /^localhost$/i,
+  /^127\./,
+  /^10\./,
+  /^172\.(1[6-9]|2\d|3[01])\./,
+  /^192\.168\./,
+  /^169\.254\./,   // link-local + cloud metadata (AWS/GCP/Azure)
+  /^::1$/,
+  /^fd[0-9a-f]{2}:/i,
+  /^fe80:/i,
+];
+
 function buildInitPayload() {
   return {
     jsonrpc: '2.0',
@@ -23,12 +35,8 @@ function validateServerUrl(raw) {
   let url;
   try { url = new URL(raw); } catch { return null; }
   if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
-  // Block private/loopback for production safety
   const host = url.hostname;
-  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
-    // Allow in dev (non-prod) by checking the origin of the incoming request
-    return url;
-  }
+  if (BLOCKED_HOST_PATTERNS.some(p => p.test(host))) return null;
   return url;
 }
 
@@ -41,7 +49,10 @@ function buildHeaders(customHeaders) {
   if (customHeaders && typeof customHeaders === 'object') {
     for (const [k, v] of Object.entries(customHeaders)) {
       if (typeof k === 'string' && typeof v === 'string') {
-        h[k] = v;
+        // Strip CRLF to prevent header injection
+        const safeKey = k.replace(/[\r\n]/g, '');
+        const safeVal = v.replace(/[\r\n]/g, '');
+        if (safeKey) h[safeKey] = safeVal;
       }
     }
   }

@@ -19781,6 +19781,7 @@ body.has-breaking-alert .panels-grid {
 }
 
 .mcp-status-loading { color: var(--text-dim); }
+.mcp-status-info { color: var(--yellow, #f5a623); }
 .mcp-status-ok { color: #44ff88; }
 .mcp-status-error { color: var(--red, #ff4444); }
 

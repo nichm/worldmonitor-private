@@ -124,7 +124,7 @@ export function openMcpConnectModal(options: McpConnectOptions): void {
       urlInput.value = card.dataset.url ?? '';
       if (card.dataset.authNote) {
         connectStatus.textContent = `\u{1f511} ${card.dataset.authNote}`;
-        connectStatus.className = 'mcp-connect-status mcp-status-loading';
+        connectStatus.className = 'mcp-connect-status mcp-status-info';
       } else {
         connectStatus.textContent = '';
         connectStatus.className = 'mcp-connect-status';
@@ -135,7 +135,7 @@ export function openMcpConnectModal(options: McpConnectOptions): void {
       const presetTitle = card.dataset.title;
       if (presetTool) {
         selectedTool = { name: presetTool, description: '' };
-        argsInput.value = presetArgs ? JSON.parse(presetArgs) !== undefined ? presetArgs : '{}' : '{}';
+        argsInput.value = presetArgs || '{}';
         if (presetTitle && !titleInput.value) titleInput.value = presetTitle;
         toolConfig.style.display = '';
         addBtn.disabled = false;
