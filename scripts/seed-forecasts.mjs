@@ -3631,8 +3631,7 @@ function buildReportableInteractionLedger(interactionLedger = [], situationSimul
       if (item.sharedActor && specificity >= 0.7 && confidence >= 0.56) return true;
       return false;
     })
-    .sort((a, b) => b.confidence - a.confidence || b.score - a.score || a.sourceLabel.localeCompare(b.sourceLabel))
-    .slice(0, 32);
+    .sort((a, b) => b.confidence - a.confidence || b.score - a.score || a.sourceLabel.localeCompare(b.sourceLabel));
 }
 
 function describeSimulationPosture(posture) {

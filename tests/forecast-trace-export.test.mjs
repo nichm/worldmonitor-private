@@ -1411,6 +1411,127 @@ describe('forecast run world state', () => {
     assert.equal(worldState.report.interactionWatchlist.length, 0);
   });
 
+  it('aggregates cross-situation effects across reportable interaction ledgers larger than 32 rows', () => {
+    const source = {
+      situationId: 'sit-source',
+      label: 'Baltic Sea supply chain situation',
+      dominantDomain: 'supply_chain',
+      familyId: 'fam-a',
+      familyLabel: 'Baltic maritime supply pressure family',
+      regions: ['Baltic Sea'],
+      actorIds: ['actor-shipping'],
+      effectChannels: [{ type: 'logistics_disruption', count: 3 }],
+      posture: 'escalatory',
+      postureScore: 0.63,
+      totalPressure: 0.68,
+      totalStabilization: 0.24,
+    };
+    const target = {
+      situationId: 'sit-target',
+      label: 'Black Sea market situation',
+      dominantDomain: 'market',
+      familyId: 'fam-b',
+      familyLabel: 'Black Sea market repricing family',
+      regions: ['Black Sea'],
+      actorIds: ['actor-markets'],
+      effectChannels: [],
+      posture: 'contested',
+      postureScore: 0.44,
+      totalPressure: 0.42,
+      totalStabilization: 0.36,
+    };
+
+    const filler = Array.from({ length: 32 }, (_, index) => ({
+      sourceSituationId: `noise-source-${index}`,
+      targetSituationId: `noise-target-${index}`,
+      sourceLabel: `Noise source ${index}`,
+      targetLabel: `Noise target ${index}`,
+      sourceActorName: `Actor ${index}`,
+      targetActorName: `Counterparty ${index}`,
+      interactionType: 'direct_overlap',
+      strongestChannel: 'political_pressure',
+      score: 6,
+      confidence: 0.9,
+      actorSpecificity: 0.85,
+      stage: 'round_1',
+    }));
+
+    const paired = [
+      {
+        sourceSituationId: source.situationId,
+        targetSituationId: target.situationId,
+        sourceLabel: source.label,
+        targetLabel: target.label,
+        sourceActorName: 'Shipping operator',
+        targetActorName: 'Commodity desk',
+        interactionType: 'regional_spillover',
+        strongestChannel: 'logistics_disruption',
+        score: 2.4,
+        confidence: 0.74,
+        actorSpecificity: 0.82,
+        stage: 'round_2',
+      },
+      {
+        sourceSituationId: source.situationId,
+        targetSituationId: target.situationId,
+        sourceLabel: source.label,
+        targetLabel: target.label,
+        sourceActorName: 'Shipping operator',
+        targetActorName: 'Commodity desk',
+        interactionType: 'regional_spillover',
+        strongestChannel: 'logistics_disruption',
+        score: 2.3,
+        confidence: 0.72,
+        actorSpecificity: 0.82,
+        stage: 'round_3',
+      },
+    ];
+
+    const effects = buildCrossSituationEffects({
+      situationSimulations: [
+        source,
+        target,
+        ...filler.flatMap((item) => ([
+          {
+            situationId: item.sourceSituationId,
+            label: item.sourceLabel,
+            dominantDomain: 'political',
+            familyId: `family-${item.sourceSituationId}`,
+            familyLabel: 'Noise family',
+            regions: [`Region ${item.sourceSituationId}`],
+            actorIds: [`actor-${item.sourceSituationId}`],
+            effectChannels: [{ type: 'political_pressure', count: 3 }],
+            posture: 'escalatory',
+            postureScore: 0.7,
+            totalPressure: 0.75,
+            totalStabilization: 0.2,
+          },
+          {
+            situationId: item.targetSituationId,
+            label: item.targetLabel,
+            dominantDomain: 'political',
+            familyId: `family-${item.targetSituationId}`,
+            familyLabel: 'Noise family',
+            regions: [`Region ${item.targetSituationId}`],
+            actorIds: [`actor-${item.targetSituationId}`],
+            effectChannels: [],
+            posture: 'contested',
+            postureScore: 0.45,
+            totalPressure: 0.4,
+            totalStabilization: 0.35,
+          },
+        ])),
+      ],
+      reportableInteractionLedger: [...filler, ...paired],
+    });
+
+    assert.ok(effects.some((item) => (
+      item.sourceSituationId === source.situationId
+      && item.targetSituationId === target.situationId
+      && item.channel === 'logistics_disruption'
+    )));
+  });
+
   it('ignores incompatible prior simulation momentum when the simulation version changes', () => {
     const conflict = makePrediction('conflict', 'Israel', 'Active armed conflict: Israel', 0.76, 0.66, '7d', [
       { type: 'ucdp', value: 'Israeli theater remains active', weight: 0.4 },
