@@ -3694,6 +3694,9 @@ function buildInteractionGroups(interactions = []) {
     groups.set(key, group);
   }
 
+  // Internal grouping helper for report/effect synthesis. We intentionally keep
+  // Sets on the grouped object because downstream callers use `.size` and do not
+  // serialize this structure directly.
   return [...groups.values()].map((group) => ({
     ...group,
     avgConfidence: group.confidenceCount
@@ -3718,6 +3721,12 @@ function computeReportableEffectConfidence(group, source, target, strongestChann
   const avgConfidence = clamp01(group.confidenceCount ? Number(group.avgConfidence || 0) : Math.max(normalizedScore * 0.9, directLinkScore * 0.8));
   const actorSpecificity = clamp01(group.actorSpecificityCount ? Number(group.avgActorSpecificity || 0) : (structuralSharedActor ? 0.78 : 0.62));
   const channelWeight = clamp01(Number(strongestChannelWeight || 0) / 3);
+  // Weight hierarchy is deliberate:
+  // - interaction score and observed confidence dominate
+  // - direct structural linkage is next
+  // - stage diversity adds supporting context
+  // - actor specificity helps separate named/credible carryover from generic links
+  // - channel weight is informative but secondary
   let confidence = (
     normalizedScore * 0.28 +
     directLinkScore * 0.2 +
