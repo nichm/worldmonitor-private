@@ -1045,6 +1045,116 @@ describe('forecast run world state', () => {
     assert.equal(worldState.report.crossSituationEffects.length, 0);
   });
 
+  it('allows cyber sources above the domain constrained threshold to emit direct effects', () => {
+    const cyber = makePrediction('cyber', 'Poland', 'Cyber disruption risk: Poland', 0.46, 0.54, '14d', [
+      { type: 'cyber', value: 'Cyber disruption pressure remains elevated across Poland', weight: 0.35 },
+    ]);
+    buildForecastCase(cyber);
+    cyber.caseFile.actors = [
+      {
+        id: 'shared-cyber-actor',
+        name: 'Shared Cyber Actor',
+        category: 'state_actor',
+        influenceScore: 0.6,
+        domains: ['cyber', 'infrastructure'],
+        regions: ['Poland', 'Baltic States'],
+        objectives: ['Sustain pressure against exposed systems'],
+        constraints: ['Avoid overt escalation'],
+        likelyActions: ['Coordinate cyber pressure against exposed infrastructure.'],
+      },
+    ];
+
+    const infrastructure = makePrediction('infrastructure', 'Baltic States', 'Infrastructure disruption risk: Baltic States', 0.41, 0.52, '14d', [
+      { type: 'outage', value: 'Infrastructure resilience is under pressure in the Baltic States', weight: 0.3 },
+    ]);
+    buildForecastCase(infrastructure);
+    infrastructure.caseFile.actors = [
+      {
+        id: 'shared-cyber-actor',
+        name: 'Shared Cyber Actor',
+        category: 'state_actor',
+        influenceScore: 0.6,
+        domains: ['cyber', 'infrastructure'],
+        regions: ['Poland', 'Baltic States'],
+        objectives: ['Sustain pressure against exposed systems'],
+        constraints: ['Avoid overt escalation'],
+        likelyActions: ['Coordinate cyber pressure against exposed infrastructure.'],
+      },
+    ];
+
+    const worldState = buildForecastRunWorldState({
+      generatedAt: Date.parse('2026-03-19T13:25:00Z'),
+      predictions: [cyber, infrastructure],
+    });
+
+    const patchedSimulationState = structuredClone(worldState.simulationState);
+    const cyberUnit = patchedSimulationState.situationSimulations.find((item) => item.label.includes('Poland'));
+    assert.ok(cyberUnit);
+    cyberUnit.posture = 'contested';
+    cyberUnit.postureScore = 0.394;
+    cyberUnit.totalPressure = 0.62;
+    cyberUnit.totalStabilization = 0.31;
+    cyberUnit.effectChannels = [{ type: 'cyber_disruption', count: 2 }];
+
+    const effects = buildCrossSituationEffects(patchedSimulationState);
+    assert.ok(effects.some((item) => item.channel === 'cyber_disruption'));
+  });
+
+  it('keeps direct regional spillovers when a source only contributes one matching channel but has direct overlap', () => {
+    const cyber = makePrediction('cyber', 'Estonia', 'Cyber pressure: Estonia', 0.47, 0.53, '14d', [
+      { type: 'cyber', value: 'Regional cyber pressure remains elevated around Estonia', weight: 0.32 },
+    ]);
+    buildForecastCase(cyber);
+    cyber.caseFile.actors = [
+      {
+        id: 'shared-regional-actor',
+        name: 'Shared Regional Actor',
+        category: 'state_actor',
+        influenceScore: 0.58,
+        domains: ['cyber', 'political'],
+        regions: ['Estonia', 'Latvia'],
+        objectives: ['Shape regional posture'],
+        constraints: ['Avoid direct confrontation'],
+        likelyActions: ['Manage broader regional effects from Estonia.'],
+      },
+    ];
+
+    const political = makePrediction('political', 'Latvia', 'Political pressure: Latvia', 0.44, 0.52, '14d', [
+      { type: 'policy_change', value: 'Political pressure is building in Latvia', weight: 0.3 },
+    ]);
+    buildForecastCase(political);
+    political.caseFile.actors = [
+      {
+        id: 'shared-regional-actor',
+        name: 'Shared Regional Actor',
+        category: 'state_actor',
+        influenceScore: 0.58,
+        domains: ['cyber', 'political'],
+        regions: ['Estonia', 'Latvia'],
+        objectives: ['Shape regional posture'],
+        constraints: ['Avoid direct confrontation'],
+        likelyActions: ['Manage broader regional effects from Estonia.'],
+      },
+    ];
+
+    const worldState = buildForecastRunWorldState({
+      generatedAt: Date.parse('2026-03-19T13:30:00Z'),
+      predictions: [cyber, political],
+    });
+
+    const patchedSimulationState = structuredClone(worldState.simulationState);
+    const cyberUnit = patchedSimulationState.situationSimulations.find((item) => item.label.includes('Estonia'));
+    assert.ok(cyberUnit);
+    cyberUnit.posture = 'contested';
+    cyberUnit.postureScore = 0.422;
+    cyberUnit.totalPressure = 0.59;
+    cyberUnit.totalStabilization = 0.28;
+    cyberUnit.effectChannels = [{ type: 'regional_spillover', count: 1 }];
+
+    const effects = buildCrossSituationEffects(patchedSimulationState);
+    assert.ok(effects.some((item) => item.channel === 'regional_spillover' && item.relation === 'regional pressure transfer'));
+  });
+
   it('uses a cross-regional family label when no single region clearly dominates a family', () => {
     const iranPolitical = makePrediction('political', 'Iran', 'Political pressure: Iran', 0.62, 0.56, '14d', [
       { type: 'policy_change', value: 'Political posture hardens in Iran', weight: 0.35 },

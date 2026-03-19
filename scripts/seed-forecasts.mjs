@@ -3407,11 +3407,18 @@ function inferSystemEffectRelation(sourceDomain, targetDomain) {
   return relationMap[key] || '';
 }
 
-function canEmitCrossSituationEffect(source, strongestChannel, strongestChannelWeight) {
+function canEmitCrossSituationEffect(source, strongestChannel, strongestChannelWeight, hasDirectStructuralLink = false) {
   if (!strongestChannel) return false;
+  const profile = getSimulationDomainProfile(source?.dominantDomain || '');
+  const constrainedThreshold = profile.constrainedThreshold ?? 0.36;
   if ((source?.posture || '') === 'constrained') return false;
-  if ((source?.postureScore || 0) < 0.42) return false;
-  if ((source?.posture || '') === 'contested' && (source?.postureScore || 0) < 0.5 && strongestChannelWeight < 2) return false;
+  if ((source?.postureScore || 0) <= constrainedThreshold) return false;
+  if (
+    (source?.posture || '') === 'contested'
+    && (source?.postureScore || 0) < Math.max(constrainedThreshold + 0.08, 0.46)
+    && strongestChannelWeight < 2
+    && !hasDirectStructuralLink
+  ) return false;
   if ((source?.posture || '') !== 'escalatory' && (source?.totalPressure || 0) <= (source?.totalStabilization || 0)) return false;
   return true;
 }
@@ -3446,7 +3453,8 @@ function buildCrossSituationEffects(simulationState) {
         || null;
       const strongestChannel = strongestChannelEntry?.type || '';
       const strongestChannelWeight = strongestChannelEntry?.count || 0;
-      if (!canEmitCrossSituationEffect(source, strongestChannel, strongestChannelWeight)) continue;
+      const hasDirectStructuralLink = regionOverlap > 0 || actorOverlap > 0;
+      if (!canEmitCrossSituationEffect(source, strongestChannel, strongestChannelWeight, hasDirectStructuralLink)) continue;
       if (strongestChannelWeight < 2 && actorOverlap === 0 && regionOverlap === 0) continue;
       const relation = inferSystemEffectRelationFromChannel(strongestChannel, target.dominantDomain);
       if (!relation) continue;
