@@ -1343,6 +1343,27 @@ describe('forecast run world state', () => {
     assert.ok(worldState.situationFamilies.some((family) => family.label.includes('maritime supply')));
   });
 
+  it('does not infer maritime families from generic port labor talk tokens', () => {
+    const portTalks = makePrediction('political', 'Spain', 'Port labor talks: Spain', 0.58, 0.55, '14d', [
+      { type: 'policy_change', value: 'Port labor talks continue in Spain', weight: 0.28 },
+    ]);
+    buildForecastCase(portTalks);
+
+    const dockStrikePolitics = makePrediction('political', 'Portugal', 'Port labor pressure: Portugal', 0.56, 0.53, '14d', [
+      { type: 'policy_change', value: 'Dockworker negotiations are shaping coalition pressure in Portugal', weight: 0.26 },
+    ]);
+    buildForecastCase(dockStrikePolitics);
+
+    const worldState = buildForecastRunWorldState({
+      generatedAt: Date.parse('2026-03-19T15:30:00Z'),
+      predictions: [portTalks, dockStrikePolitics],
+    });
+
+    assert.ok(worldState.situationFamilies.length >= 1);
+    assert.ok(worldState.situationFamilies.every((family) => family.archetype !== 'maritime_supply'));
+    assert.ok(worldState.situationFamilies.every((family) => !family.label.includes('maritime supply')));
+  });
+
   it('keeps weak generic interactions out of the reportable interaction surface', () => {
     const source = makePrediction('political', 'Brazil', 'Political pressure: Brazil', 0.56, 0.53, '14d', [
       { type: 'policy_change', value: 'Political pressure is building in Brazil', weight: 0.32 },

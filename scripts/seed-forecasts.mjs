@@ -2601,11 +2601,14 @@ function inferSituationFamilyArchetype(input = {}) {
   const domains = uniqueSortedStrings([input.dominantDomain, ...(input.domains || [])].filter(Boolean));
   const signals = uniqueSortedStrings((input.signalTypes || []).filter(Boolean));
   const tokens = uniqueSortedStrings([...(input.tokens || []), ...(input.specificTokens || [])].filter(Boolean));
+  const hasMaritimeSignal = signals.some((item) => ['chokepoint', 'gps_jamming'].includes(item));
+  const hasStrongMaritimeToken = tokens.some((token) => ['shipping', 'freight', 'maritime', 'logistics', 'vessel', 'rerouting'].includes(token));
+  const hasRouteToken = tokens.some((token) => ['port', 'corridor', 'transit', 'route', 'strait', 'sea'].includes(token));
 
   if (domains.includes('conflict') || domains.includes('military')) return 'war_theater';
   if (domains.includes('cyber')) return 'cyber_pressure';
   if (domains.includes('infrastructure')) return 'infrastructure_fragility';
-  if (domains.includes('supply_chain') || signals.some((item) => ['chokepoint', 'gps_jamming'].includes(item)) || tokens.some((token) => ['shipping', 'port', 'freight', 'corridor', 'maritime'].includes(token))) {
+  if (domains.includes('supply_chain') || hasMaritimeSignal || (hasStrongMaritimeToken && hasRouteToken)) {
     return 'maritime_supply';
   }
   if (domains.includes('political')) return 'political_instability';
