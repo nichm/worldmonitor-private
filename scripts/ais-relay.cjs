@@ -1729,12 +1729,13 @@ async function seedTokenPanels() {
     console.warn('[TokenPanels] All panels empty after mapping — skipping Redis write to preserve cached data');
     return 0;
   }
-  await upstashSet('market:defi-tokens:v1', defi, TOKEN_PANELS_SEED_TTL);
-  await upstashSet('market:ai-tokens:v1', ai, TOKEN_PANELS_SEED_TTL);
-  await upstashSet('market:other-tokens:v1', other, TOKEN_PANELS_SEED_TTL);
+  const ok1 = await upstashSet('market:defi-tokens:v1', defi, TOKEN_PANELS_SEED_TTL);
+  const ok2 = await upstashSet('market:ai-tokens:v1', ai, TOKEN_PANELS_SEED_TTL);
+  const ok3 = await upstashSet('market:other-tokens:v1', other, TOKEN_PANELS_SEED_TTL);
   await upstashSet('seed-meta:market:token-panels', { fetchedAt: Date.now(), recordCount: defi.tokens.length + ai.tokens.length + other.tokens.length }, 604800);
   const total = defi.tokens.length + ai.tokens.length + other.tokens.length;
-  console.log(`[TokenPanels] Seeded ${defi.tokens.length} DeFi, ${ai.tokens.length} AI, ${other.tokens.length} Other (${total} total)`);
+  const allOk = ok1 && ok2 && ok3;
+  console.log(`[TokenPanels] Seeded ${defi.tokens.length} DeFi, ${ai.tokens.length} AI, ${other.tokens.length} Other (${total} total, redis: ${allOk ? 'OK' : 'PARTIAL'})`);
   return total;
 }
 
