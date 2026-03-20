@@ -38,7 +38,7 @@ async function fetchFxRates() {
       }
       const data = await resp.json();
       const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
-      rates[currency] = price ?? FX_FALLBACKS[currency] ?? null;
+      rates[currency] = (price != null && price > 0) ? price : (FX_FALLBACKS[currency] ?? null);
     } catch {
       rates[currency] = FX_FALLBACKS[currency] || null;
     }
@@ -49,8 +49,9 @@ async function fetchFxRates() {
 }
 
 async function searchExa(query, domains) {
-  const apiKey = process.env.EXA_API_KEY;
-  if (!apiKey) throw new Error('EXA_API_KEY not set');
+  // Support both EXA_API_KEYS (comma-separated, shared with ais-relay) and EXA_API_KEY
+  const apiKey = (process.env.EXA_API_KEYS || process.env.EXA_API_KEY || '').split(/[\n,]+/)[0].trim();
+  if (!apiKey) throw new Error('EXA_API_KEYS or EXA_API_KEY not set');
 
   const resp = await fetch('https://api.exa.ai/search', {
     method: 'POST',
@@ -64,13 +65,9 @@ async function searchExa(query, domains) {
       includeDomains: domains,
       numResults: 3,
       type: 'auto',
-      summary: {
-        query: 'Extract the product price as a number and currency',
-        schema: {
-          productName: 'string',
-          price: 'number',
-          currency: 'string',
-          brand: 'string',
+      contents: {
+        summary: {
+          query: 'What is the price of this product? Include currency symbol and amount.',
         },
       },
     }),
@@ -85,38 +82,34 @@ async function searchExa(query, domains) {
   return resp.json();
 }
 
-function extractPrice(result) {
-  // Try structured summary first
-  const summary = result?.summary;
-  if (summary) {
-    try {
-      const parsed = typeof summary === 'string' ? JSON.parse(summary) : summary;
-      if (parsed?.price && typeof parsed.price === 'number' && parsed.price > 0) {
-        return { price: parsed.price, source: result.url || '' };
-      }
-    } catch {}
-  }
+// Only match prices that include an explicit currency code — bare numbers are too noisy
+// (EXA summaries typically say "priced at AED 3.99" or "AED3.99")
+const PRICE_PATTERNS = [
+  /(\d+(?:\.\d{1,3})?)\s*(?:AED|SAR|QAR|KWD|BHD|OMR|EGP|JOD|LBP|USD)/i,
+  /(?:AED|SAR|QAR|KWD|BHD|OMR|EGP|JOD|LBP|USD)\s*(\d+(?:\.\d{1,3})?)/i,
+];
 
-  // Regex fallback on title/snippet
-  const text = `${result.title || ''} ${result.snippet || ''}`;
-  const patterns = [
-    { re: /(\d+(?:\.\d{1,3})?)\s*(?:AED|SAR|QAR|KWD|BHD|OMR|EGP|JOD|LBP|USD)/i, label: 'currency-suffix' },
-    { re: /(?:AED|SAR|QAR|KWD|BHD|OMR|EGP|JOD|LBP|USD)\s*(\d+(?:\.\d{1,3})?)/i, label: 'currency-prefix' },
-    { re: /(\d+(?:\.\d{1,3})?)/, label: 'bare-number' },
-  ];
-  for (const { re, label } of patterns) {
+function matchPrice(text, url) {
+  for (const re of PRICE_PATTERNS) {
     const match = text.match(re);
     if (match) {
       const price = parseFloat(match[1]);
-      if (price > 0 && price < 100000) {
-        if (label === 'bare-number') {
-          console.warn(`    [extractPrice] bare-number fallback matched ${price} from ${result.url || 'unknown'} — may be inaccurate`);
-        }
-        return { price, source: result.url || '' };
-      }
+      if (price > 0 && price < 100000) return { price, source: url || '' };
     }
   }
   return null;
+}
+
+function extractPrice(result) {
+  const url = result.url || '';
+  // EXA returns summary as plain-text like "priced at AED 3.99" — run patterns on it
+  const summary = result?.summary;
+  if (summary && typeof summary === 'string') {
+    const fromSummary = matchPrice(summary, url);
+    if (fromSummary) return fromSummary;
+  }
+  // Fallback: title (no bare-number — too many false positives from weights/codes)
+  return matchPrice(result.title || '', url);
 }
 
 async function fetchGroceryBasketPrices() {
