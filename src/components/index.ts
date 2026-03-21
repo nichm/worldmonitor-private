@@ -67,6 +67,7 @@ export * from './EconomicCorrelationPanel';
 export * from './DisasterCorrelationPanel';
 export * from './ConsumerPricesPanel';
 export { NationalDebtPanel } from './NationalDebtPanel';
+export { OntarioRoadsPanel } from './OntarioRoadsPanel';
 export { TorontoFirePanel } from './TorontoFirePanel';
 export { ShelterGaugePanel } from './ShelterGaugePanel';
 export { BocRateTickerPanel } from './BocRateTickerPanel';

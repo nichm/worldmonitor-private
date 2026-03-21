@@ -372,6 +372,68 @@ requestAnimationFrame(() => {
 // Clear stale settings-open flag (survives ungraceful shutdown)
 localStorage.removeItem('wm-settings-open');
 
+// Development variant switcher (localhost only)
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+  const createVariantSwitcher = () => {
+    const switcher = document.createElement('div');
+    switcher.id = 'dev-variant-switcher';
+    switcher.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10000;
+      background: rgba(30, 30, 30, 0.95);
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    `;
+
+    const label = document.createElement('div');
+    label.textContent = 'Dev Variant Switcher:';
+    label.style.cssText = 'color: #fff; font-size: 11px; margin-bottom: 8px; font-weight: 600;';
+
+    const select = document.createElement('select');
+    select.style.cssText = `
+      width: 100%;
+      padding: 6px 8px;
+      background: #222;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    `;
+
+    const variants = ['full', 'tech', 'happy', 'finance', 'commodity', 'toronto'];
+    const currentVariant = localStorage.getItem('worldmonitor-variant') || 'full';
+
+    variants.forEach(v => {
+      const option = document.createElement('option');
+      option.value = v;
+      option.textContent = v.charAt(0).toUpperCase() + v.slice(1);
+      if (v === currentVariant) option.selected = true;
+      select.appendChild(option);
+    });
+
+    select.addEventListener('change', () => {
+      const selected = select.value;
+      localStorage.setItem('worldmonitor-variant', selected);
+      location.reload();
+    });
+
+    switcher.appendChild(label);
+    switcher.appendChild(select);
+    document.body.appendChild(switcher);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', createVariantSwitcher);
+  } else {
+    createVariantSwitcher();
+  }
+}
+
 // Standalone windows: ?settings=1 = panel display settings, ?live-channels=1 = channel management
 // Both need i18n initialized so t() does not return undefined.
 const urlParams = new URL(location.href).searchParams;

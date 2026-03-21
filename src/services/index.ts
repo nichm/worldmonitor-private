@@ -57,3 +57,7 @@ export * from './toronto-water-level';
 export * from './canada-earthquakes';
 export * from './ontario-spills';
 export * from './toronto-airtraffic';
+export * from './toronto-crime';
+export * from './toronto-development';
+export * from './toronto-311';
+export * from './ontario-electricity';

@@ -380,6 +380,15 @@ canvas,
   filter: grayscale(0%) drop-shadow(0 0 4px var(--semantic-info));
 }
 
+.variant-option[data-variant="toronto"].active {
+  color: #ff6b35;
+  background: rgba(255, 107, 53, 0.1);
+}
+
+.variant-option[data-variant="toronto"].active .variant-icon {
+  filter: grayscale(0%) drop-shadow(0 0 4px #ff6b35);
+}
+
 .variant-divider {
   width: 1px;
   height: 12px;
