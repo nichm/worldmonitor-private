@@ -1,6 +1,6 @@
-import { createCircuitBreaker } from '@/utils';
-import { toApiUrl } from '@/services/runtime';
-import { dispatchAlert } from '@/services/breaking-news-alerts';
+import { createCircuitBreaker } from "@/utils";
+import { toApiUrl } from "@/services/runtime";
+import { dispatchAlert } from "@/services/breaking-news-alerts";
 
 export interface AircraftData {
   icao24: string;
@@ -48,19 +48,19 @@ const CACHE_TTL_MS = 90 * 1000; // 90 seconds (balance freshness vs credit budge
 
 // Circuit breaker with cache
 const breaker = createCircuitBreaker<AirTrafficResponse>({
-  name: 'TorontoAirTraffic',
+  name: "TorontoAirTraffic",
   cacheTtlMs: CACHE_TTL_MS,
   persistCache: true,
 });
 
 // Emergency squawk codes
-const EMERGENCY_SQUAWKS = ['7500', '7600', '7700'];
+const EMERGENCY_SQUAWKS = ["7500", "7600", "7700"];
 
 // Squawk code meanings
 const SQUAWK_MEANINGS: Record<string, string> = {
-  '7500': 'HIJACK',
-  '7600': 'LOSS OF COMMS',
-  '7700': 'EMERGENCY',
+  "7500": "HIJACK",
+  "7600": "LOSS OF COMMS",
+  "7700": "EMERGENCY",
 };
 
 // Track dispatched emergency IDs to avoid duplicates
@@ -77,7 +77,7 @@ function cleanupDispatchedEntries(): void {
   for (const id of dispatchedEmergencies) {
     // Extract timestamp from ID
     const timestampMatch = id.match(/(\d+)$/);
-    if (timestampMatch && timestampMatch[1]) {
+    if (timestampMatch?.[1]) {
       const dispatchedTime = parseInt(timestampMatch[1], 10);
       if (now - dispatchedTime > DISPATCHED_TTL_MS) {
         toDelete.push(id);
@@ -95,7 +95,7 @@ function cleanupDispatchedEntries(): void {
  */
 function isEmergencySquawk(squawk: string | null): boolean {
   if (!squawk) return false;
-  return EMERGENCY_SQUAWKS.includes(squawk.padStart(4, '0'));
+  return EMERGENCY_SQUAWKS.includes(squawk.padStart(4, "0"));
 }
 
 /**
@@ -103,7 +103,7 @@ function isEmergencySquawk(squawk: string | null): boolean {
  */
 function getSquawkMeaning(squawk: string | null): string | null {
   if (!squawk) return null;
-  const normalized = squawk.padStart(4, '0');
+  const normalized = squawk.padStart(4, "0");
   return SQUAWK_MEANINGS[normalized] || null;
 }
 
@@ -123,7 +123,7 @@ function checkEmergencyAlerts(response: AirTrafficResponse): void {
     dispatchedEmergencies.add(dispatchId);
 
     const meaning = getSquawkMeaning(emergency.squawk);
-    const callsign = emergency.callsign || 'Unknown';
+    const callsign = emergency.callsign || "Unknown";
     const location = `${emergency.latitude.toFixed(4)}, ${emergency.longitude.toFixed(4)}`;
 
     const headline = `Aircraft Emergency - ${meaning} - ${callsign} (${location})`;
@@ -131,11 +131,11 @@ function checkEmergencyAlerts(response: AirTrafficResponse): void {
     const alert = {
       id: dispatchId,
       headline,
-      source: 'OpenSky Network',
-      link: 'https://opensky-network.org/',
-      threatLevel: 'critical' as const,
+      source: "OpenSky Network",
+      link: "https://opensky-network.org/",
+      threatLevel: "critical" as const,
       timestamp: new Date(),
-      origin: 'keyword_spike' as const,
+      origin: "keyword_spike" as const,
     };
 
     dispatchAlert(alert);
@@ -147,27 +147,30 @@ function checkEmergencyAlerts(response: AirTrafficResponse): void {
  * Requires OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET environment variables
  */
 export async function fetchTorontoAirTraffic(): Promise<AirTrafficResponse> {
-  const response = await breaker.execute(async () => {
-    const url = toApiUrl('/api/toronto-airtraffic');
-    const resp = await fetch(url, {
-      signal: AbortSignal.timeout(20000),
-    });
+  const response = await breaker.execute(
+    async () => {
+      const url = toApiUrl("/api/toronto-airtraffic");
+      const resp = await fetch(url, {
+        signal: AbortSignal.timeout(20000),
+      });
 
-    if (!resp.ok) {
-      throw new Error(`HTTP ${resp.status}`);
-    }
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
+      }
 
-    return await resp.json();
-  }, {
-    error: 'Service unavailable',
-    aircraft: [],
-    total: 0,
-    airborneCount: 0,
-    groundCount: 0,
-    emergencyCount: 0,
-    emergencies: [],
-    gtaBounds: { lamin: 43.40, lamax: 44.00, lomin: -79.80, lomax: -78.90 },
-  });
+      return await resp.json();
+    },
+    {
+      error: "Service unavailable",
+      aircraft: [],
+      total: 0,
+      airborneCount: 0,
+      groundCount: 0,
+      emergencyCount: 0,
+      emergencies: [],
+      gtaBounds: { lamin: 43.4, lamax: 44.0, lomin: -79.8, lomax: -78.9 },
+    },
+  );
 
   // Check for emergency alerts if we have valid data
   if (!response.error && response.emergencies.length > 0) {
@@ -211,7 +214,7 @@ export function aircraftToMapLayer(aircraft: AircraftData[]): Array<{
   color: number[];
   isEmergency: boolean;
 }> {
-  return aircraft.map(ac => ({
+  return aircraft.map((ac) => ({
     id: ac.icao24,
     lat: ac.latitude,
     lon: ac.longitude,
@@ -230,21 +233,21 @@ export function aircraftToMapLayer(aircraft: AircraftData[]): Array<{
  * Gets emergency aircraft for summary
  */
 export function getEmergencyAircraft(aircraft: AircraftData[]): AircraftData[] {
-  return aircraft.filter(ac => isEmergencySquawk(ac.squawk));
+  return aircraft.filter((ac) => isEmergencySquawk(ac.squawk));
 }
 
 /**
  * Gets airborne aircraft count
  */
 export function getAirborneCount(aircraft: AircraftData[]): number {
-  return aircraft.filter(ac => !ac.onGround).length;
+  return aircraft.filter((ac) => !ac.onGround).length;
 }
 
 /**
  * Formats altitude for display
  */
 export function formatAltitude(altitude: number | null): string {
-  if (altitude === null) return 'N/A';
+  if (altitude === null) return "N/A";
   return `${Math.round(altitude)} ft`;
 }
 
@@ -252,7 +255,7 @@ export function formatAltitude(altitude: number | null): string {
  * Formats velocity for display
  */
 export function formatVelocity(velocity: number | null): string {
-  if (velocity === null) return 'N/A';
+  if (velocity === null) return "N/A";
   return `${Math.round(velocity)} kts`;
 }
 
@@ -260,7 +263,7 @@ export function formatVelocity(velocity: number | null): string {
  * Formats heading for display
  */
 export function formatHeading(heading: number | null): string {
-  if (heading === null) return 'N/A';
+  if (heading === null) return "N/A";
   return `${Math.round(heading)}°`;
 }
 
@@ -268,6 +271,6 @@ export function formatHeading(heading: number | null): string {
  * Formats squawk code for display
  */
 export function formatSquawk(squawk: string | null): string {
-  if (!squawk) return '----';
-  return squawk.padStart(4, '0');
+  if (!squawk) return "----";
+  return squawk.padStart(4, "0");
 }

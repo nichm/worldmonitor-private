@@ -1,6 +1,6 @@
-import '../styles/main.css';
-import { MapComponent } from '../components/Map';
-import { initI18n } from '../services/i18n';
+import "../styles/main.css";
+import { MapComponent } from "../components/Map";
+import { initI18n } from "../services/i18n";
 
 type MobileMapIntegrationHarness = {
   ready: boolean;
@@ -22,28 +22,28 @@ declare global {
   }
 }
 
-const app = document.getElementById('app');
+const app = document.getElementById("app");
 if (!app) {
-  throw new Error('Missing #app container for mobile map integration harness');
+  throw new Error("Missing #app container for mobile map integration harness");
 }
 
-document.body.style.margin = '0';
-document.body.style.overflow = 'hidden';
+document.body.style.margin = "0";
+document.body.style.overflow = "hidden";
 
-app.className = 'map-container';
-app.style.width = '100vw';
-app.style.height = '100vh';
-app.style.position = 'relative';
-app.style.overflow = 'hidden';
+app.className = "map-container";
+app.style.width = "100vw";
+app.style.height = "100vh";
+app.style.position = "relative";
+app.style.overflow = "hidden";
 
 const MINIMAL_WORLD_TOPOLOGY = {
-  type: 'Topology',
+  type: "Topology",
   objects: {
     countries: {
-      type: 'GeometryCollection',
+      type: "GeometryCollection",
       geometries: [
         {
-          type: 'Polygon',
+          type: "Polygon",
           id: 1,
           arcs: [[0]],
         },
@@ -68,16 +68,16 @@ const MINIMAL_WORLD_TOPOLOGY = {
 const originalFetch = window.fetch.bind(window);
 window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url =
-    typeof input === 'string'
+    typeof input === "string"
       ? input
       : input instanceof URL
-      ? input.toString()
-      : input.url;
+        ? input.toString()
+        : input.url;
 
-  if (url.includes('world-atlas@2/countries-50m.json')) {
+  if (url.includes("world-atlas@2/countries-50m.json")) {
     return new Response(JSON.stringify(MINIMAL_WORLD_TOPOLOGY), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -148,6 +148,9 @@ const layers = {
   toronto_earthquakes: false,
   ontario_spills: false,
   toronto_air_traffic: false,
+  ontario_weather_alerts: false,
+  ontario_roads: false,
+  ontario_floods: false,
 };
 
 await initI18n();
@@ -155,15 +158,15 @@ await initI18n();
 const map = new MapComponent(app, {
   zoom: 2.7,
   pan: { x: 0, y: 0 },
-  view: 'global',
+  view: "global",
   layers,
-  timeRange: 'all',
+  timeRange: "all",
 });
 
 let ready = false;
 let fallbackInjected = false;
 const ensureHotspotsRendered = (): void => {
-  if (document.querySelector('.hotspot')) {
+  if (document.querySelector(".hotspot")) {
     ready = true;
     return;
   }
@@ -180,7 +183,7 @@ const ensureHotspotsRendered = (): void => {
         lat: number;
         lon: number;
         keywords: string[];
-        level: 'low' | 'elevated' | 'high';
+        level: "low" | "elevated" | "high";
         description: string;
         status: string;
       }>;
@@ -189,24 +192,32 @@ const ensureHotspotsRendered = (): void => {
     mapInternals.worldData = MINIMAL_WORLD_TOPOLOGY;
     mapInternals.countryFeatures = [
       {
-        type: 'Feature',
-        properties: { name: 'E2E Country' },
+        type: "Feature",
+        properties: { name: "E2E Country" },
         geometry: {
-          type: 'Polygon',
-          coordinates: [[[-180, -90], [180, -90], [180, 90], [-180, 90], [-180, -90]]],
+          type: "Polygon",
+          coordinates: [
+            [
+              [-180, -90],
+              [180, -90],
+              [180, 90],
+              [-180, 90],
+              [-180, -90],
+            ],
+          ],
         },
       },
     ];
     mapInternals.hotspots = [
       {
-        id: 'e2e-map-hotspot',
-        name: 'E2E Map Hotspot',
+        id: "e2e-map-hotspot",
+        name: "E2E Map Hotspot",
         lat: 20,
         lon: 10,
-        keywords: ['e2e', 'integration'],
-        level: 'high',
-        description: 'Integration harness hotspot',
-        status: 'monitoring',
+        keywords: ["e2e", "integration"],
+        level: "high",
+        description: "Integration harness hotspot",
+        status: "monitoring",
       },
     ];
     mapInternals.state.layers.hotspots = true;
@@ -224,7 +235,7 @@ window.__mobileMapIntegrationHarness = {
     return ready;
   },
   getPopupRect: () => {
-    const element = document.querySelector('.map-popup') as HTMLElement | null;
+    const element = document.querySelector(".map-popup") as HTMLElement | null;
     if (!element) return null;
     const rect = element.getBoundingClientRect();
     return {

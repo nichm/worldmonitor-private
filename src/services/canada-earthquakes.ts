@@ -1,6 +1,6 @@
-import { createCircuitBreaker } from '@/utils';
-import { toApiUrl } from '@/services/runtime';
-import { dispatchAlert } from '@/services/breaking-news-alerts';
+import { createCircuitBreaker } from "@/utils";
+import { toApiUrl } from "@/services/runtime";
+import { dispatchAlert } from "@/services/breaking-news-alerts";
 
 export interface EarthquakeEvent {
   id: string;
@@ -12,7 +12,7 @@ export interface EarthquakeEvent {
   location: string;
   felt: boolean;
   quality: string;
-  alertLevel: 'PRIORITY' | 'ROUTINE' | 'INFO' | 'NONE';
+  alertLevel: "PRIORITY" | "ROUTINE" | "INFO" | "NONE";
 }
 
 export interface EarthquakeResponse {
@@ -35,7 +35,7 @@ const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 // Circuit breaker with cache
 const breaker = createCircuitBreaker<EarthquakeResponse>({
-  name: 'CanadaEarthquakes',
+  name: "CanadaEarthquakes",
   cacheTtlMs: CACHE_TTL_MS,
   persistCache: true,
 });
@@ -54,7 +54,7 @@ function cleanupDispatchedEntries(): void {
   for (const id of dispatchedEvents) {
     // Extract timestamp from ID (format: YYYY-MM-DDTHH:MM:SS...)
     const timestampMatch = id.match(/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})/);
-    if (timestampMatch && timestampMatch[1]) {
+    if (timestampMatch?.[1]) {
       const eventTime = new Date(timestampMatch[1]).getTime();
       if (now - eventTime > DISPATCHED_TTL_MS) {
         toDelete.push(id);
@@ -74,7 +74,7 @@ function checkEarthquakeAlerts(events: EarthquakeEvent[]): void {
   cleanupDispatchedEntries();
 
   for (const event of events) {
-    if (event.alertLevel !== 'PRIORITY' && event.alertLevel !== 'ROUTINE') {
+    if (event.alertLevel !== "PRIORITY" && event.alertLevel !== "ROUTINE") {
       continue;
     }
 
@@ -86,18 +86,22 @@ function checkEarthquakeAlerts(events: EarthquakeEvent[]): void {
 
     dispatchedEvents.add(dispatchId);
 
-    const headline = event.alertLevel === 'PRIORITY'
-      ? `M${event.magnitude.toFixed(1)} Earthquake in GTA - ${event.location}`
-      : `M${event.magnitude.toFixed(1)} Earthquake Detected - ${event.location}`;
+    const headline =
+      event.alertLevel === "PRIORITY"
+        ? `M${event.magnitude.toFixed(1)} Earthquake in GTA - ${event.location}`
+        : `M${event.magnitude.toFixed(1)} Earthquake Detected - ${event.location}`;
 
     const alert = {
       id: `earthquake-${event.id}`,
       headline,
-      source: 'Earthquakes Canada (NRCan)',
-      link: 'https://www.earthquakescanada.nrcan.gc.ca/',
-      threatLevel: event.alertLevel === 'PRIORITY' ? ('high' as const) : ('critical' as const),
+      source: "Earthquakes Canada (NRCan)",
+      link: "https://www.earthquakescanada.nrcan.gc.ca/",
+      threatLevel:
+        event.alertLevel === "PRIORITY"
+          ? ("high" as const)
+          : ("critical" as const),
       timestamp: new Date(event.timestamp),
-      origin: 'keyword_spike' as const,
+      origin: "keyword_spike" as const,
     };
 
     dispatchAlert(alert);
@@ -108,25 +112,28 @@ function checkEarthquakeAlerts(events: EarthquakeEvent[]): void {
  * Fetches recent Canadian earthquakes filtered for GTA/Ontario
  */
 export async function fetchCanadaEarthquakes(): Promise<EarthquakeResponse> {
-  const response = await breaker.execute(async () => {
-    const url = toApiUrl('/api/canada-earthquakes');
-    const resp = await fetch(url, {
-      signal: AbortSignal.timeout(15000),
-    });
+  const response = await breaker.execute(
+    async () => {
+      const url = toApiUrl("/api/canada-earthquakes");
+      const resp = await fetch(url, {
+        signal: AbortSignal.timeout(15000),
+      });
 
-    if (!resp.ok) {
-      throw new Error(`HTTP ${resp.status}`);
-    }
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
+      }
 
-    return await resp.json();
-  }, {
-    error: 'Service unavailable',
-    earthquakes: [],
-    gtaBounds: { latMin: 43.30, latMax: 44.20, lonMin: -80.00, lonMax: -78.70 },
-    total: 0,
-    priorityCount: 0,
-    routineCount: 0,
-  });
+      return await resp.json();
+    },
+    {
+      error: "Service unavailable",
+      earthquakes: [],
+      gtaBounds: { latMin: 43.3, latMax: 44.2, lonMin: -80.0, lonMax: -78.7 },
+      total: 0,
+      priorityCount: 0,
+      routineCount: 0,
+    },
+  );
 
   // Check for alerts if we have valid data
   if (!response.error && response.earthquakes.length > 0) {
@@ -177,7 +184,7 @@ export function earthquakesToMapLayer(events: EarthquakeEvent[]): Array<{
   size: number;
   alertLevel: string;
 }> {
-  return events.map(event => ({
+  return events.map((event) => ({
     id: event.id,
     lat: event.latitude,
     lon: event.longitude,
@@ -194,6 +201,10 @@ export function earthquakesToMapLayer(events: EarthquakeEvent[]): Array<{
 /**
  * Gets significant earthquakes for summary
  */
-export function getSignificantEarthquakes(events: EarthquakeEvent[]): EarthquakeEvent[] {
-  return events.filter(e => e.alertLevel === 'PRIORITY' || e.alertLevel === 'ROUTINE');
+export function getSignificantEarthquakes(
+  events: EarthquakeEvent[],
+): EarthquakeEvent[] {
+  return events.filter(
+    (e) => e.alertLevel === "PRIORITY" || e.alertLevel === "ROUTINE",
+  );
 }

@@ -22,8 +22,8 @@ function jsonResponse(body, status, headers = {}) {
     status,
     headers: {
       "Content-Type": "application/json",
-      ...headers
-    }
+      ...headers,
+    },
   });
 }
 const config = { runtime: "edge" };
@@ -31,32 +31,34 @@ const TORONTO_CAD_URL = "https://www.toronto.ca/fire/cadinfo/livecad.htm";
 const CACHE_TTL = 5 * 60;
 async function handler(_req) {
   try {
-    const response = await fetch(TORONTO_CAD_URL, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; WorldMonitor/1.0)"
-      }
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    const html = await response.text();
-    const incidents = parseTorontoFireCAD(html);
+    // Toronto Fire CAD page is currently protected by Akamai (403 Forbidden)
+    // Return empty data with migration notice
     return jsonResponse(
-      { incidents },
+      {
+        incidents: [],
+        total: 0,
+        notice:
+          "Toronto Fire CAD API is temporarily unavailable. The city is updating their data access systems. Service will resume once access is restored.",
+        lastUpdated: new Date().toISOString(),
+      },
       200,
       {
-        "Cache-Control": `public, max-age=${CACHE_TTL}, s-maxage=${CACHE_TTL}, stale-while-revalidate=30`
-      }
+        "Cache-Control": `public, max-age=${CACHE_TTL}, s-maxage=${CACHE_TTL}, stale-while-revalidate=30`,
+      },
     );
   } catch (error) {
-    console.error("[Toronto Fire] CAD fetch failed:", error);
+    console.error("[Toronto Fire] Error:", error);
     return jsonResponse(
-      { error: error.message, incidents: [] },
-      200,
-      // Return 200 with empty incidents to avoid breaking the app
       {
-        "Cache-Control": "public, max-age=30, stale-while-revalidate=10"
-      }
+        error: "Toronto Fire data temporarily unavailable",
+        message: error.message,
+        incidents: [],
+        total: 0,
+      },
+      503,
+      {
+        "Cache-Control": "no-cache, no-store",
+      },
     );
   }
 }
@@ -78,7 +80,13 @@ function parseTorontoFireCAD(html) {
       const cellRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
       const cells = [];
       for (const cellMatch of rowHtml.matchAll(cellRegex)) {
-        const cellContent = cellMatch[1].replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim();
+        const cellContent = cellMatch[1]
+          .replace(/<[^>]+>/g, "")
+          .replace(/&nbsp;/g, " ")
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .trim();
         cells.push(cellContent);
       }
       if (cells.length >= 3) {
@@ -90,14 +98,11 @@ function parseTorontoFireCAD(html) {
           address: address || "Unknown Location",
           alarm,
           incidentType: incidentType || "Unknown",
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
       }
     }
   }
   return incidents;
 }
-export {
-  config,
-  handler as default
-};
+export { config, handler as default };

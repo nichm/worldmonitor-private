@@ -1,21 +1,21 @@
 // Happy variant - happy.worldmonitor.app
-import type { PanelConfig, MapLayers } from '@/types';
-import type { VariantConfig } from './base';
+import type { PanelConfig, MapLayers } from "@/types";
+import type { VariantConfig } from "./base";
 
 // Re-export base config
-export * from './base';
+export * from "./base";
 
 // Panel configuration for happy/positive news dashboard
 export const DEFAULT_PANELS: Record<string, PanelConfig> = {
-  map: { name: 'World Map', enabled: true, priority: 1 },
-  'positive-feed': { name: 'Good News Feed', enabled: true, priority: 1 },
-  progress: { name: 'Human Progress', enabled: true, priority: 1 },
-  counters: { name: 'Live Counters', enabled: true, priority: 1 },
+  map: { name: "World Map", enabled: true, priority: 1 },
+  "positive-feed": { name: "Good News Feed", enabled: true, priority: 1 },
+  progress: { name: "Human Progress", enabled: true, priority: 1 },
+  counters: { name: "Live Counters", enabled: true, priority: 1 },
   spotlight: { name: "Today's Hero", enabled: true, priority: 1 },
-  breakthroughs: { name: 'Breakthroughs', enabled: true, priority: 1 },
-  digest: { name: '5 Good Things', enabled: true, priority: 1 },
-  species: { name: 'Conservation Wins', enabled: true, priority: 1 },
-  renewable: { name: 'Renewable Energy', enabled: true, priority: 1 },
+  breakthroughs: { name: "Breakthroughs", enabled: true, priority: 1 },
+  digest: { name: "5 Good Things", enabled: true, priority: 1 },
+  species: { name: "Conservation Wins", enabled: true, priority: 1 },
+  renewable: { name: "Renewable Energy", enabled: true, priority: 1 },
 };
 
 // Map layers — all geopolitical overlays disabled; natural events only
@@ -23,7 +23,6 @@ export const DEFAULT_MAP_LAYERS: MapLayers = {
   gpsJamming: false,
   satellites: false,
 
-
   conflicts: false,
   bases: false,
   cables: false,
@@ -88,6 +87,9 @@ export const DEFAULT_MAP_LAYERS: MapLayers = {
   toronto_earthquakes: false,
   ontario_spills: false,
   toronto_air_traffic: false,
+  ontario_weather_alerts: false,
+  ontario_roads: false,
+  ontario_floods: false,
 };
 
 // Mobile defaults — same as desktop for happy variant
@@ -95,7 +97,6 @@ export const MOBILE_DEFAULT_MAP_LAYERS: MapLayers = {
   gpsJamming: false,
   satellites: false,
 
-
   conflicts: false,
   bases: false,
   cables: false,
@@ -160,11 +161,14 @@ export const MOBILE_DEFAULT_MAP_LAYERS: MapLayers = {
   toronto_earthquakes: false,
   ontario_spills: false,
   toronto_air_traffic: false,
+  ontario_weather_alerts: false,
+  ontario_roads: false,
+  ontario_floods: false,
 };
 
 export const VARIANT_CONFIG: VariantConfig = {
-  name: 'happy',
-  description: 'Good news and global progress dashboard',
+  name: "happy",
+  description: "Good news and global progress dashboard",
   panels: DEFAULT_PANELS,
   mapLayers: DEFAULT_MAP_LAYERS,
   mobileMapLayers: MOBILE_DEFAULT_MAP_LAYERS,
