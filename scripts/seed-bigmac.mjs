@@ -5,8 +5,25 @@ import { loadEnvFile, CHROME_UA, runSeed, sleep } from './_seed-utils.mjs';
 loadEnvFile(import.meta.url);
 
 const CANONICAL_KEY = 'economic:bigmac:v1';
-const CACHE_TTL = 86400; // 24h — Big Mac prices change rarely
+const CACHE_TTL = 864000; // 10 days — weekly seed with 3-day cron-drift buffer
 const EXA_DELAY_MS = 150;
+
+async function readCurrentSnapshot() {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  try {
+    const resp = await fetch(`${url}/get/${encodeURIComponent(CANONICAL_KEY)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!resp.ok) return null;
+    const { result } = await resp.json();
+    return result ? JSON.parse(result) : null;
+  } catch {
+    return null;
+  }
+}
 
 const FX_FALLBACKS = {
   // Middle East
@@ -156,7 +173,7 @@ async function searchExa(query, includeDomains = null) {
   return resp.json();
 }
 
-async function fetchBigMacPrices() {
+async function fetchBigMacPrices(prevSnapshot) {
   const fxRates = await fetchFxRates();
   const results = [];
 
@@ -217,16 +234,44 @@ async function fetchBigMacPrices() {
   const cheapest = withData.length ? withData.reduce((a, b) => a.usdPrice < b.usdPrice ? a : b).code : '';
   const mostExpensive = withData.length ? withData.reduce((a, b) => a.usdPrice > b.usdPrice ? a : b).code : '';
 
+  // Compute WoW per country
+  const wowAvailable = prevSnapshot?.countries?.length > 0;
+  if (wowAvailable) {
+    const prevMap = Object.fromEntries(prevSnapshot.countries.map(c => [c.code, c.usdPrice]));
+    for (const r of results) {
+      if (r.usdPrice != null && prevMap[r.code] != null && prevMap[r.code] > 0) {
+        r.wowPct = +((r.usdPrice - prevMap[r.code]) / prevMap[r.code] * 100).toFixed(2);
+      } else {
+        r.wowPct = null;
+      }
+    }
+  }
+
+  const wowCountries = wowAvailable ? results.filter(r => r.wowPct != null) : [];
+  const wowAvgPct = wowCountries.length > 0
+    ? +(wowCountries.reduce((s, r) => s + r.wowPct, 0) / wowCountries.length).toFixed(2)
+    : 0;
+
   return {
     countries: results,
     fetchedAt: new Date().toISOString(),
     cheapestCountry: cheapest,
     mostExpensiveCountry: mostExpensive,
+    wowAvgPct,
+    wowAvailable,
+    prevFetchedAt: wowAvailable ? (prevSnapshot.fetchedAt ?? '') : '',
   };
 }
 
-await runSeed('economic', 'bigmac', CANONICAL_KEY, fetchBigMacPrices, {
+const prevSnapshot = await readCurrentSnapshot();
+
+await runSeed('economic', 'bigmac', CANONICAL_KEY, () => fetchBigMacPrices(prevSnapshot), {
   ttlSeconds: CACHE_TTL,
   validateFn: (data) => data?.countries?.length > 0,
   recordCount: (data) => data?.countries?.filter(c => c.available).length || 0,
+  extraKeys: [{
+    key: `${CANONICAL_KEY}:prev`,
+    transform: () => prevSnapshot,
+    ttl: CACHE_TTL * 2,
+  }],
 });

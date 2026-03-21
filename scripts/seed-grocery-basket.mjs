@@ -7,8 +7,25 @@ loadEnvFile(import.meta.url);
 const config = loadSharedConfig('grocery-basket.json');
 
 const CANONICAL_KEY = 'economic:grocery-basket:v1';
-const CACHE_TTL = 21600; // 6h
+const CACHE_TTL = 864000; // 10 days — weekly seed with 3-day cron-drift buffer
 const EXA_DELAY_MS = 150;
+
+async function readCurrentSnapshot() {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  try {
+    const resp = await fetch(`${url}/get/${encodeURIComponent(CANONICAL_KEY)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!resp.ok) return null;
+    const { result } = await resp.json();
+    return result ? JSON.parse(result) : null;
+  } catch {
+    return null;
+  }
+}
 const FIRECRAWL_DELAY_MS = 500;
 
 // Hardcoded FX fallbacks — used when Yahoo Finance returns null/zero
@@ -214,7 +231,7 @@ function extractPrice(result, expectedCurrency) {
   return fromTitle;
 }
 
-async function fetchGroceryBasketPrices() {
+async function fetchGroceryBasketPrices(prevSnapshot) {
   const fxRates = await fetchFxRates();
 
   const countriesResult = [];
@@ -316,16 +333,44 @@ async function fetchGroceryBasketPrices() {
   const cheapest = rankable.length ? rankable.reduce((a, b) => a.totalUsd < b.totalUsd ? a : b).code : '';
   const mostExpensive = rankable.length ? rankable.reduce((a, b) => a.totalUsd > b.totalUsd ? a : b).code : '';
 
+  // Compute WoW per country
+  const wowAvailable = prevSnapshot?.countries?.length > 0;
+  if (wowAvailable) {
+    const prevMap = Object.fromEntries(prevSnapshot.countries.map(c => [c.code, c.totalUsd]));
+    for (const country of countriesResult) {
+      if (country.totalUsd > 0 && prevMap[country.code] != null && prevMap[country.code] > 0) {
+        country.wowPct = +((country.totalUsd - prevMap[country.code]) / prevMap[country.code] * 100).toFixed(2);
+      } else {
+        country.wowPct = null;
+      }
+    }
+  }
+
+  const wowCountries = wowAvailable ? countriesResult.filter(c => c.wowPct != null) : [];
+  const wowAvgPct = wowCountries.length > 0
+    ? +(wowCountries.reduce((s, c) => s + c.wowPct, 0) / wowCountries.length).toFixed(2)
+    : 0;
+
   return {
     countries: countriesResult,
     fetchedAt: new Date().toISOString(),
     cheapestCountry: cheapest,
     mostExpensiveCountry: mostExpensive,
+    wowAvgPct,
+    wowAvailable,
+    prevFetchedAt: wowAvailable ? (prevSnapshot.fetchedAt ?? '') : '',
   };
 }
 
-await runSeed('economic', 'grocery-basket', CANONICAL_KEY, fetchGroceryBasketPrices, {
+const prevSnapshot = await readCurrentSnapshot();
+
+await runSeed('economic', 'grocery-basket', CANONICAL_KEY, () => fetchGroceryBasketPrices(prevSnapshot), {
   ttlSeconds: CACHE_TTL,
   validateFn: (data) => data?.countries?.length > 0,
   recordCount: (data) => data?.countries?.length || 0,
+  extraKeys: [{
+    key: `${CANONICAL_KEY}:prev`,
+    transform: () => prevSnapshot,
+    ttl: CACHE_TTL * 2,
+  }],
 });

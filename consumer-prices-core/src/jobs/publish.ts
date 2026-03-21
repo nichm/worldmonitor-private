@@ -44,17 +44,20 @@ async function writeSnapshot(
   key: string,
   data: unknown,
   ttlSeconds: number,
-) {
+  advanceSeedMeta = true,
+): Promise<void> {
   const json = JSON.stringify(data);
   await upstashCommand(url, token, ['SET', key, json, 'EX', ttlSeconds]);
-  await upstashCommand(url, token, [
-    'SET',
-    makeKey(['seed-meta', key]),
-    JSON.stringify({ fetchedAt: Date.now(), recordCount: recordCount(data) }),
-    'EX',
-    ttlSeconds * 2,
-  ]);
-  logger.info(`  wrote ${key} (${json.length} bytes, ttl=${ttlSeconds}s)`);
+  if (advanceSeedMeta) {
+    await upstashCommand(url, token, [
+      'SET',
+      makeKey(['seed-meta', key]),
+      JSON.stringify({ fetchedAt: Date.now(), recordCount: recordCount(data) }),
+      'EX',
+      ttlSeconds * 2,
+    ]);
+  }
+  logger.info(`  wrote ${key} (${json.length} bytes, ttl=${ttlSeconds}s, meta=${advanceSeedMeta})`);
 }
 
 // 26h TTL — longer than the 24h cron cadence to survive scheduling drift
@@ -69,12 +72,25 @@ export async function publishAll() {
   const markets = [...new Set(retailers.map((r) => r.marketCode))];
   const baskets = loadAllBasketConfigs();
 
+  // Determine freshness per market BEFORE writing
+  const marketFreshness: Record<string, boolean> = {};
   for (const marketCode of markets) {
-    logger.info(`Publishing snapshots for market: ${marketCode}`);
+    try {
+      const freshness = await buildFreshnessSnapshot(marketCode);
+      // hasFreshData = at least one retailer scraped within last 2 hours
+      marketFreshness[marketCode] = freshness.overallFreshnessMin < 120;
+    } catch {
+      marketFreshness[marketCode] = false;
+    }
+  }
+
+  for (const marketCode of markets) {
+    const advanceSeedMeta = marketFreshness[marketCode] ?? false;
+    logger.info(`Publishing snapshots for market: ${marketCode} (freshData=${advanceSeedMeta})`);
 
     try {
       const overview = await buildOverviewSnapshot(marketCode);
-      await writeSnapshot(url, token, makeKey(['consumer-prices', 'overview', marketCode]), overview, TTL);
+      await writeSnapshot(url, token, makeKey(['consumer-prices', 'overview', marketCode]), overview, TTL, advanceSeedMeta);
     } catch (err) {
       logger.error(`overview:${marketCode} failed: ${err}`);
     }
@@ -82,7 +98,7 @@ export async function publishAll() {
     for (const days of [7, 30]) {
       try {
         const movers = await buildMoversSnapshot(marketCode, days);
-        await writeSnapshot(url, token, makeKey(['consumer-prices', 'movers', marketCode, `${days}d`]), movers, TTL);
+        await writeSnapshot(url, token, makeKey(['consumer-prices', 'movers', marketCode, `${days}d`]), movers, TTL, advanceSeedMeta);
       } catch (err) {
         logger.error(`movers:${marketCode}:${days}d failed: ${err}`);
       }
@@ -90,7 +106,7 @@ export async function publishAll() {
 
     try {
       const freshness = await buildFreshnessSnapshot(marketCode);
-      await writeSnapshot(url, token, makeKey(['consumer-prices', 'freshness', marketCode]), freshness, TTL);
+      await writeSnapshot(url, token, makeKey(['consumer-prices', 'freshness', marketCode]), freshness, TTL, advanceSeedMeta);
     } catch (err) {
       logger.error(`freshness:${marketCode} failed: ${err}`);
     }
@@ -98,7 +114,7 @@ export async function publishAll() {
     for (const range of ['7d', '30d', '90d']) {
       try {
         const categories = await buildCategoriesSnapshot(marketCode, range);
-        await writeSnapshot(url, token, makeKey(['consumer-prices', 'categories', marketCode, range]), categories, TTL);
+        await writeSnapshot(url, token, makeKey(['consumer-prices', 'categories', marketCode, range]), categories, TTL, advanceSeedMeta);
       } catch (err) {
         logger.error(`categories:${marketCode}:${range} failed: ${err}`);
       }
@@ -112,6 +128,7 @@ export async function publishAll() {
           makeKey(['consumer-prices', 'retailer-spread', marketCode, basket.slug]),
           spread,
           TTL,
+          advanceSeedMeta,
         );
       } catch (err) {
         logger.error(`spread:${marketCode}:${basket.slug} failed: ${err}`);
@@ -125,6 +142,7 @@ export async function publishAll() {
             makeKey(['consumer-prices', 'basket-series', marketCode, basket.slug, range]),
             series,
             TTL,
+            advanceSeedMeta,
           );
         } catch (err) {
           logger.error(`basket-series:${marketCode}:${basket.slug}:${range} failed: ${err}`);
