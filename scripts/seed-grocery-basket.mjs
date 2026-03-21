@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { loadEnvFile, loadSharedConfig, CHROME_UA, runSeed, sleep } from './_seed-utils.mjs';
+import { loadEnvFile, loadSharedConfig, CHROME_UA, runSeed, sleep, readSeedSnapshot } from './_seed-utils.mjs';
 
 loadEnvFile(import.meta.url);
 
@@ -10,22 +10,6 @@ const CANONICAL_KEY = 'economic:grocery-basket:v1';
 const CACHE_TTL = 864000; // 10 days — weekly seed with 3-day cron-drift buffer
 const EXA_DELAY_MS = 150;
 
-async function readCurrentSnapshot() {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
-  try {
-    const resp = await fetch(`${url}/get/${encodeURIComponent(CANONICAL_KEY)}`, {
-      headers: { Authorization: `Bearer ${token}` },
-      signal: AbortSignal.timeout(5_000),
-    });
-    if (!resp.ok) return null;
-    const { result } = await resp.json();
-    return result ? JSON.parse(result) : null;
-  } catch {
-    return null;
-  }
-}
 const FIRECRAWL_DELAY_MS = 500;
 
 // Hardcoded FX fallbacks — used when Yahoo Finance returns null/zero
@@ -362,7 +346,7 @@ async function fetchGroceryBasketPrices(prevSnapshot) {
   };
 }
 
-const prevSnapshot = await readCurrentSnapshot();
+const prevSnapshot = await readSeedSnapshot(CANONICAL_KEY);
 
 await runSeed('economic', 'grocery-basket', CANONICAL_KEY, () => fetchGroceryBasketPrices(prevSnapshot), {
   ttlSeconds: CACHE_TTL,

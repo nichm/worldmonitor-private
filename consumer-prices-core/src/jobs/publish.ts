@@ -62,6 +62,8 @@ async function writeSnapshot(
 
 // 26h TTL — longer than the 24h cron cadence to survive scheduling drift
 const TTL = 93600;
+// Freshness gate: at least one retailer scraped within this window advances seed-meta
+const FRESH_DATA_THRESHOLD_MIN = 120;
 
 export async function publishAll() {
   const url = process.env.UPSTASH_REDIS_REST_URL;
@@ -85,7 +87,7 @@ export async function publishAll() {
   for (const marketCode of markets) {
     const freshnessSnapshot = marketFreshnessSnapshots[marketCode];
     // hasFreshData = at least one retailer scraped within last 2 hours
-    const advanceSeedMeta = freshnessSnapshot != null && freshnessSnapshot.overallFreshnessMin < 120;
+    const advanceSeedMeta = freshnessSnapshot != null && freshnessSnapshot.overallFreshnessMin < FRESH_DATA_THRESHOLD_MIN;
     logger.info(`Publishing snapshots for market: ${marketCode} (freshData=${advanceSeedMeta})`);
 
     try {

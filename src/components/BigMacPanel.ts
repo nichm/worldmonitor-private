@@ -45,19 +45,21 @@ export class BigMacPanel extends Panel {
     const minCode = sorted[sorted.length - 1]?.code;
 
     const showWow = data.wowAvailable && data.wowAvgPct !== undefined;
-    const wowHeader = showWow ? `<th class="gb-cell">WoW</th>` : '';
+    const wowHeader = showWow ? `<th class="gb-cell">${t('panels.bigmacWow')}</th>` : '';
 
     const rows = sorted.map(c => {
       const cls = c.code === minCode ? 'gb-cheapest' : c.code === maxCode ? 'gb-priciest' : '';
-      const wowCell = showWow
-        ? (() => {
-            const pct = c.wowPct ?? null;
-            if (pct == null) return `<td class="gb-cell gb-na">—</td>`;
-            const sign = pct >= 0 ? '▲' : '▼';
-            const wowCls = pct >= 0 ? 'bm-wow-up' : 'bm-wow-down';
-            return `<td class="gb-cell ${wowCls}">${sign}${Math.abs(pct).toFixed(1)}%</td>`;
-          })()
-        : '';
+      let wowCell = '';
+      if (showWow) {
+        const pct = c.wowPct ?? null;
+        if (pct == null) {
+          wowCell = `<td class="gb-cell gb-na">—</td>`;
+        } else {
+          const sign = pct >= 0 ? '▲' : '▼';
+          const wowCls = pct >= 0 ? 'bm-wow-up' : 'bm-wow-down';
+          wowCell = `<td class="gb-cell ${wowCls}">${sign}${Math.abs(pct).toFixed(1)}%</td>`;
+        }
+      }
       return `<tr>
         <td class="gb-item-name">${escapeHtml(c.flag)} ${escapeHtml(c.name)}</td>
         <td class="gb-cell ${cls}">$${c.usdPrice.toFixed(2)}</td>
@@ -65,14 +67,13 @@ export class BigMacPanel extends Panel {
       </tr>`;
     }).join('');
 
-    const wowSummary = showWow
-      ? (() => {
-          const avg = data.wowAvgPct;
-          const sign = avg >= 0 ? '▲' : '▼';
-          const cls = avg >= 0 ? 'bm-wow-up' : 'bm-wow-down';
-          return `<div class="bm-wow-summary">Global avg: <span class="${cls}">${sign}${Math.abs(avg).toFixed(1)}% WoW</span></div>`;
-        })()
-      : '';
+    let wowSummary = '';
+    if (showWow) {
+      const avg = data.wowAvgPct;
+      const sign = avg >= 0 ? '▲' : '▼';
+      const cls = avg >= 0 ? 'bm-wow-up' : 'bm-wow-down';
+      wowSummary = `<div class="bm-wow-summary">Global avg: <span class="${cls}">${sign}${Math.abs(avg).toFixed(1)}% ${t('panels.bigmacWow')}</span></div>`;
+    }
 
     const updatedAt = data.fetchedAt ? new Date(data.fetchedAt).toLocaleDateString() : '';
 
@@ -82,7 +83,7 @@ export class BigMacPanel extends Panel {
         <div class="gb-scroll">
           <table class="gb-table">
             <thead><tr>
-              <th class="gb-item-col">Country</th>
+              <th class="gb-item-col">${t('panels.bigmacCountry')}</th>
               <th class="gb-cell">USD</th>
               ${wowHeader}
             </tr></thead>

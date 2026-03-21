@@ -5,9 +5,6 @@
  * and writes them to Upstash Redis for WorldMonitor bootstrap hydration.
  *
  * Run manually: node scripts/seed-consumer-prices.mjs
- * Deployed as: Railway cron service (same pattern as ais-relay loops)
- *
- * Memory: runSeed() calls process.exit(0) — use extraKeys for all keys.
  *
  * IMPORTANT: This is a MANUAL FALLBACK script only.
  * Do NOT configure as a Railway cron. The consumer-prices-core publish.ts

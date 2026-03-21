@@ -71,24 +71,22 @@ export class GroceryBasketPanel extends Panel {
       const isLow = c.code === data.cheapestCountry;
       const isHigh = c.code === data.mostExpensiveCountry;
       const cls = isLow ? 'gb-cheapest' : isHigh ? 'gb-priciest' : '';
-      const wowBadge = (c.wowPct != null)
-        ? (() => {
-            const sign = c.wowPct >= 0 ? '▲' : '▼';
-            const wowCls = c.wowPct >= 0 ? 'bm-wow-up' : 'bm-wow-down';
-            return `<span class="gb-wow ${wowCls}">${sign}${Math.abs(c.wowPct).toFixed(1)}%</span>`;
-          })()
-        : '';
+      let wowBadge = '';
+      if (c.wowPct != null) {
+        const sign = c.wowPct >= 0 ? '▲' : '▼';
+        const wowCls = c.wowPct >= 0 ? 'bm-wow-up' : 'bm-wow-down';
+        wowBadge = `<span class="gb-wow ${wowCls}">${sign}${Math.abs(c.wowPct).toFixed(1)}%</span>`;
+      }
       return `<td class="gb-cell gb-total ${cls}"><strong>$${c.totalUsd.toFixed(2)}</strong>${wowBadge}</td>`;
     }).join('')}</tr>`;
 
-    const wowSummary = data.wowAvailable && data.wowAvgPct !== undefined
-      ? (() => {
-          const avg = data.wowAvgPct;
-          const sign = avg >= 0 ? '▲' : '▼';
-          const cls = avg >= 0 ? 'bm-wow-up' : 'bm-wow-down';
-          return `<div class="bm-wow-summary">Basket avg: <span class="${cls}">${sign}${Math.abs(avg).toFixed(1)}% WoW</span></div>`;
-        })()
-      : '';
+    let wowSummary = '';
+    if (data.wowAvailable && data.wowAvgPct !== undefined) {
+      const avg = data.wowAvgPct;
+      const sign = avg >= 0 ? '▲' : '▼';
+      const cls = avg >= 0 ? 'bm-wow-up' : 'bm-wow-down';
+      wowSummary = `<div class="bm-wow-summary">Basket avg: <span class="${cls}">${sign}${Math.abs(avg).toFixed(1)}% WoW</span></div>`;
+    }
 
     const updatedAt = data.fetchedAt ? new Date(data.fetchedAt).toLocaleDateString() : '';
 
