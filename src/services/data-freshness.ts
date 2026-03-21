@@ -78,6 +78,17 @@ const SOURCE_METADATA: Record<DataSourceId, { name: string; requiredForRisk: boo
   radiation: { name: 'Radiation Watch', requiredForRisk: false, panelId: 'radiation-watch' },
   gpsjam: { name: 'GPS/GNSS Interference', requiredForRisk: false, panelId: 'map' },
   treasury_revenue: { name: 'Treasury Customs Revenue', requiredForRisk: false, panelId: 'trade-policy' },
+  toronto_fire: { name: 'Toronto Fire CAD', requiredForRisk: false, panelId: 'toronto-fire' },
+  toronto_dinesafe: { name: 'DineSafe Closures', requiredForRisk: false, panelId: 'dinesafe' },
+  ontario_housing: { name: 'Ontario Housing Targets', requiredForRisk: false, panelId: 'housing-targets' },
+  toronto_shelter: { name: 'Toronto Shelter System', requiredForRisk: false, panelId: 'shelter-gauge' },
+  boc_rates: { name: 'Bank of Canada Rates', requiredForRisk: false, panelId: 'boc-rates' },
+  toronto_permits: { name: 'Toronto Building Permits', requiredForRisk: false, panelId: 'building-permits' },
+  ontario_roads: { name: 'Ontario 511 Highway Incidents', requiredForRisk: false, panelId: 'ontario-roads' },
+  toronto_water_level: { name: 'Lake Ontario Water Level', requiredForRisk: false, panelId: 'toronto-water-level' },
+  canada_earthquakes: { name: 'Canada Earthquakes (GTA)', requiredForRisk: false, panelId: undefined },
+  ontario_spills: { name: 'Ontario Spills Database', requiredForRisk: false, panelId: undefined },
+  toronto_airtraffic: { name: 'Toronto Air Traffic', requiredForRisk: false, panelId: undefined },
 };
 
 class DataFreshnessTracker {
@@ -341,6 +352,17 @@ const INTELLIGENCE_GAP_MESSAGES: Record<DataSourceId, string> = {
   radiation: 'Radiation monitoring degraded—EPA RadNet and Safecast observations unavailable',
   gpsjam: 'GPS/GNSS interference data unavailable—jamming zones undetected',
   treasury_revenue: 'US Treasury customs revenue data unavailable',
+  toronto_fire: 'Toronto Fire CAD incidents unavailable—emergency response tracking offline',
+  toronto_dinesafe: 'DineSafe closure data unavailable—food safety violations not detected',
+  ontario_housing: 'Ontario housing target progress unavailable—construction/municipality status unknown',
+  toronto_shelter: 'Toronto shelter occupancy data unavailable—homelessness capacity unknown',
+  boc_rates: 'Bank of Canada rate data unavailable—FX/policy rate monitoring offline',
+  toronto_permits: 'Toronto building permits data unavailable—development pipeline blind',
+  ontario_roads: 'Ontario 511 highway incidents unavailable—GTA traffic conditions unknown',
+  toronto_water_level: 'Lake Ontario water level data unavailable—flood risk blind',
+  canada_earthquakes: 'Canada earthquake data unavailable—seismic monitoring offline',
+  ontario_spills: 'Ontario spills data unavailable—hazard events not monitored',
+  toronto_airtraffic: 'Toronto air traffic data unavailable—aviation monitoring offline',
 };
 
 /**

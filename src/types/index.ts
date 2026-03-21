@@ -32,7 +32,18 @@ export type DataSourceId =
   | 'gpsjam'
   | 'sanctions_pressure'
   | 'radiation'
-  | 'treasury_revenue';
+  | 'treasury_revenue'
+  | 'toronto_fire'
+  | 'toronto_dinesafe'
+  | 'toronto_shelter'
+  | 'boc_rates'
+  | 'toronto_permits'
+  | 'ontario_roads'
+  | 'ontario_housing'
+  | 'toronto_water_level'
+  | 'canada_earthquakes'
+  | 'ontario_spills'
+  | 'toronto_airtraffic';
 
 // AppContext lives in src/app/app-context.ts because it references
 // components, services, and utils (top-level aggregate type).
@@ -70,6 +81,7 @@ export interface Feed {
   url: string | Record<string, string>;
   type?: string;
   region?: string;
+  tier?: number;              // Source tier for prioritization (lower = more authoritative)
   propagandaRisk?: PropagandaRisk;
   stateAffiliated?: string;  // e.g., "Russia", "China", "Iran"
   lang?: string;             // ISO 2-letter code for filtering
@@ -650,6 +662,17 @@ export interface MapLayers {
   commodityPorts: boolean;
   webcams: boolean;
   weatherRadar: boolean;
+  // Toronto variant layers
+  toronto_fire_incidents: boolean;
+  toronto_dinesafe: boolean;
+  toronto_neighbourhoods: boolean;
+  toronto_311_stress: boolean;
+  toronto_development: boolean;
+  // Widget 17-20 layers
+  toronto_water_level: boolean;
+  toronto_earthquakes: boolean;
+  ontario_spills: boolean;
+  toronto_air_traffic: boolean;
 }
 
 export interface AIDataCenter {
@@ -1476,4 +1499,42 @@ export interface CountryBriefSignals {
   gpsJammingHexes: number;
   isTier1: boolean;
   thermalEscalations: number;
+}
+
+// Toronto DineSafe restaurant closures
+export interface DineSafeClosure {
+  establishment_id: string;
+  establishment_name: string;
+  establishment_address: string;
+  establishment_status: string;
+  inspection_date: string;
+  severity: string;
+  action: string;
+  lat: number;
+  lon: number;
+  infraction_details?: string;
+}
+
+// Toronto Neighbourhood risk assessment (baked static GeoJSON)
+export interface TorontoNeighbourhood {
+  id: string;
+  name: string;
+  riskScore: number; // 0-100 calculated as crime*0.4 + fire*0.3 + auto*0.3
+  crimeIndex?: number;
+  fireIndex?: number;
+  autoTheftIndex?: number;
+}
+
+// Ontario Housing Target Progress
+export interface OntarioHousingTarget {
+  _id: number;
+  Municipality: string;
+  Year: number;
+  Target: number;
+  Housing_Units: number;
+  Progress_Percentage: number;
+}
+
+export interface OntarioHousingResponse {
+  data: OntarioHousingTarget[];
 }

@@ -534,10 +534,13 @@ export class PanelLayoutManager implements AppModule {
 
     const mapContainer = document.getElementById('mapContainer') as HTMLElement;
     const preferGlobe = loadFromStorage<string>(STORAGE_KEYS.mapMode, 'flat') === 'globe';
+
+    // Apply Toronto's INITIAL_VIEW when Toronto variant is selected
+    const isTorontoVariant = SITE_VARIANT === 'toronto';
     this.ctx.map = new MapContainer(mapContainer, {
-      zoom: this.ctx.isMobile ? 2.5 : 1.0,
+      zoom: isTorontoVariant ? 10 : (this.ctx.isMobile ? 2.5 : 1.0),
       pan: { x: 0, y: 0 },
-      view: this.ctx.isMobile ? this.ctx.resolvedLocation : 'global',
+      view: isTorontoVariant ? 'toronto' : (this.ctx.isMobile ? this.ctx.resolvedLocation : 'global'),
       layers: this.ctx.mapLayers,
       timeRange: '7d',
     }, preferGlobe);
@@ -823,6 +826,36 @@ export class PanelLayoutManager implements AppModule {
     if (this.shouldCreatePanel('windy-webcams')) {
       this.ctx.panels['windy-webcams'] = new PinnedWebcamsPanel();
     }
+
+    // Ontario highways panel (regional traffic incidents)
+    this.lazyPanel('ontario-roads', () =>
+      import('@/components/OntarioRoadsPanel').then(m => new m.OntarioRoadsPanel()),
+    );
+
+    // Toronto variant panels
+    this.lazyPanel('toronto-fire', () =>
+      import('@/components/TorontoFirePanel').then(m => new m.TorontoFirePanel()),
+    );
+
+    this.lazyPanel('shelter-gauge', () =>
+      import('@/components/ShelterGaugePanel').then(m => new m.ShelterGaugePanel()),
+    );
+
+    this.lazyPanel('boc-rates', () =>
+      import('@/components/BocRateTickerPanel').then(m => new m.BocRateTickerPanel()),
+    );
+
+    this.lazyPanel('building-permits', () =>
+      import('@/components/BuildingPermitsPanel').then(m => new m.BuildingPermitsPanel()),
+    );
+
+    this.lazyPanel('dinesafe', () =>
+      import('@/components/DineSafePanel').then(m => new m.DineSafePanel()),
+    );
+
+    this.lazyPanel('housing-targets', () =>
+      import('@/components/HousingTargetsPanel').then(m => new m.HousingTargetsPanel()),
+    );
 
     this.createPanel('events', () => new TechEventsPanel('events', () => this.ctx.allNews));
     this.createPanel('service-status', () => new ServiceStatusPanel());

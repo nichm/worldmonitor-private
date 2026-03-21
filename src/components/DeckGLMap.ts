@@ -47,6 +47,8 @@ import type { DisplacementFlow } from '@/services/displacement';
 import type { Earthquake } from '@/services/earthquakes';
 import type { ClimateAnomaly } from '@/services/climate';
 import type { RadiationObservation } from '@/services/radiation';
+import type { TorontoFireIncident } from '@/services/toronto-fire';
+import type { DineSafeClosure } from '@/types';
 import { ArcLayer } from '@deck.gl/layers';
 import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 import { H3HexagonLayer } from '@deck.gl/geo-layers';
@@ -116,7 +118,7 @@ import type { WebcamEntry, WebcamCluster } from '@/generated/client/worldmonitor
 import { fetchWebcamImage } from '@/services/webcams';
 
 export type TimeRange = '1h' | '6h' | '24h' | '48h' | '7d' | 'all';
-export type DeckMapView = 'global' | 'america' | 'mena' | 'eu' | 'asia' | 'latam' | 'africa' | 'oceania';
+export type DeckMapView = 'global' | 'america' | 'mena' | 'eu' | 'asia' | 'latam' | 'africa' | 'oceania' | 'toronto';
 type MapInteractionMode = 'flat' | '3d';
 
 export interface CountryClickPayload {
@@ -161,6 +163,7 @@ const VIEW_PRESETS: Record<DeckMapView, { longitude: number; latitude: number; z
   latam: { longitude: -60, latitude: -15, zoom: 3 },
   africa: { longitude: 20, latitude: 5, zoom: 3 },
   oceania: { longitude: 135, latitude: -25, zoom: 3.5 },
+  toronto: { longitude: -79.3832, latitude: 43.6532, zoom: 10 },
 };
 
 const MAP_INTERACTION_MODE: MapInteractionMode =
@@ -377,6 +380,9 @@ export class DeckGLMap {
   private happinessScores: Map<string, number> = new Map();
   private happinessYear = 0;
   private happinessSource = '';
+  private torontoFireIncidents: TorontoFireIncident[] = [];
+  private dinesafeClosures: DineSafeClosure[] = [];
+  private torontoNeighbourhoods: any = null; // GeoJSON FeatureCollection
   private speciesRecoveryZones: Array<SpeciesRecovery & { recoveryZone: { name: string; lat: number; lon: number } }> = [];
   private renewableInstallations: RenewableInstallation[] = [];
   private webcamData: Array<WebcamEntry | WebcamCluster> = [];
@@ -524,6 +530,7 @@ export class DeckGLMap {
       localizeMapLabels(this.maplibreMap);
       this.initDeck();
       this.loadCountryBoundaries();
+      this.loadTorontoNeighbourhoods();
       this.fetchServerBases();
       this.render();
     });
@@ -1657,6 +1664,69 @@ export class DeckGLMap {
 
     if (mapLayers.satellites && this.imageryScenes.length > 0) {
       layers.push(this.createImageryFootprintLayer());
+    }
+
+    // Toronto Fire CAD incidents
+    if (mapLayers.toronto_fire_incidents && this.torontoFireIncidents.length > 0) {
+      layers.push(new ScatterplotLayer<TorontoFireIncident>({
+        id: 'toronto-fire-layer',
+        data: this.torontoFireIncidents.filter(inc => inc.lat !== null && inc.lon !== null),
+        getPosition: (d) => [d.lon!, d.lat!],
+        getRadius: 8,
+        getFillColor: (d) => {
+          const alarm = d.alarm;
+          switch (true) {
+            case alarm >= 5:
+              return [0, 0, 0, 200]; // Black
+            case alarm >= 4:
+              return [100, 0, 0, 200]; // Dark red
+            case alarm >= 3:
+              return [255, 0, 0, 200]; // Red
+            case alarm >= 2:
+              return [255, 165, 0, 200]; // Orange
+            default:
+              return [255, 255, 0, 200]; // Yellow
+          }
+        },
+        radiusUnits: 'pixels',
+        pickable: true,
+      }));
+    }
+
+    // Toronto DineSafe Closures (red pins)
+    if (mapLayers.toronto_dinesafe && this.dinesafeClosures.length > 0) {
+      layers.push(new ScatterplotLayer<DineSafeClosure>({
+        id: 'toronto-dinesafe-layer',
+        data: this.dinesafeClosures,
+        getPosition: (d) => [d.lon, d.lat],
+        getRadius: 6,
+        getFillColor: [220, 38, 38, 200] as [number, number, number, number],
+        getLineColor: [255, 255, 255, 150] as [number, number, number, number],
+        lineWidthUnits: 'pixels',
+        getLineWidth: () => 2,
+        stroked: true,
+        radiusUnits: 'pixels',
+        pickable: true,
+      }));
+    }
+
+    // Toronto Neighbourhoods Risk (GeoJSON polygon layer)
+    if (mapLayers.toronto_neighbourhoods && this.torontoNeighbourhoods) {
+      layers.push(new GeoJsonLayer<any, any>({
+        id: 'toronto-neighbourhoods-layer',
+        data: this.torontoNeighbourhoods,
+        getFillColor: (d: any) => {
+          const riskScore = d.properties?.riskScore || 0;
+          const r = Math.min(255, Math.floor((riskScore / 100) * 255));
+          const g = Math.min(255, Math.floor(((100 - riskScore) / 100) * 255));
+          return [r, g, 0, 80] as [number, number, number, number];
+        },
+        getLineColor: [200, 200, 200, 100] as [number, number, number, number],
+        lineWidthMinPixels: 1,
+        getLineWidth: 1,
+        filled: true,
+        pickable: true,
+      }));
     }
 
     // Webcam layer (server-side clustered markers)
@@ -3679,6 +3749,17 @@ export class DeckGLMap {
           : (obj.title || obj.name || 'Webcam');
         return { html: `<div class="deckgl-tooltip"><strong>${text(label)}</strong></div>` };
       }
+      case 'toronto-fire-layer': {
+        const alarm = obj.alarm;
+        const alarmColor = alarm >= 5 ? 'black' : alarm >= 4 ? 'darkred' : alarm >= 3 ? 'red' : alarm >= 2 ? 'orange' : 'yellow';
+        return {
+          html: `<div class="deckgl-tooltip">
+            <strong style="color: ${alarmColor}">${alarm}-Alarm ${text(obj.incidentType)}</strong><br>
+            ${text(obj.address)}<br>
+            <span style="opacity: 0.7">${obj.time || 'N/A'}</span>
+          </div>`
+        };
+      }
       default:
         return null;
     }
@@ -4809,6 +4890,21 @@ export class DeckGLMap {
     this.render();
   }
 
+  public setTorontoFireIncidents(incidents: TorontoFireIncident[]): void {
+    this.torontoFireIncidents = incidents;
+    this.render();
+  }
+
+  public setTorontoDineSafe(closures: DineSafeClosure[]): void {
+    this.dinesafeClosures = closures;
+    this.render();
+  }
+
+  public setTorontoNeighbourhoods(geojson: any): void {
+    this.torontoNeighbourhoods = geojson;
+    this.render();
+  }
+
   public setWeatherAlerts(alerts: WeatherAlert[]): void {
     this.weatherAlerts = alerts;
     this.render();
@@ -5546,6 +5642,23 @@ export class DeckGLMap {
         this.render();
       })
       .catch((err) => console.warn('[DeckGLMap] Failed to load country boundaries:', err));
+  }
+
+  private loadTorontoNeighbourhoods(): void {
+    if (!this.maplibreMap || !this.state.layers.toronto_neighbourhoods) return;
+
+    // Load static GeoJSON
+    fetch('/data/toronto-neighbourhood-risk.geojson')
+      .then((res) => res.json())
+      .then((geojson) => {
+        if (!geojson || !geojson.features) {
+          console.warn('[DeckGLMap] Invalid Toronto neighbourhoods GeoJSON');
+          return;
+        }
+        this.torontoNeighbourhoods = geojson;
+        this.render();
+      })
+      .catch((err) => console.warn('[DeckGLMap] Failed to load Toronto neighbourhoods:', err));
   }
 
   private setupCountryHover(): void {

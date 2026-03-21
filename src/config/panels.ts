@@ -4,6 +4,7 @@ import { SITE_VARIANT } from './variant';
 import { isDesktopRuntime } from '@/services/runtime';
 // boundary-ignore: getSecretState is a pure env/keychain probe with no service dependencies
 import { getSecretState } from '@/services/runtime-config';
+import { DEFAULT_PANELS as TORONTO_PANELS, DEFAULT_MAP_LAYERS as TORONTO_MAP_LAYERS, MOBILE_DEFAULT_MAP_LAYERS as TORONTO_MOBILE_MAP_LAYERS } from './variants/toronto';
 
 const _desktop = isDesktopRuntime();
 
@@ -138,6 +139,16 @@ const FULL_MAP_LAYERS: MapLayers = {
   commodityPorts: false,
   webcams: false,
   weatherRadar: false,
+  // Toronto variant layers (disabled in full variant)
+  toronto_fire_incidents: false,
+  toronto_dinesafe: false,
+  toronto_neighbourhoods: false,
+  toronto_311_stress: false,
+  toronto_development: false,
+  toronto_water_level: false,
+  toronto_earthquakes: false,
+  ontario_spills: false,
+  toronto_air_traffic: false,
 };
 
 const FULL_MOBILE_MAP_LAYERS: MapLayers = {
@@ -200,6 +211,16 @@ const FULL_MOBILE_MAP_LAYERS: MapLayers = {
   commodityPorts: false,
   webcams: false,
   weatherRadar: false,
+  // Toronto variant layers (disabled in full variant)
+  toronto_fire_incidents: false,
+  toronto_dinesafe: false,
+  toronto_neighbourhoods: false,
+  toronto_311_stress: false,
+  toronto_development: false,
+  toronto_water_level: false,
+  toronto_earthquakes: false,
+  ontario_spills: false,
+  toronto_air_traffic: false,
 };
 
 // ============================================
@@ -304,6 +325,16 @@ const TECH_MAP_LAYERS: MapLayers = {
   commodityPorts: false,
   webcams: false,
   weatherRadar: false,
+  // Toronto variant layers (disabled in tech variant)
+  toronto_fire_incidents: false,
+  toronto_dinesafe: false,
+  toronto_neighbourhoods: false,
+  toronto_311_stress: false,
+  toronto_development: false,
+  toronto_water_level: false,
+  toronto_earthquakes: false,
+  ontario_spills: false,
+  toronto_air_traffic: false,
 };
 
 const TECH_MOBILE_MAP_LAYERS: MapLayers = {
@@ -365,6 +396,16 @@ const TECH_MOBILE_MAP_LAYERS: MapLayers = {
   commodityPorts: false,
   webcams: false,
   weatherRadar: false,
+  // Toronto variant layers (disabled in tech variant)
+  toronto_fire_incidents: false,
+  toronto_dinesafe: false,
+  toronto_neighbourhoods: false,
+  toronto_311_stress: false,
+  toronto_development: false,
+  toronto_water_level: false,
+  toronto_earthquakes: false,
+  ontario_spills: false,
+  toronto_air_traffic: false,
 };
 
 // ============================================
@@ -477,6 +518,16 @@ const FINANCE_MAP_LAYERS: MapLayers = {
   commodityPorts: false,
   webcams: false,
   weatherRadar: false,
+  // Toronto variant layers (disabled in finance variant)
+  toronto_fire_incidents: false,
+  toronto_dinesafe: false,
+  toronto_neighbourhoods: false,
+  toronto_311_stress: false,
+  toronto_development: false,
+  toronto_water_level: false,
+  toronto_earthquakes: false,
+  ontario_spills: false,
+  toronto_air_traffic: false,
 };
 
 const FINANCE_MOBILE_MAP_LAYERS: MapLayers = {
@@ -538,6 +589,16 @@ const FINANCE_MOBILE_MAP_LAYERS: MapLayers = {
   commodityPorts: false,
   webcams: false,
   weatherRadar: false,
+  // Toronto variant layers (disabled in finance variant)
+  toronto_fire_incidents: false,
+  toronto_dinesafe: false,
+  toronto_neighbourhoods: false,
+  toronto_311_stress: false,
+  toronto_development: false,
+  toronto_water_level: false,
+  toronto_earthquakes: false,
+  ontario_spills: false,
+  toronto_air_traffic: false,
 };
 
 // ============================================
@@ -615,6 +676,16 @@ const HAPPY_MAP_LAYERS: MapLayers = {
   commodityPorts: false,
   webcams: false,
   weatherRadar: false,
+  // Toronto variant layers (disabled in happy variant)
+  toronto_fire_incidents: false,
+  toronto_dinesafe: false,
+  toronto_neighbourhoods: false,
+  toronto_311_stress: false,
+  toronto_development: false,
+  toronto_water_level: false,
+  toronto_earthquakes: false,
+  ontario_spills: false,
+  toronto_air_traffic: false,
 };
 
 const HAPPY_MOBILE_MAP_LAYERS: MapLayers = {
@@ -676,6 +747,16 @@ const HAPPY_MOBILE_MAP_LAYERS: MapLayers = {
   commodityPorts: false,
   webcams: false,
   weatherRadar: false,
+  // Toronto variant layers (disabled in happy variant)
+  toronto_fire_incidents: false,
+  toronto_dinesafe: false,
+  toronto_neighbourhoods: false,
+  toronto_311_stress: false,
+  toronto_development: false,
+  toronto_water_level: false,
+  toronto_earthquakes: false,
+  ontario_spills: false,
+  toronto_air_traffic: false,
 };
 
 // ============================================
@@ -770,6 +851,16 @@ const COMMODITY_MAP_LAYERS: MapLayers = {
   commodityPorts: true,
   webcams: false,
   weatherRadar: false,
+  // Toronto variant layers (disabled in commodity variant)
+  toronto_fire_incidents: false,
+  toronto_dinesafe: false,
+  toronto_neighbourhoods: false,
+  toronto_311_stress: false,
+  toronto_development: false,
+  toronto_water_level: false,
+  toronto_earthquakes: false,
+  ontario_spills: false,
+  toronto_air_traffic: false,
 };
 
 const COMMODITY_MOBILE_MAP_LAYERS: MapLayers = {
@@ -831,6 +922,16 @@ const COMMODITY_MOBILE_MAP_LAYERS: MapLayers = {
   commodityPorts: true,
   webcams: false,
   weatherRadar: false,
+  // Toronto variant layers (disabled in commodity variant)
+  toronto_fire_incidents: false,
+  toronto_dinesafe: false,
+  toronto_neighbourhoods: false,
+  toronto_311_stress: false,
+  toronto_development: false,
+  toronto_water_level: false,
+  toronto_earthquakes: false,
+  ontario_spills: false,
+  toronto_air_traffic: false,
 };
 
 // ============================================
@@ -843,6 +944,7 @@ export const ALL_PANELS: Record<string, PanelConfig> = {
   ...COMMODITY_PANELS,
   ...TECH_PANELS,
   ...FINANCE_PANELS,
+  ...TORONTO_PANELS,
   ...FULL_PANELS,
 };
 
@@ -853,6 +955,7 @@ export const VARIANT_DEFAULTS: Record<string, string[]> = {
   finance:   Object.keys(FINANCE_PANELS),
   commodity: Object.keys(COMMODITY_PANELS),
   happy:     Object.keys(HAPPY_PANELS),
+  toronto:   Object.keys(TORONTO_PANELS),
 };
 
 /**
@@ -877,6 +980,10 @@ export const VARIANT_PANEL_OVERRIDES: Partial<Record<string, Partial<Record<stri
   },
   happy: {
     map:         { name: 'World Map' },
+  },
+  toronto: {
+    map:         { name: 'Toronto Intelligence Map' },
+    'live-news': { name: 'Toronto Headlines' },
   },
 };
 
@@ -916,25 +1023,29 @@ export const DEFAULT_PANELS: Record<string, PanelConfig> = Object.fromEntries(
   )
 );
 
-export const DEFAULT_MAP_LAYERS = SITE_VARIANT === 'happy' 
-  ? HAPPY_MAP_LAYERS 
-  : SITE_VARIANT === 'tech' 
-    ? TECH_MAP_LAYERS 
-    : SITE_VARIANT === 'finance' 
-      ? FINANCE_MAP_LAYERS 
+export const DEFAULT_MAP_LAYERS = SITE_VARIANT === 'happy'
+  ? HAPPY_MAP_LAYERS
+  : SITE_VARIANT === 'tech'
+    ? TECH_MAP_LAYERS
+    : SITE_VARIANT === 'finance'
+      ? FINANCE_MAP_LAYERS
       : SITE_VARIANT === 'commodity'
         ? COMMODITY_MAP_LAYERS
-        : FULL_MAP_LAYERS;
+        : SITE_VARIANT === 'toronto'
+          ? TORONTO_MAP_LAYERS
+          : FULL_MAP_LAYERS;
 
-export const MOBILE_DEFAULT_MAP_LAYERS = SITE_VARIANT === 'happy' 
-  ? HAPPY_MOBILE_MAP_LAYERS 
-  : SITE_VARIANT === 'tech' 
-    ? TECH_MOBILE_MAP_LAYERS 
-    : SITE_VARIANT === 'finance' 
-      ? FINANCE_MOBILE_MAP_LAYERS 
+export const MOBILE_DEFAULT_MAP_LAYERS = SITE_VARIANT === 'happy'
+  ? HAPPY_MOBILE_MAP_LAYERS
+  : SITE_VARIANT === 'tech'
+    ? TECH_MOBILE_MAP_LAYERS
+    : SITE_VARIANT === 'finance'
+      ? FINANCE_MOBILE_MAP_LAYERS
       : SITE_VARIANT === 'commodity'
         ? COMMODITY_MOBILE_MAP_LAYERS
-        : FULL_MOBILE_MAP_LAYERS;
+        : SITE_VARIANT === 'toronto'
+          ? TORONTO_MOBILE_MAP_LAYERS
+          : FULL_MOBILE_MAP_LAYERS;
 
 /** Maps map-layer toggle keys to their data-freshness source IDs (single source of truth). */
 export const LAYER_TO_SOURCE: Partial<Record<keyof MapLayers, DataSourceId[]>> = {
@@ -1062,6 +1173,33 @@ export const PANEL_CATEGORY_MAP: Record<string, { labelKey: string; panelKeys: s
   happyPlanet: {
     labelKey: 'header.panelCatHappyPlanet',
     panelKeys: ['species', 'renewable', 'giving'],
+  },
+
+  // Toronto variant
+  torontoCore: {
+    labelKey: 'header.panelCatTorontoCore',
+    panelKeys: ['map', 'live-news'],
+    variants: ['toronto'],
+  },
+  torontoEmergency: {
+    labelKey: 'header.panelCatTorontoEmergency',
+    panelKeys: ['toronto-fire', 'eccc-alerts', 'trca-floods', 'shelter-gauge', 'toronto-water-level'],
+    variants: ['toronto'],
+  },
+  torontoInfrastructure: {
+    labelKey: 'header.panelCatTorontoInfrastructure',
+    panelKeys: ['ontario-roads', 'building-permits', 'toronto-311', 'ttc-health', 'toronto-development'],
+    variants: ['toronto'],
+  },
+  torontoEconomic: {
+    labelKey: 'header.panelCatTorontoEconomic',
+    panelKeys: ['boc-ticker', 'statcan-toronto', 'housing-targets', 'ontario-electricity'],
+    variants: ['toronto'],
+  },
+  torontoCivic: {
+    labelKey: 'header.panelCatTorontoCivic',
+    panelKeys: ['dinesafe', 'toronto-crime'],
+    variants: ['toronto'],
   },
 };
 

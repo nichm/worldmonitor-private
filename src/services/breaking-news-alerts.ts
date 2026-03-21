@@ -146,7 +146,7 @@ function isGlobalCooldown(candidateLevel: 'critical' | 'high'): boolean {
   return true;
 }
 
-function dispatchAlert(alert: BreakingAlert): void {
+export function dispatchAlert(alert: BreakingAlert): void {
   pruneDedupeMap();
   dedupeMap.set(alert.id, Date.now());
   lastGlobalAlertMs = Date.now();

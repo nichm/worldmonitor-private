@@ -71,6 +71,9 @@ export const SOURCE_TIERS: Record<string, number> = {
   // Portuguese
   'Brasil Paralelo': 2,
 
+  // Tier 1 - Official Government Weather & Environment
+  'Environment Canada': 1,
+
   // Tier 1 - Official Government & International Orgs
   'White House': 1,
   'State Dept': 1,
@@ -725,6 +728,11 @@ const FULL_FEEDS: Record<string, Feed[]> = {
     { name: 'Reuters Energy', url: rss('https://news.google.com/rss/search?q=site:reuters.com+(oil+OR+gas+OR+energy+OR+OPEC)+when:3d&hl=en-US&gl=US&ceid=US:en') },
     { name: 'Mining & Resources', url: rss('https://news.google.com/rss/search?q=(lithium+OR+"rare+earth"+OR+cobalt+OR+mining)+when:3d&hl=en-US&gl=US&ceid=US:en') },
   ],
+  alerts: [
+    // Environment Canada (ECCC) weather alerts for Ontario
+    // Fetched from custom edge function that parses CAP-XML
+    { name: 'Environment Canada', url: '/api/eccc-ontario-alerts', type: 'eccc-alerts', lang: 'en' },
+  ],
 };
 
 // Tech/AI variant feeds
@@ -1198,13 +1206,13 @@ export const FEEDS = SITE_VARIANT === 'tech'
 export const SOURCE_REGION_MAP: Record<string, { labelKey: string; feedKeys: string[] }> = {
   // Full (geopolitical) variant regions
   worldwide: { labelKey: 'header.sourceRegionWorldwide', feedKeys: ['politics', 'crisis'] },
-  us: { labelKey: 'header.sourceRegionUS', feedKeys: ['us', 'gov'] },
+  us: { labelKey: 'header.sourceRegionUS', feedKeys: ['us', 'gov', 'alerts'] },
   europe: { labelKey: 'header.sourceRegionEurope', feedKeys: ['europe'] },
   middleeast: { labelKey: 'header.sourceRegionMiddleEast', feedKeys: ['middleeast'] },
   africa: { labelKey: 'header.sourceRegionAfrica', feedKeys: ['africa'] },
   latam: { labelKey: 'header.sourceRegionLatAm', feedKeys: ['latam'] },
   asia: { labelKey: 'header.sourceRegionAsiaPacific', feedKeys: ['asia'] },
-  topical: { labelKey: 'header.sourceRegionTopical', feedKeys: ['energy', 'tech', 'ai', 'finance', 'layoffs', 'thinktanks'] },
+  topical: { labelKey: 'header.sourceRegionTopical', feedKeys: ['energy', 'tech', 'ai', 'finance', 'layoffs', 'thinktanks', 'alerts'] },
   intel: { labelKey: 'header.sourceRegionIntel', feedKeys: [] },
 
   // Tech variant regions

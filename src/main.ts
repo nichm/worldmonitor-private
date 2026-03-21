@@ -332,9 +332,12 @@ import { installSwUpdateHandler } from '@/bootstrap/sw-update';
 const chunkReloadStorageKey = installChunkReloadGuard(__APP_VERSION__);
 
 // Initialize Vercel Analytics (10% sampling to reduce costs)
-inject({
-  beforeSend: (event) => (Math.random() > 0.1 ? null : event),
-});
+// Skip in local development and desktop apps
+if (!location.hostname.startsWith('localhost') && !('__TAURI_INTERNALS__' in window)) {
+  inject({
+    beforeSend: (event) => (Math.random() > 0.1 ? null : event),
+  });
+}
 
 // Initialize dynamic meta tags for sharing
 initMetaTags();

@@ -20,6 +20,41 @@ const feedFailures = new Map<string, { count: number; cooldownUntil: number }>()
 const feedCache = new Map<string, { items: NewsItem[]; timestamp: number }>();
 const CACHE_TTL = 30 * 60 * 1000;
 
+// ECCC alerts integration
+let ecccAlertItems: NewsItem[] = [];
+let ecccAlertsLastFetch = 0;
+const ECCC_ALERTS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+async function fetchEcccAlerts(): Promise<NewsItem[]> {
+  const now = Date.now();
+  if (ecccAlertItems.length > 0 && now - ecccAlertsLastFetch < ECCC_ALERTS_CACHE_TTL) {
+    return ecccAlertItems;
+  }
+
+  try {
+    const response = await fetch('/api/eccc-ontario-alerts');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    const items: NewsItem[] = data.items || [];
+
+    ecccAlertItems = items.map((item: unknown) => ({
+      ...(item as NewsItem),
+      pubDate: new Date((item as NewsItem).pubDate),
+    }));
+
+    ecccAlertsLastFetch = Date.now();
+    return ecccAlertItems;
+  } catch (error) {
+    console.error('[RSS] Failed to fetch ECCC alerts:', error);
+    return ecccAlertItems.length > 0 ? ecccAlertItems : [];
+  }
+}
+
+export function getEcccAlerts(): NewsItem[] {
+  return ecccAlertItems;
+}
+
 function toSerializable(items: NewsItem[]): Array<Omit<NewsItem, 'pubDate'> & { pubDate: string }> {
   return items.map(item => ({ ...item, pubDate: item.pubDate.toISOString() }));
 }
@@ -214,6 +249,36 @@ export async function fetchFeed(feed: Feed): Promise<NewsItem[]> {
   }
 
   try {
+    // Special handling for ECCC alerts feed (JSON API)
+    const isEcccAlertsFeed = feed.type === 'eccc-alerts' ||
+      (typeof feed.url === 'string' && feed.url.includes('/api/eccc-ontario-alerts'));
+
+    if (isEcccAlertsFeed) {
+      const url = typeof feed.url === 'string' ? feed.url : (feed.url[currentLang] || feed.url.en || Object.values(feed.url)[0] || '');
+      if (!url) throw new Error(`No URL found for feed ${feed.name}`);
+
+      const response = await fetchWithProxy(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+
+      const items: NewsItem[] = (data.items || []).map((item: any) => ({
+        ...item,
+        pubDate: new Date(item.pubDate),
+      }));
+
+      feedCache.set(feedScope, { items, timestamp: Date.now() });
+      void setPersistentCache(getPersistentFeedKey(feedScope), toSerializable(items));
+      recordFeedSuccess(feedScope);
+      ingestHeadlines(items.map(item => ({
+        title: item.title,
+        pubDate: item.pubDate,
+        source: item.source,
+        link: item.link,
+      })));
+
+      return items;
+    }
+
     let url = typeof feed.url === 'string' ? feed.url : feed.url.en;
     if (typeof feed.url !== 'string') {
       url = feed.url[currentLang] || feed.url.en || Object.values(feed.url)[0] || '';
@@ -322,6 +387,7 @@ export async function fetchCategoryFeeds(
   options: {
     batchSize?: number;
     onBatch?: (items: NewsItem[]) => void;
+    includeEcccAlerts?: boolean;
   } = {}
 ): Promise<NewsItem[]> {
   const topLimit = 20;
@@ -356,6 +422,16 @@ export async function fetchCategoryFeeds(
       [topItems[i], topItems[i + 1]] = [topItems[i + 1]!, topItems[i]!];
     }
   };
+
+  // Include ECCC alerts if requested
+  if (options.includeEcccAlerts) {
+    try {
+      const ecccItems = await fetchEcccAlerts();
+      ecccItems.forEach(insertTopItem);
+    } catch {
+      // Silently fail - ECCC alerts are supplemental
+    }
+  }
 
   for (const batch of batches) {
     const results = await Promise.all(batch.map(fetchFeed));

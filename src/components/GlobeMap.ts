@@ -2518,6 +2518,7 @@ export class GlobeMap {
     latam:    { lat: -15, lng: -60,  altitude: 1.5 },
     africa:   { lat:  5,  lng:  20,  altitude: 1.5 },
     oceania:  { lat: -25, lng: 140,  altitude: 1.5 },
+    toronto:  { lat: 43.6532, lng: -79.3832, altitude: 0.08 },
   };
 
   public setView(view: MapView): void {
@@ -3194,6 +3195,11 @@ export class GlobeMap {
   public onTimeRangeChanged(_cb: (r: TimeRange) => void): void {}
   public onStateChanged(_cb: (s: MapContainerState) => void): void {}
   public setOnCountry(_cb: any): void {}
+
+  public setTorontoFireIncidents(_incidents: any[]): void {}
+  public setTorontoDineSafe(_closures: any[]): void {}
+  public setTorontoNeighbourhoods(_geojson: any): void {}
+
   public getHotspotLevel(_id: string) { return 'low'; }
 
   private async applyEnhancedVisuals(): Promise<void> {

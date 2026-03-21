@@ -36,9 +36,9 @@ const API_KEY = process.env.AISSTREAM_API_KEY || process.env.VITE_AISSTREAM_API_
 const PORT = process.env.PORT || 3004;
 
 if (!API_KEY) {
-  console.error('[Relay] Error: AISSTREAM_API_KEY environment variable not set');
-  console.error('[Relay] Get a free key at https://aisstream.io');
-  process.exit(1);
+  console.warn('[Relay] Warning: AISSTREAM_API_KEY environment variable not set');
+  console.warn('[Relay] AIS vessel tracking disabled. Get a free key at https://aisstream.io');
+  console.warn('[Relay] Other relay features will continue to work (RSS proxy, etc.)');
 }
 
 const MAX_WS_CLIENTS = 10; // Cap WS clients — app uses HTTP snapshots, not WS
@@ -389,6 +389,106 @@ const orefState = {
   _alertsCache: null,  // { json, gzip, brotli }
   _historyCache: null, // { json, gzip, brotli }
 };
+
+// ─────────────────────────────────────────────────────────────
+// Ontario 511 Highway Incidents (GTA)
+// ─────────────────────────────────────────────────────────────
+
+const ONTARIO_511_POLL_INTERVAL_MS = Math.max(60_000, Number(process.env.ONTARIO_511_POLL_INTERVAL_MS || 300_000));
+const ONTARIO_511_ENABLED = true; // No special config needed, uses public API
+const GTA_HIGHWAYS = ['400', '401', '403', '404', '407', '427', 'QEW'];
+const GTA_BOUNDS = { minLat: 43.3, maxLat: 44.1, minLon: -80.0, maxLon: -78.8 };
+
+const ontario511State = {
+  lastIncidents: [],
+  lastPollAt: 0,
+  lastError: null,
+  _incidentsCache: null,  // { json, gzip, brotli }
+};
+
+async function fetchOntario511Incidents() {
+  try {
+    // Ontario 511 API - public endpoint for road events
+    // Note: In production, this may need to use a specific API endpoint or scrape
+    const resp = await fetch('https://511on.ca/api/v2/events', {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': CHROME_UA,
+      },
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    if (!resp.ok) {
+      throw new Error(`Ontario 511 API returned ${resp.status}`);
+    }
+
+    const raw = await resp.json();
+    const events = Array.isArray(raw) ? raw : (raw.events || []);
+
+    // Filter to GTA highways and geographic bounds
+    const gtaEvents = events.filter(event => {
+      const roadName = (event.RoadName || event.roadName || '').toUpperCase();
+      const isGtaHwy = GTA_HIGHWAYS.some(hw => roadName.includes(`HWY-${hw}`) || roadName.includes(hw));
+
+      const lat = event.Latitude || event.latitude;
+      const lon = event.Longitude || event.longitude;
+      const inBounds = lat && lon &&
+        lat >= GTA_BOUNDS.minLat && lat <= GTA_BOUNDS.maxLat &&
+        lon >= GTA_BOUNDS.minLon && lon <= GTA_BOUNDS.maxLon;
+
+      return isGtaHwy || inBounds;
+    });
+
+    // Normalize to standard format
+    const incidents = gtaEvents.map(event => ({
+      id: event.Id || event.id || `${Date.now()}-${Math.random()}`,
+      roadName: event.RoadName || event.roadName || 'Unknown',
+      description: event.Description || event.description || event.Event_Type || event.eventType || '',
+      severity: (event.Severity || event.severity || 'UNKNOWN').toUpperCase(),
+      latitude: event.Latitude !== undefined ? Number(event.Latitude) : (event.latitude !== undefined ? Number(event.latitude) : null),
+      longitude: event.Longitude !== undefined ? Number(event.Longitude) : (event.longitude !== undefined ? Number(event.longitude) : null),
+      startTime: event.Start_Time || event.startTime || event.Created_Date || event.createdDate || new Date().toISOString(),
+      lastUpdated: event.Last_Updated || event.lastUpdated || new Date().toISOString(),
+      county: event.County || event.county || null,
+      type: event.Event_Type || event.eventType || null,
+    }));
+
+    ontario511State.lastIncidents = incidents;
+    ontario511State.lastPollAt = Date.now();
+    ontario511State.lastError = null;
+
+    ontario511PreSerializeResponse();
+    logThrottled('log', 'ontario-511', `[Relay] Ontario 511: ${incidents.length} GTA incidents`);
+  } catch (err) {
+    ontario511State.lastError = err?.message || String(err);
+    console.warn('[Relay] Ontario 511 poll error:', ontario511State.lastError);
+    ontario511PreSerializeResponse();
+  }
+}
+
+function ontario511PreSerializeResponse() {
+  const ts = ontario511State.lastPollAt ? new Date(ontario511State.lastPollAt).toISOString() : new Date().toISOString();
+  const responseJson = JSON.stringify({
+    incidents: ontario511State.lastIncidents || [],
+    timestamp: ts,
+    ...(ontario511State.lastError ? { error: ontario511State.lastError } : {}),
+  });
+  ontario511State._incidentsCache = {
+    json: responseJson,
+    gzip: gzipSyncBuffer(responseJson),
+    brotli: brotliSyncBuffer(responseJson)
+  };
+}
+
+function startOntario511PollLoop() {
+  // Initial fetch
+  fetchOntario511Incidents().catch(() => {});
+  // Poll every 5 minutes (configurable)
+  setInterval(() => {
+    fetchOntario511Incidents().catch(() => {});
+  }, ONTARIO_511_POLL_INTERVAL_MS).unref?.();
+  console.log(`[Relay] Ontario 511 poll loop started (interval ${ONTARIO_511_POLL_INTERVAL_MS}ms)`);
+}
 
 function loadTelegramChannels() {
   // Product-managed curated list lives in repo root under data/ (shared by web + desktop).
@@ -7311,6 +7411,12 @@ const server = http.createServer(async (req, res) => {
         redisEnabled: UPSTASH_ENABLED,
         bootstrapSource: orefState.bootstrapSource,
       },
+      ontario511: {
+        enabled: ONTARIO_511_ENABLED,
+        incidentCount: ontario511State.lastIncidents?.length || 0,
+        lastPollAt: ontario511State.lastPollAt ? new Date(ontario511State.lastPollAt).toISOString() : null,
+        hasError: !!ontario511State.lastError,
+      },
       memory: {
         rss: `${(mem.rss / 1024 / 1024).toFixed(0)}MB`,
         heapUsed: `${(mem.heapUsed / 1024 / 1024).toFixed(0)}MB`,
@@ -7748,6 +7854,23 @@ const server = http.createServer(async (req, res) => {
         historyCount24h: orefState.historyCount24h,
         totalHistoryCount: orefState.totalHistoryCount,
         timestamp: orefState.lastPollAt ? new Date(orefState.lastPollAt).toISOString() : new Date().toISOString(),
+      }));
+    }
+  } else if (pathname === '/ontario-511') {
+    const c = ontario511State._incidentsCache;
+    if (c) {
+      sendPreGzipped(req, res, 200, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=60',
+      }, c.json, c.gzip, c.brotli);
+    } else {
+      sendCompressed(req, res, 200, {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=60',
+      }, JSON.stringify({
+        incidents: ontario511State.lastIncidents || [],
+        timestamp: ontario511State.lastPollAt ? new Date(ontario511State.lastPollAt).toISOString() : new Date().toISOString(),
+        ...(ontario511State.lastError ? { error: ontario511State.lastError } : {}),
       }));
     }
   } else if (pathname.startsWith('/ucdp-events')) {
@@ -8355,6 +8478,12 @@ function connectUpstream() {
   if (upstreamSocket?.readyState === WebSocket.OPEN ||
       upstreamSocket?.readyState === WebSocket.CONNECTING) return;
 
+  // Skip AIS connection if no API key
+  if (!API_KEY) {
+    console.log('[Relay] AIS stream disabled (no API key)');
+    return;
+  }
+
   console.log('[Relay] Connecting to aisstream.io...');
   const socket = new WebSocket(AISSTREAM_URL);
   upstreamSocket = socket;
@@ -8456,6 +8585,7 @@ server.listen(PORT, () => {
   console.log(`[Relay] WebSocket relay on port ${PORT} (OpenSky: ${OPENSKY_PROXY_ENABLED ? 'via proxy' : 'direct'})`);
   startTelegramPollLoop();
   startOrefPollLoop();
+  startOntario511PollLoop();
   startUcdpSeedLoop();
   startMarketDataSeedLoop();
   startAviationSeedLoop();

@@ -271,6 +271,16 @@ export const DEFAULT_MAP_LAYERS: MapLayers = {
   commodityPorts: false,
   webcams: false,
   weatherRadar: false,
+  // Toronto variant layers (disabled in tech variant)
+  toronto_fire_incidents: false,
+  toronto_dinesafe: false,
+  toronto_neighbourhoods: false,
+  toronto_311_stress: false,
+  toronto_development: false,
+  toronto_water_level: false,
+  toronto_earthquakes: false,
+  ontario_spills: false,
+  toronto_air_traffic: false,
 };
 
 // Mobile defaults for tech variant
@@ -332,6 +342,16 @@ export const MOBILE_DEFAULT_MAP_LAYERS: MapLayers = {
   commodityPorts: false,
   webcams: false,
   weatherRadar: false,
+  // Toronto variant layers (disabled in tech variant)
+  toronto_fire_incidents: false,
+  toronto_dinesafe: false,
+  toronto_neighbourhoods: false,
+  toronto_311_stress: false,
+  toronto_development: false,
+  toronto_water_level: false,
+  toronto_earthquakes: false,
+  ontario_spills: false,
+  toronto_air_traffic: false,
 };
 
 export const VARIANT_CONFIG: VariantConfig = {

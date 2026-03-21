@@ -3,7 +3,7 @@ import type { MapLayers } from '@/types';
 import { isDesktopRuntime } from '@/services/runtime';
 
 export type MapRenderer = 'flat' | 'globe';
-export type MapVariant = 'full' | 'tech' | 'finance' | 'happy' | 'commodity';
+export type MapVariant = 'full' | 'tech' | 'finance' | 'happy' | 'commodity' | 'toronto';
 
 const _desktop = isDesktopRuntime();
 
@@ -80,6 +80,16 @@ export const LAYER_REGISTRY: Record<keyof MapLayers, LayerDefinition> = {
   commodityPorts:           def('commodityPorts',           '&#9973;',   'commodityPorts',           'Commodity Ports'),
   webcams:                  def('webcams',                  '&#128247;', 'webcams',                  'Live Webcams'),
   weatherRadar:             def('weatherRadar',             '&#127783;', 'weatherRadar',             'Weather Radar', ['flat']),
+  // Toronto variant layers
+  toronto_fire_incidents:   def('toronto_fire_incidents',   '&#128293;', 'torontoFireIncidents',     'Fire Incidents'),
+  toronto_dinesafe:         def('toronto_dinesafe',         '&#128066;', 'torontoDinesafe',           'DineSafe Closures'),
+  toronto_neighbourhoods:   def('toronto_neighbourhoods',   '&#127963;', 'torontoNeighbourhoods',     'Neighbourhood Risk'),
+  toronto_311_stress:       def('toronto_311_stress',       '&#128262;', 'toronto311Stress',          '311 Service Stress'),
+  toronto_development:      def('toronto_development',      '&#127979;', 'torontoDevelopment',        'Development Pipeline'),
+  toronto_water_level:      def('toronto_water_level',      '&#127755;', 'torontoWaterLevel',         'Lake Ontario Surge'),
+  toronto_earthquakes:      def('toronto_earthquakes',      '&#127755;', 'torontoEarthquakes',        'Earthquakes'),
+  ontario_spills:           def('ontario_spills',           '&#9888;',   'ontarioSpills',             'Hazardous Spills'),
+  toronto_air_traffic:      def('toronto_air_traffic',      '&#9992;',   'torontoAirTraffic',         'Air Traffic'),
 };
 
 const VARIANT_LAYER_ORDER: Record<MapVariant, Array<keyof MapLayers>> = {
@@ -114,12 +124,18 @@ const VARIANT_LAYER_ORDER: Record<MapVariant, Array<keyof MapLayers>> = {
     'ais', 'economic', 'fires', 'climate',
     'natural', 'weather', 'outages', 'dayNight', 'weatherRadar',
   ],
+  toronto: [
+    'toronto_fire_incidents', 'toronto_dinesafe', 'toronto_neighbourhoods',
+    'toronto_311_stress', 'toronto_development', 'toronto_water_level',
+    'toronto_earthquakes', 'ontario_spills', 'toronto_air_traffic',
+  ],
 };
 
 const SVG_ONLY_LAYERS: Partial<Record<MapVariant, Array<keyof MapLayers>>> = {
   full: ['sanctions'],
   finance: ['sanctions'],
   commodity: ['sanctions'],
+  toronto: [],
 };
 
 const I18N_PREFIX = 'components.deckgl.layers.';

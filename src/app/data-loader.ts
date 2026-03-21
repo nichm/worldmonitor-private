@@ -65,6 +65,7 @@ import {
   fetchCriticalMinerals,
   fetchSanctionsPressure,
   fetchRadiationWatch,
+  fetchTorontoFireIncidents,
 } from '@/services';
 import { getMarketWatchlistEntries } from '@/services/market-watchlist';
 import { fetchStockAnalysesForTargets, getStockAnalysisTargets } from '@/services/stock-analysis';
@@ -103,6 +104,11 @@ import { fetchThermalEscalations } from '@/services/thermal-escalation';
 import { fetchTelegramFeed } from '@/services/telegram-intel';
 import { fetchOrefAlerts, startOrefPolling, stopOrefPolling, onOrefAlertsUpdate } from '@/services/oref-alerts';
 import { enrichEventsWithExposure } from '@/services/population-exposure';
+import { fetchTorontoShelter } from '@/services/toronto-shelter';
+import { fetchTorontoPermits } from '@/services/toronto-permits';
+import { fetchTorontoDineSafe } from '@/services/toronto-dinesafe';
+import { fetchOntarioHousing } from '@/services/ontario-housing';
+import { fetchOntarioRoads, startOntarioRoadsPolling, stopOntarioRoadsPolling, onOntarioRoadsUpdate, type OntarioRoadsResponse } from '@/services/ontario-roads';
 import { debounce, getCircuitBreakerCooldownInfo } from '@/utils';
 import { getSecretState, isFeatureAvailable, isFeatureEnabled } from '@/services/runtime-config';
 import { isDesktopRuntime, toApiUrl } from '@/services/runtime';
@@ -255,6 +261,7 @@ export class DataLoaderManager implements AppModule {
     if (this.imageryRetryTimer) { clearTimeout(this.imageryRetryTimer); this.imageryRetryTimer = null; }
     this.applyTimeRangeFilterToNewsPanelsDebounced.cancel();
     stopOrefPolling();
+    stopOntarioRoadsPolling();
     if (this.boundMarketWatchlistHandler) {
       window.removeEventListener('wm-market-watchlist-changed', this.boundMarketWatchlistHandler as EventListener);
       this.boundMarketWatchlistHandler = null;
@@ -498,6 +505,29 @@ export class DataLoaderManager implements AppModule {
     }
     if (SITE_VARIANT !== 'happy' && shouldLoad('thermal-escalation')) {
       tasks.push({ name: 'thermalEscalation', task: runGuarded('thermalEscalation', () => this.loadThermalEscalations()) });
+    }
+
+    // Toronto variant panels
+    if (SITE_VARIANT === 'toronto' || shouldLoad('shelter-gauge')) {
+      tasks.push({ name: 'torontoShelter', task: runGuarded('torontoShelter', () => this.loadTorontoShelter()) });
+    }
+    if (SITE_VARIANT === 'toronto' || (this.ctx.mapLayers.toronto_fire_incidents && shouldLoad('toronto-fire'))) {
+      tasks.push({ name: 'torontoFire', task: runGuarded('torontoFire', () => this.loadTorontoFire()) });
+    }
+    if (SITE_VARIANT === 'toronto' || shouldLoad('boc-rates')) {
+      tasks.push({ name: 'bocRates', task: runGuarded('bocRates', () => this.loadBocRates()) });
+    }
+    if (SITE_VARIANT === 'toronto' || shouldLoad('building-permits')) {
+      tasks.push({ name: 'buildingPermits', task: runGuarded('buildingPermits', () => this.loadBuildingPermits()) });
+    }
+    if (SITE_VARIANT === 'toronto' || shouldLoad('dinesafe')) {
+      tasks.push({ name: 'dineSafe', task: runGuarded('dineSafe', () => this.loadTorontoDineSafe()) });
+    }
+    if (SITE_VARIANT === 'toronto' || shouldLoad('housing-targets')) {
+      tasks.push({ name: 'housingTargets', task: runGuarded('housingTargets', () => this.loadOntarioHousing()) });
+    }
+    if (SITE_VARIANT === 'toronto' || shouldLoad('ontario-roads')) {
+      tasks.push({ name: 'ontarioRoads', task: runGuarded('ontarioRoads', () => this.loadOntarioRoads()) });
     }
 
     // Stagger startup: run tasks in small batches to avoid hammering upstreams
@@ -1814,6 +1844,15 @@ export class DataLoaderManager implements AppModule {
       })());
     }
 
+    // Ontario Roads polling (toronto variant only)
+    if (SITE_VARIANT === 'toronto') {
+      onOntarioRoadsUpdate((update: OntarioRoadsResponse) => {
+        this.callPanel('ontario-roads', 'setData', update);
+        dataFreshness.recordUpdate('ontario_roads' as DataSourceId, update.incidents.length);
+      });
+      startOntarioRoadsPolling();
+    }
+
     // GPS/GNSS jamming (cloud-only — seeded by Wingbits API via fetch-gpsjam.mjs)
     if (!isDesktopRuntime()) {
       tasks.push((async () => {
@@ -2787,6 +2826,19 @@ export class DataLoaderManager implements AppModule {
     }
   }
 
+  async loadTorontoFire(): Promise<void> {
+    try {
+      const incidents = await fetchTorontoFireIncidents();
+      this.ctx.map?.setTorontoFireIncidents(incidents);
+      this.callPanel('toronto-fire', 'setData', incidents);
+      dataFreshness.recordUpdate('toronto_fire' as DataSourceId, incidents.length);
+    } catch (error) {
+      console.error('[App] Toronto Fire fetch failed:', error);
+      this.callPanel('toronto-fire', 'setData', []);
+      dataFreshness.recordError('toronto_fire' as DataSourceId, String(error));
+    }
+  }
+
   async loadThermalEscalations(): Promise<void> {
     try {
       const result = await fetchThermalEscalations();
@@ -2795,6 +2847,79 @@ export class DataLoaderManager implements AppModule {
       dataFreshness.recordUpdate('thermal-escalation' as DataSourceId, result.clusters.length);
     } catch (error) {
       console.error('[App] Thermal escalation fetch failed:', error);
+    }
+  }
+
+  async loadTorontoShelter(): Promise<void> {
+    try {
+      const result = await fetchTorontoShelter();
+      if (result) {
+        this.callPanel('shelter-gauge', 'fetchData');
+        dataFreshness.recordUpdate('toronto_shelter' as DataSourceId, 1);
+      }
+    } catch (error) {
+      console.error('[App] Toronto shelter fetch failed:', error);
+      dataFreshness.recordError('toronto_shelter' as DataSourceId, String(error));
+    }
+  }
+
+  async loadTorontoDineSafe(): Promise<void> {
+    try {
+      const closures = await fetchTorontoDineSafe();
+      this.ctx.map?.setTorontoDineSafe(closures);
+      this.callPanel('dinesafe', 'setData', closures);
+      dataFreshness.recordUpdate('toronto_dinesafe' as DataSourceId, closures.length);
+    } catch (error) {
+      console.error('[App] Toronto DineSafe fetch failed:', error);
+      this.callPanel('dinesafe', 'setData', []);
+      dataFreshness.recordError('toronto_dinesafe' as DataSourceId, String(error));
+    }
+  }
+
+  async loadOntarioHousing(): Promise<void> {
+    try {
+      const targets = await fetchOntarioHousing();
+      this.callPanel('housing-targets', 'setData', targets);
+      dataFreshness.recordUpdate('ontario_housing' as DataSourceId, targets.length);
+    } catch (error) {
+      console.error('[App] Ontario Housing fetch failed:', error);
+      this.callPanel('housing-targets', 'setData', []);
+      dataFreshness.recordError('ontario_housing' as DataSourceId, String(error));
+    }
+  }
+
+  async loadOntarioRoads(): Promise<void> {
+    try {
+      const data = await fetchOntarioRoads();
+      this.callPanel('ontario-roads', 'setData', data);
+      dataFreshness.recordUpdate('ontario_roads' as DataSourceId, data.incidents.length);
+    } catch (error) {
+      console.error('[App] Ontario Roads fetch failed:', error);
+      this.callPanel('ontario-roads', 'setData', { incidents: [], timestamp: new Date().toISOString(), filteredHighways: [], error: String(error) });
+      dataFreshness.recordError('ontario_roads' as DataSourceId, String(error));
+    }
+  }
+
+  async loadBocRates(): Promise<void> {
+    try {
+      this.callPanel('boc-rates', 'fetchData');
+      dataFreshness.recordUpdate('boc_rates' as DataSourceId, 1);
+    } catch (error) {
+      console.error('[App] BoC rates fetch failed:', error);
+      dataFreshness.recordError('boc_rates' as DataSourceId, String(error));
+    }
+  }
+
+  async loadBuildingPermits(): Promise<void> {
+    try {
+      const result = await fetchTorontoPermits();
+      if (result) {
+        this.callPanel('building-permits', 'fetchData');
+        dataFreshness.recordUpdate('toronto_permits' as DataSourceId, result.permits?.length ?? 0);
+      }
+    } catch (error) {
+      console.error('[App] Building permits fetch failed:', error);
+      dataFreshness.recordError('toronto_permits' as DataSourceId, String(error));
     }
   }
 }

@@ -59,7 +59,7 @@ RUN chmod +x /app/entrypoint.sh
 # Ensure writable dirs for non-root
 RUN chown -R appuser:appgroup /app /tmp/nginx-client-body /tmp/nginx-proxy \
     /tmp/nginx-fastcgi /tmp/nginx-uwsgi /tmp/nginx-scgi /var/log/supervisor \
-    /var/lib/nginx /var/log/nginx
+    /var/lib/nginx /var/log/nginx /etc/nginx /etc/supervisor
 
 USER appuser
 

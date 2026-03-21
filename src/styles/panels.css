@@ -2403,3 +2403,457 @@
 .gb-priciest { background: rgba(239,68,68,0.1); color: #f87171; }
 .gb-total-row td { border-top: 2px solid rgba(255,255,255,0.2); }
 .gb-updated { font-size: 0.65rem; opacity: 0.4; text-align: right; padding: 4px 6px; }
+
+/* Ontario Roads Panel */
+.ontario-roads-filters {
+  display: flex;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-wrap: wrap;
+}
+
+.ontario-roads-filters .filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ontario-roads-filters label {
+  font-size: 0.7rem;
+  opacity: 0.6;
+  font-weight: 500;
+}
+
+.ontario-roads-filters select {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  color: var(--text-normal);
+  cursor: pointer;
+}
+
+.ontario-roads-filters select:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.15);
+}
+
+.ontario-roads-content {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.highway-group {
+  margin-bottom: 16px;
+}
+
+.highway-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(8px);
+}
+
+.highway-name {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-normal);
+}
+
+.highway-count {
+  font-size: 0.7rem;
+  opacity: 0.6;
+}
+
+.highway-badge {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.highway-badge.critical {
+  background: rgba(239,68,68,0.15);
+  color: var(--threat-critical);
+}
+
+.highway-badge.major {
+  background: rgba(251,146,60,0.12);
+  color: var(--threat-high);
+}
+
+.highway-incidents {
+  padding: 8px 12px;
+}
+
+.ontario-incident {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+}
+
+.ontario-incident[data-severity="critical"] {
+  border-left-color: var(--threat-critical);
+  background: rgba(239,68,68,0.05);
+}
+
+.ontario-incident[data-severity="major"] {
+  border-left-color: var(--threat-high);
+  background: rgba(251,146,60,0.03);
+}
+
+.ontario-incident[data-severity="moderate"] {
+  border-left-color: var(--threat-medium);
+}
+
+.ontario-incident[data-severity="minor"] {
+  border-left-color: var(--threat-low);
+}
+
+.incident-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.incident-severity {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.incident-time {
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
+
+.incident-description {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.incident-meta {
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
+
+.incident-location {
+  font-style: italic;
+}
+
+/* ----------------------------------------------------------
+   Toronto Shelter Gauge Panel
+   ---------------------------------------------------------- */
+.shelter-gauge-container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.shelter-gauge {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.gauge-svg {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+}
+
+.gauge-value {
+  font-size: 32px;
+  font-weight: 700;
+  fill: var(--text);
+}
+
+.gauge-label {
+  font-size: 11px;
+  fill: var(--text-dim);
+}
+
+.shelter-citywide {
+  text-align: center;
+  padding: 12px;
+  background: var(--overlay-subtle);
+  border-radius: 8px;
+}
+
+.citywide-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.citywide-metric {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.citywide-date {
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+.shelter-sectors {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shelter-sector {
+  padding: 8px 10px;
+  background: var(--overlay-subtle);
+  border-radius: 6px;
+}
+
+.sector-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.sector-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.sector-occupancy {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sector-capacity {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.sector-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.sector-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+  border-radius: 3px;
+}
+
+/* ----------------------------------------------------------
+   Bank of Canada Rate Ticker Panel
+   ---------------------------------------------------------- */
+.boc-ticker-container {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.boc-ticker {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.boc-ticker-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.boc-ticker-item.boc-overnight {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px;
+  background: var(--overlay-subtle);
+  border-radius: 6px;
+}
+
+.boc-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.boc-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.boc-change-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.boc-footer {
+  font-size: 9px;
+  color: var(--text-faint);
+  text-align: right;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ----------------------------------------------------------
+   Toronto Building Permits Panel
+   ---------------------------------------------------------- */
+.permits-container {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.permits-summary {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.permits-total {
+  flex: 1;
+  padding: 10px;
+  background: var(--overlay-subtle);
+  border-radius: 6px;
+}
+
+.permits-total-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.permits-total-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.permits-total-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.permits-chart {
+  flex: 1;
+  padding: 10px;
+  background: var(--overlay-subtle);
+  border-radius: 6px;
+}
+
+.permits-chart-title {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.permits-sparkline {
+  height: 40px;
+}
+
+.permits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.permits-list-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  padding: 4px 0;
+}
+
+.permit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: var(--overlay-subtle);
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+}
+
+.permit-row--high {
+  border-left-color: var(--semantic-critical);
+}
+
+.permit-row--medium {
+  border-left-color: var(--semantic-elevated);
+}
+
+.permit-row--low {
+  border-left-color: var(--semantic-normal);
+}
+
+.permit-location {
+  flex: 1;
+}
+
+.permit-street {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.permit-ward {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.permit-units {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.permit-count {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.permit-label {
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+.permits-footer {
+  font-size: 9px;
+  color: var(--text-faint);
+  text-align: center;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-subtle);
+}

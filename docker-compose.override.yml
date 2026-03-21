@@ -1,0 +1,31 @@
+services:
+  worldmonitor:
+    environment:
+      # GLM 4.7 Configuration with OpenAI-compatible endpoint
+      LLM_API_URL: "https://api.cerebras.ai/v1/chat/completions"
+      LLM_API_KEY: "csk-t23xx3jypeh6ktm545x8hkykd4kp2exjde348ntmn3hf4dxv"
+      LLM_MODEL: "zai-glm-4.7"
+
+      # AviationStack API
+      AVIATIONSTACK_API: "72b04b403597cfbbfa6c3eb7e18691bb"
+
+      # ACLED credentials (for automatic token refresh)
+      ACLED_EMAIL: "contact@nichm.com"
+      ACLED_PASSWORD: "ymn0QWQ!uqt9kxt8fpq"
+
+      # Finnhub API
+      FINNHUB_API_KEY: "d6anfahr01qqjvbr3q10"
+
+      # NASA FIRMS API (wildfire detection)
+      NASA_FIRMS_API_KEY: "0f07f3e5071ff58687ace9ac32ee2da0"
+
+      # FRED API (economic indicators)
+      FRED_API_KEY: "401f3dc24cfa56be05c0c3240a908acf"
+
+      # AISStream API (vessel tracking - needed by worldmonitor service too)
+      AISSTREAM_API_KEY: "96f5cee55e5868f84e388f0c663004bc8ca06741"
+
+  ais-relay:
+    environment:
+      # AISStream API key (vessel tracking)
+      AISSTREAM_API_KEY: "96f5cee55e5868f84e388f0c663004bc8ca06741"

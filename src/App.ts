@@ -1026,6 +1026,12 @@ export class App {
       REFRESH_INTERVALS.strategicRisk,
       () => this.isPanelNearViewport('strategic-risk')
     );
+    this.refreshScheduler.scheduleRefresh(
+      'toronto-fire',
+      () => this.dataLoader.loadTorontoFire(),
+      REFRESH_INTERVALS.torontoFire,
+      () => this.state.mapLayers.toronto_fire_incidents && this.isPanelNearViewport('toronto-fire')
+    );
 
     // Server-side temporal anomalies (news + satellite_fires)
     if (SITE_VARIANT !== 'happy') {

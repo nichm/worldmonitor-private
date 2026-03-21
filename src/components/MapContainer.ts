@@ -44,9 +44,11 @@ import type { SatellitePosition } from '@/services/satellites';
 import type { IranEvent } from '@/services/conflict';
 import type { ImageryScene } from '@/generated/server/worldmonitor/imagery/v1/service_server';
 import type { WebcamEntry, WebcamCluster } from '@/generated/client/worldmonitor/webcam/v1/service_client';
+import type { TorontoFireIncident } from '@/services/toronto-fire';
+import type { DineSafeClosure } from '@/types';
 
 export type TimeRange = '1h' | '6h' | '24h' | '48h' | '7d' | 'all';
-export type MapView = 'global' | 'america' | 'mena' | 'eu' | 'asia' | 'latam' | 'africa' | 'oceania';
+export type MapView = 'global' | 'america' | 'mena' | 'eu' | 'asia' | 'latam' | 'africa' | 'oceania' | 'toronto';
 
 export interface MapContainerState {
   zoom: number;
@@ -397,6 +399,24 @@ export class MapContainer {
   }
 
   // ─── Data setters ────────────────────────────────────────────────────────────
+
+  public setTorontoFireIncidents(incidents: TorontoFireIncident[]): void {
+    if (this.useGlobe) { this.globeMap?.setTorontoFireIncidents(incidents); return; }
+    if (this.useDeckGL) { this.deckGLMap?.setTorontoFireIncidents(incidents); }
+    // SVG map does not support Toronto fire incidents
+  }
+
+  public setTorontoDineSafe(closures: DineSafeClosure[]): void {
+    if (this.useGlobe) { this.globeMap?.setTorontoDineSafe(closures); return; }
+    if (this.useDeckGL) { this.deckGLMap?.setTorontoDineSafe(closures); }
+    // SVG map does not support DineSafe layer
+  }
+
+  public setTorontoNeighbourhoods(geojson: any): void {
+    if (this.useGlobe) { this.globeMap?.setTorontoNeighbourhoods(geojson); return; }
+    if (this.useDeckGL) { this.deckGLMap?.setTorontoNeighbourhoods(geojson); }
+    // SVG map does not support Toronto neighbourhoods layer
+  }
 
   public setEarthquakes(earthquakes: Earthquake[]): void {
     this.cachedEarthquakes = earthquakes;
