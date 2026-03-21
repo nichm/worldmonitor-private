@@ -72,11 +72,14 @@ export default async function handler(req) {
     const body = JSON.stringify(result);
 
     if (redisUrl && redisToken && country && code) {
-      fetch(redisUrl, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${redisToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(['SET', cacheKey, body, 'EX', 604800]),
-      }).catch(() => {});
+      try {
+        await fetch(redisUrl, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${redisToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(['SET', cacheKey, body, 'EX', 604800]),
+          signal: AbortSignal.timeout(2000),
+        });
+      } catch { /* cache write failed or timed out, non-critical */ }
     }
 
     return new Response(body, {

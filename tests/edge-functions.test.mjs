@@ -109,6 +109,30 @@ describe('Legacy api/*.js endpoint allowlist', () => {
   });
 });
 
+describe('reverse-geocode Redis write', () => {
+  const geocodePath = join(apiDir, 'reverse-geocode.js');
+
+  it('has awaited Redis write (not fire-and-forget)', () => {
+    const src = readFileSync(geocodePath, 'utf-8');
+    assert.ok(
+      src.includes('await fetch(redisUrl'),
+      'reverse-geocode.js: Redis cache write must be awaited to prevent edge-isolate termination before write completes',
+    );
+    assert.ok(
+      !src.includes('.catch(() => {})'),
+      'reverse-geocode.js: fire-and-forget .catch(() => {}) pattern must be replaced with awaited try-catch',
+    );
+  });
+
+  it('bounds the Redis write with AbortSignal.timeout', () => {
+    const src = readFileSync(geocodePath, 'utf-8');
+    assert.ok(
+      src.includes('AbortSignal.timeout'),
+      'reverse-geocode.js: Redis write must have AbortSignal.timeout to prevent holding the response open on slow writes',
+    );
+  });
+});
+
 describe('Edge Function module isolation', () => {
   for (const { name, path } of edgeFunctions) {
     it(`${name} does not import from ../server/ (Edge Functions cannot resolve cross-directory TS)`, () => {
