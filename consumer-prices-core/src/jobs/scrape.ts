@@ -196,8 +196,18 @@ export async function scrapeAll() {
   }
 }
 
-if (process.argv[2]) {
-  scrapeRetailer(process.argv[2]).finally(() => closePool()).catch(console.error);
-} else {
-  scrapeAll().finally(() => closePool()).catch(console.error);
+async function main() {
+  try {
+    if (process.argv[2]) {
+      await scrapeRetailer(process.argv[2]);
+    } else {
+      await scrapeAll();
+    }
+  } catch (err) {
+    console.error('[scrape] fatal:', err);
+  } finally {
+    await closePool().catch(() => {});
+  }
 }
+
+main().catch(() => {}).then(() => process.exit(0));
