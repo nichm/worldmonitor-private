@@ -26,10 +26,10 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-var config = { runtime: "edge" };
-var TORONTO_CAD_URL = "https://www.toronto.ca/fire/cadinfo/livecad.htm";
-var CACHE_TTL = 5 * 60;
-async function handler(req) {
+const config = { runtime: "edge" };
+const TORONTO_CAD_URL = "https://www.toronto.ca/fire/cadinfo/livecad.htm";
+const CACHE_TTL = 5 * 60;
+async function handler(_req) {
   try {
     const response = await fetch(TORONTO_CAD_URL, {
       headers: {
@@ -78,7 +78,7 @@ function parseTorontoFireCAD(html) {
       const cellRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
       const cells = [];
       for (const cellMatch of rowHtml.matchAll(cellRegex)) {
-        let cellContent = cellMatch[1].replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim();
+        const cellContent = cellMatch[1].replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim();
         cells.push(cellContent);
       }
       if (cells.length >= 3) {

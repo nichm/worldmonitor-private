@@ -1,41 +1,41 @@
 // api/contact.js
 import { createRequire } from "module";
 import { resolve as nodePathResolve } from "path";
-var version = "1.32.0";
-var lookup = [];
-var revLookup = [];
-var Arr = Uint8Array;
-var code = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const version = "1.32.0";
+const lookup = [];
+const revLookup = [];
+const Arr = Uint8Array;
+const code = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 for (i = 0, len = code.length; i < len; ++i) {
   lookup[i] = code[i];
   revLookup[code.charCodeAt(i)] = i;
 }
-var i;
-var len;
+let i;
+let len;
 revLookup["-".charCodeAt(0)] = 62;
 revLookup["_".charCodeAt(0)] = 63;
 function getLens(b64) {
-  var len2 = b64.length;
+  const len2 = b64.length;
   if (len2 % 4 > 0) {
     throw new Error("Invalid string. Length must be a multiple of 4");
   }
-  var validLen = b64.indexOf("=");
+  let validLen = b64.indexOf("=");
   if (validLen === -1) validLen = len2;
-  var placeHoldersLen = validLen === len2 ? 0 : 4 - validLen % 4;
+  const placeHoldersLen = validLen === len2 ? 0 : 4 - validLen % 4;
   return [validLen, placeHoldersLen];
 }
 function _byteLength(_b64, validLen, placeHoldersLen) {
   return (validLen + placeHoldersLen) * 3 / 4 - placeHoldersLen;
 }
 function toByteArray(b64) {
-  var tmp;
-  var lens = getLens(b64);
-  var validLen = lens[0];
-  var placeHoldersLen = lens[1];
-  var arr2 = new Arr(_byteLength(b64, validLen, placeHoldersLen));
-  var curByte = 0;
-  var len2 = placeHoldersLen > 0 ? validLen - 4 : validLen;
-  var i2;
+  let tmp;
+  const lens = getLens(b64);
+  const validLen = lens[0];
+  const placeHoldersLen = lens[1];
+  const arr2 = new Arr(_byteLength(b64, validLen, placeHoldersLen));
+  let curByte = 0;
+  const len2 = placeHoldersLen > 0 ? validLen - 4 : validLen;
+  let i2;
   for (i2 = 0; i2 < len2; i2 += 4) {
     tmp = revLookup[b64.charCodeAt(i2)] << 18 | revLookup[b64.charCodeAt(i2 + 1)] << 12 | revLookup[b64.charCodeAt(i2 + 2)] << 6 | revLookup[b64.charCodeAt(i2 + 3)];
     arr2[curByte++] = tmp >> 16 & 255;
@@ -57,21 +57,21 @@ function tripletToBase64(num) {
   return lookup[num >> 18 & 63] + lookup[num >> 12 & 63] + lookup[num >> 6 & 63] + lookup[num & 63];
 }
 function encodeChunk(uint8, start, end) {
-  var tmp;
-  var output = [];
-  for (var i2 = start; i2 < end; i2 += 3) {
+  let tmp;
+  const output = [];
+  for (let i2 = start; i2 < end; i2 += 3) {
     tmp = (uint8[i2] << 16 & 16711680) + (uint8[i2 + 1] << 8 & 65280) + (uint8[i2 + 2] & 255);
     output.push(tripletToBase64(tmp));
   }
   return output.join("");
 }
 function fromByteArray(uint8) {
-  var tmp;
-  var len2 = uint8.length;
-  var extraBytes = len2 % 3;
-  var parts = [];
-  var maxChunkLength = 16383;
-  for (var i2 = 0, len22 = len2 - extraBytes; i2 < len22; i2 += maxChunkLength) {
+  let tmp;
+  const len2 = uint8.length;
+  const extraBytes = len2 % 3;
+  const parts = [];
+  const maxChunkLength = 16383;
+  for (let i2 = 0, len22 = len2 - extraBytes; i2 < len22; i2 += maxChunkLength) {
     parts.push(
       encodeChunk(
         uint8,
@@ -139,12 +139,12 @@ function isSimpleObject(value) {
   prototype?.constructor?.name === "Object";
   return isObject && isSimple;
 }
-var LITTLE_ENDIAN = true;
-var MIN_INT64 = BigInt("-9223372036854775808");
-var MAX_INT64 = BigInt("9223372036854775807");
-var ZERO = BigInt("0");
-var EIGHT = BigInt("8");
-var TWOFIFTYSIX = BigInt("256");
+const LITTLE_ENDIAN = true;
+const MIN_INT64 = BigInt("-9223372036854775808");
+const MAX_INT64 = BigInt("9223372036854775807");
+const ZERO = BigInt("0");
+const EIGHT = BigInt("8");
+const TWOFIFTYSIX = BigInt("256");
 function isSpecial(n) {
   return Number.isNaN(n) || !Number.isFinite(n) || Object.is(n, -0);
 }
@@ -200,9 +200,9 @@ function modernBase64ToBigInt(encoded) {
   const intBytesView = new DataView(integerBytes.buffer);
   return intBytesView.getBigInt64(0, true);
 }
-var bigIntToBase64 = DataView.prototype.setBigInt64 ? modernBigIntToBase64 : slowBigIntToBase64;
-var base64ToBigInt = DataView.prototype.getBigInt64 ? modernBase64ToBigInt : slowBase64ToBigInt;
-var MAX_IDENTIFIER_LEN = 1024;
+const bigIntToBase64 = DataView.prototype.setBigInt64 ? modernBigIntToBase64 : slowBigIntToBase64;
+const base64ToBigInt = DataView.prototype.getBigInt64 ? modernBase64ToBigInt : slowBase64ToBigInt;
+const MAX_IDENTIFIER_LEN = 1024;
 function validateObjectField(k) {
   if (k.length > MAX_IDENTIFIER_LEN) {
     throw new Error(
@@ -290,7 +290,7 @@ function jsonToConvex(value) {
   }
   return out;
 }
-var MAX_VALUE_FOR_ERROR_LEN = 16384;
+const MAX_VALUE_FOR_ERROR_LEN = 16384;
 function stringifyValueForError(value) {
   const str = JSON.stringify(value, (_key, value2) => {
     if (value2 === void 0) {
@@ -420,13 +420,13 @@ function convexOrUndefinedToJsonInternal(value, originalValue, context) {
 function convexToJson(value) {
   return convexToJsonInternal(value, value, "", false);
 }
-var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-var _a;
-var _b;
-var IDENTIFYING_FIELD = /* @__PURE__ */ Symbol.for("ConvexError");
-var ConvexError = class extends (_b = Error, _a = IDENTIFYING_FIELD, _b) {
+const __defProp = Object.defineProperty;
+const __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+const __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+let _a;
+let _b;
+const IDENTIFYING_FIELD = /* @__PURE__ */ Symbol.for("ConvexError");
+const ConvexError = class extends (_b = Error, _a = IDENTIFYING_FIELD, _b) {
   constructor(data) {
     super(typeof data === "string" ? data : stringifyValueForError(data));
     __publicField(this, "name", "ConvexError");
@@ -435,13 +435,13 @@ var ConvexError = class extends (_b = Error, _a = IDENTIFYING_FIELD, _b) {
     this.data = data;
   }
 };
-var arr = () => Array.from({ length: 4 }, () => 0);
-var aBytes = arr();
-var bBytes = arr();
-var __defProp2 = Object.defineProperty;
-var __defNormalProp2 = (obj, key, value) => key in obj ? __defProp2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField2 = (obj, key, value) => __defNormalProp2(obj, typeof key !== "symbol" ? key + "" : key, value);
-var INFO_COLOR = "color:rgb(0, 145, 255)";
+const arr = () => Array.from({ length: 4 }, () => 0);
+const aBytes = arr();
+const bBytes = arr();
+const __defProp2 = Object.defineProperty;
+const __defNormalProp2 = (obj, key, value) => key in obj ? __defProp2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+const __publicField2 = (obj, key, value) => __defNormalProp2(obj, typeof key !== "symbol" ? key + "" : key, value);
+const INFO_COLOR = "color:rgb(0, 145, 255)";
 function prefix_for_source(source) {
   switch (source) {
     case "query":
@@ -454,7 +454,7 @@ function prefix_for_source(source) {
       return "?";
   }
 }
-var DefaultLogger = class {
+const DefaultLogger = class {
   constructor(options) {
     __publicField2(this, "_onLogLineFuncs");
     __publicField2(this, "_verbose");
@@ -544,8 +544,8 @@ function logForFunction(logger, type, source, udfPath, message) {
     logger.error(`[CONVEX ${prefix}(${udfPath})] ${message}`);
   }
 }
-var functionName = /* @__PURE__ */ Symbol.for("functionName");
-var toReferencePath = /* @__PURE__ */ Symbol.for("toReferencePath");
+const functionName = /* @__PURE__ */ Symbol.for("functionName");
+const toReferencePath = /* @__PURE__ */ Symbol.for("toReferencePath");
 function extractReferencePath(reference) {
   return reference[toReferencePath] ?? null;
 }
@@ -623,11 +623,11 @@ function createApi(pathParts = []) {
   };
   return new Proxy({}, handler2);
 }
-var anyApi = createApi();
-var __defProp3 = Object.defineProperty;
-var __defNormalProp3 = (obj, key, value) => key in obj ? __defProp3(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField3 = (obj, key, value) => __defNormalProp3(obj, typeof key !== "symbol" ? key + "" : key, value);
-var Long = class _Long {
+const anyApi = createApi();
+const __defProp3 = Object.defineProperty;
+const __defNormalProp3 = (obj, key, value) => key in obj ? __defProp3(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+const __publicField3 = (obj, key, value) => __defNormalProp3(obj, typeof key !== "symbol" ? key + "" : key, value);
+const Long = class _Long {
   constructor(low, high) {
     __publicField3(this, "low");
     __publicField3(this, "high");
@@ -637,7 +637,7 @@ var Long = class _Long {
     this.__isUnsignedLong__ = true;
   }
   static isLong(obj) {
-    return (obj && obj.__isUnsignedLong__) === true;
+    return (obj?.__isUnsignedLong__) === true;
   }
   // prettier-ignore
   static fromBytesLE(bytes) {
@@ -662,7 +662,7 @@ var Long = class _Long {
     ];
   }
   static fromNumber(value) {
-    if (isNaN(value)) return UZERO;
+    if (Number.isNaN(value)) return UZERO;
     if (value < 0) return UZERO;
     if (value >= TWO_PWR_64_DBL) return MAX_UNSIGNED_VALUE;
     return new _Long(value % TWO_PWR_32_DBL | 0, value / TWO_PWR_32_DBL | 0);
@@ -694,21 +694,21 @@ var Long = class _Long {
     return new _Long(val.low, val.high);
   }
 };
-var UZERO = new Long(0, 0);
-var TWO_PWR_16_DBL = 1 << 16;
-var TWO_PWR_32_DBL = TWO_PWR_16_DBL * TWO_PWR_16_DBL;
-var TWO_PWR_64_DBL = TWO_PWR_32_DBL * TWO_PWR_32_DBL;
-var MAX_UNSIGNED_VALUE = new Long(4294967295 | 0, 4294967295 | 0);
-var InvalidTokenError = class extends Error {
+const UZERO = new Long(0, 0);
+const TWO_PWR_16_DBL = 1 << 16;
+const TWO_PWR_32_DBL = TWO_PWR_16_DBL * TWO_PWR_16_DBL;
+const TWO_PWR_64_DBL = TWO_PWR_32_DBL * TWO_PWR_32_DBL;
+const MAX_UNSIGNED_VALUE = new Long(4294967295 | 0, 4294967295 | 0);
+const InvalidTokenError = class extends Error {
 };
 InvalidTokenError.prototype.name = "InvalidTokenError";
-var MAXIMUM_REFRESH_DELAY = 20 * 24 * 60 * 60 * 1e3;
-var __defProp4 = Object.defineProperty;
-var __defNormalProp4 = (obj, key, value) => key in obj ? __defProp4(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField4 = (obj, key, value) => __defNormalProp4(obj, typeof key !== "symbol" ? key + "" : key, value);
-var STATUS_CODE_UDF_FAILED = 560;
-var specifiedFetch = void 0;
-var ConvexHttpClient = class {
+const MAXIMUM_REFRESH_DELAY = 20 * 24 * 60 * 60 * 1e3;
+const __defProp4 = Object.defineProperty;
+const __defNormalProp4 = (obj, key, value) => key in obj ? __defProp4(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+const __publicField4 = (obj, key, value) => __defNormalProp4(obj, typeof key !== "symbol" ? key + "" : key, value);
+const STATUS_CODE_UDF_FAILED = 560;
+const specifiedFetch = void 0;
+const ConvexHttpClient = class {
   /**
    * Create a new {@link ConvexHttpClient}.
    *
@@ -1144,35 +1144,35 @@ function forwardErrorData(errorData, error) {
   error.data = jsonToConvex(errorData);
   return error;
 }
-var defaultWebSocketConstructor;
+let defaultWebSocketConstructor;
 function setDefaultWebSocketConstructor(ws) {
   defaultWebSocketConstructor = ws;
 }
-var require2 = createRequire(nodePathResolve("."));
-var __create = Object.create;
-var __defProp5 = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __require = /* @__PURE__ */ ((x) => typeof require2 !== "undefined" ? require2 : typeof Proxy !== "undefined" ? new Proxy(x, {
+const require2 = createRequire(nodePathResolve("."));
+const __create = Object.create;
+const __defProp5 = Object.defineProperty;
+const __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+const __getOwnPropNames = Object.getOwnPropertyNames;
+const __getProtoOf = Object.getPrototypeOf;
+const __hasOwnProp = Object.prototype.hasOwnProperty;
+const __require = /* @__PURE__ */ ((x) => typeof require2 !== "undefined" ? require2 : typeof Proxy !== "undefined" ? new Proxy(x, {
   get: (a, b) => (typeof require2 !== "undefined" ? require2 : a)[b]
 }) : x)(function(x) {
   if (typeof require2 !== "undefined") return require2.apply(this, arguments);
   throw Error('Dynamic require of "' + x + '" is not supported');
 });
-var __commonJS = (cb, mod) => function __require2() {
+const __commonJS = (cb, mod) => function __require2() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
-var __copyProps = (to, from, except, desc) => {
+const __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
+    for (const key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
         __defProp5(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+const __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
@@ -1180,10 +1180,10 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp5(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var require_stream = __commonJS({
-  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/stream.js"(exports, module) {
-    "use strict";
-    var { Duplex } = __require("stream");
+const require_stream = __commonJS({
+  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/stream.js"(_exports, module) {
+    
+    const { Duplex } = __require("stream");
     function emitClose(stream) {
       stream.emit("close");
     }
@@ -1221,7 +1221,7 @@ var require_stream = __commonJS({
         if (duplex.destroyed) return;
         duplex.push(null);
       });
-      duplex._destroy = function(err, callback) {
+      duplex._destroy = (err, callback) => {
         if (ws.readyState === ws.CLOSED) {
           callback(err);
           process.nextTick(emitClose, duplex);
@@ -1238,7 +1238,7 @@ var require_stream = __commonJS({
         });
         if (terminateOnDestroy) ws.terminate();
       };
-      duplex._final = function(callback) {
+      duplex._final = (callback) => {
         if (ws.readyState === ws.CONNECTING) {
           ws.once("open", function open() {
             duplex._final(callback);
@@ -1256,10 +1256,10 @@ var require_stream = __commonJS({
           ws.close();
         }
       };
-      duplex._read = function() {
+      duplex._read = () => {
         if (ws.isPaused) ws.resume();
       };
-      duplex._write = function(chunk, encoding, callback) {
+      duplex._write = (chunk, encoding, callback) => {
         if (ws.readyState === ws.CONNECTING) {
           ws.once("open", function open() {
             duplex._write(chunk, encoding, callback);
@@ -1275,11 +1275,11 @@ var require_stream = __commonJS({
     module.exports = createWebSocketStream2;
   }
 });
-var require_constants = __commonJS({
-  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/constants.js"(exports, module) {
-    "use strict";
-    var BINARY_TYPES = ["nodebuffer", "arraybuffer", "fragments"];
-    var hasBlob = typeof Blob !== "undefined";
+const require_constants = __commonJS({
+  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/constants.js"(_exports, module) {
+    
+    const BINARY_TYPES = ["nodebuffer", "arraybuffer", "fragments"];
+    const hasBlob = typeof Blob !== "undefined";
     if (hasBlob) BINARY_TYPES.push("blob");
     module.exports = {
       BINARY_TYPES,
@@ -1295,43 +1295,43 @@ var require_constants = __commonJS({
     };
   }
 });
-var require_node_gyp_build = __commonJS({
-  "../common/temp/node_modules/.pnpm/node-gyp-build@4.8.4/node_modules/node-gyp-build/node-gyp-build.js"(exports, module) {
-    var fs = __require("fs");
-    var path = __require("path");
-    var os = __require("os");
-    var runtimeRequire = typeof __webpack_require__ === "function" ? __non_webpack_require__ : __require;
-    var vars = process.config && process.config.variables || {};
-    var prebuildsOnly = !!process.env.PREBUILDS_ONLY;
-    var abi = process.versions.modules;
-    var runtime = isElectron() ? "electron" : isNwjs() ? "node-webkit" : "node";
-    var arch = process.env.npm_config_arch || os.arch();
-    var platform = process.env.npm_config_platform || os.platform();
-    var libc = process.env.LIBC || (isAlpine(platform) ? "musl" : "glibc");
-    var armv = process.env.ARM_VERSION || (arch === "arm64" ? "8" : vars.arm_version) || "";
-    var uv = (process.versions.uv || "").split(".")[0];
+const require_node_gyp_build = __commonJS({
+  "../common/temp/node_modules/.pnpm/node-gyp-build@4.8.4/node_modules/node-gyp-build/node-gyp-build.js"(_exports, module) {
+    const fs = __require("fs");
+    const path = __require("path");
+    const os = __require("os");
+    const runtimeRequire = typeof __webpack_require__ === "function" ? __non_webpack_require__ : __require;
+    const vars = process.config?.variables || {};
+    const prebuildsOnly = !!process.env.PREBUILDS_ONLY;
+    const abi = process.versions.modules;
+    const runtime = isElectron() ? "electron" : isNwjs() ? "node-webkit" : "node";
+    const arch = process.env.npm_config_arch || os.arch();
+    const platform = process.env.npm_config_platform || os.platform();
+    const libc = process.env.LIBC || (isAlpine(platform) ? "musl" : "glibc");
+    const armv = process.env.ARM_VERSION || (arch === "arm64" ? "8" : vars.arm_version) || "";
+    const uv = (process.versions.uv || "").split(".")[0];
     module.exports = load;
     function load(dir) {
       return runtimeRequire(load.resolve(dir));
     }
-    load.resolve = load.path = function(dir) {
+    load.resolve = load.path = (dir) => {
       dir = path.resolve(dir || ".");
       try {
-        var name = runtimeRequire(path.join(dir, "package.json")).name.toUpperCase().replace(/-/g, "_");
+        const name = runtimeRequire(path.join(dir, "package.json")).name.toUpperCase().replace(/-/g, "_");
         if (process.env[name + "_PREBUILD"]) dir = process.env[name + "_PREBUILD"];
       } catch (err) {
       }
       if (!prebuildsOnly) {
-        var release = getFirst(path.join(dir, "build/Release"), matchBuild);
+        const release = getFirst(path.join(dir, "build/Release"), matchBuild);
         if (release) return release;
-        var debug = getFirst(path.join(dir, "build/Debug"), matchBuild);
+        const debug = getFirst(path.join(dir, "build/Debug"), matchBuild);
         if (debug) return debug;
       }
-      var prebuild = resolve(dir);
+      const prebuild = resolve(dir);
       if (prebuild) return prebuild;
-      var nearby = resolve(path.dirname(process.execPath));
+      const nearby = resolve(path.dirname(process.execPath));
       if (nearby) return nearby;
-      var target = [
+      const target = [
         "platform=" + platform,
         "arch=" + arch,
         "runtime=" + runtime,
@@ -1346,13 +1346,13 @@ var require_node_gyp_build = __commonJS({
       ].filter(Boolean).join(" ");
       throw new Error("No native build was found for " + target + "\n    loaded from: " + dir + "\n");
       function resolve(dir2) {
-        var tuples = readdirSync(path.join(dir2, "prebuilds")).map(parseTuple);
-        var tuple = tuples.filter(matchTuple(platform, arch)).sort(compareTuples)[0];
+        const tuples = readdirSync(path.join(dir2, "prebuilds")).map(parseTuple);
+        const tuple = tuples.filter(matchTuple(platform, arch)).sort(compareTuples)[0];
         if (!tuple) return;
-        var prebuilds = path.join(dir2, "prebuilds", tuple.name);
-        var parsed = readdirSync(prebuilds).map(parseTags);
-        var candidates = parsed.filter(matchTags(runtime, abi));
-        var winner = candidates.sort(compareTags(runtime))[0];
+        const prebuilds = path.join(dir2, "prebuilds", tuple.name);
+        const parsed = readdirSync(prebuilds).map(parseTags);
+        const candidates = parsed.filter(matchTags(runtime, abi));
+        const winner = candidates.sort(compareTags(runtime))[0];
         if (winner) return path.join(prebuilds, winner.file);
       }
     };
@@ -1364,24 +1364,24 @@ var require_node_gyp_build = __commonJS({
       }
     }
     function getFirst(dir, filter) {
-      var files = readdirSync(dir).filter(filter);
+      const files = readdirSync(dir).filter(filter);
       return files[0] && path.join(dir, files[0]);
     }
     function matchBuild(name) {
       return /\.node$/.test(name);
     }
     function parseTuple(name) {
-      var arr2 = name.split("-");
+      const arr2 = name.split("-");
       if (arr2.length !== 2) return;
-      var platform2 = arr2[0];
-      var architectures = arr2[1].split("+");
+      const platform2 = arr2[0];
+      const architectures = arr2[1].split("+");
       if (!platform2) return;
       if (!architectures.length) return;
       if (!architectures.every(Boolean)) return;
       return { name, platform: platform2, architectures };
     }
     function matchTuple(platform2, arch2) {
-      return function(tuple) {
+      return (tuple) => {
         if (tuple == null) return false;
         if (tuple.platform !== platform2) return false;
         return tuple.architectures.includes(arch2);
@@ -1391,12 +1391,12 @@ var require_node_gyp_build = __commonJS({
       return a.architectures.length - b.architectures.length;
     }
     function parseTags(file) {
-      var arr2 = file.split(".");
-      var extension = arr2.pop();
-      var tags = { file, specificity: 0 };
+      const arr2 = file.split(".");
+      const extension = arr2.pop();
+      const tags = { file, specificity: 0 };
       if (extension !== "node") return;
-      for (var i2 = 0; i2 < arr2.length; i2++) {
-        var tag = arr2[i2];
+      for (let i2 = 0; i2 < arr2.length; i2++) {
+        const tag = arr2[i2];
         if (tag === "node" || tag === "electron" || tag === "node-webkit") {
           tags.runtime = tag;
         } else if (tag === "napi") {
@@ -1417,7 +1417,7 @@ var require_node_gyp_build = __commonJS({
       return tags;
     }
     function matchTags(runtime2, abi2) {
-      return function(tags) {
+      return (tags) => {
         if (tags == null) return false;
         if (tags.runtime && tags.runtime !== runtime2 && !runtimeAgnostic(tags)) return false;
         if (tags.abi && tags.abi !== abi2 && !tags.napi) return false;
@@ -1431,7 +1431,7 @@ var require_node_gyp_build = __commonJS({
       return tags.runtime === "node" && tags.napi;
     }
     function compareTags(runtime2) {
-      return function(a, b) {
+      return (a, b) => {
         if (a.runtime !== b.runtime) {
           return a.runtime === runtime2 ? -1 : 1;
         } else if (a.abi !== b.abi) {
@@ -1444,10 +1444,10 @@ var require_node_gyp_build = __commonJS({
       };
     }
     function isNwjs() {
-      return !!(process.versions && process.versions.nw);
+      return !!(process.versions?.nw);
     }
     function isElectron() {
-      if (process.versions && process.versions.electron) return true;
+      if (process.versions?.electron) return true;
       if (process.env.ELECTRON_RUN_AS_NODE) return true;
       return typeof window !== "undefined" && window.process && window.process.type === "renderer";
     }
@@ -1462,9 +1462,9 @@ var require_node_gyp_build = __commonJS({
     load.compareTuples = compareTuples;
   }
 });
-var require_node_gyp_build2 = __commonJS({
-  "../common/temp/node_modules/.pnpm/node-gyp-build@4.8.4/node_modules/node-gyp-build/index.js"(exports, module) {
-    var runtimeRequire = typeof __webpack_require__ === "function" ? __non_webpack_require__ : __require;
+const require_node_gyp_build2 = __commonJS({
+  "../common/temp/node_modules/.pnpm/node-gyp-build@4.8.4/node_modules/node-gyp-build/index.js"(_exports, module) {
+    const runtimeRequire = typeof __webpack_require__ === "function" ? __non_webpack_require__ : __require;
     if (typeof runtimeRequire.addon === "function") {
       module.exports = runtimeRequire.addon.bind(runtimeRequire);
     } else {
@@ -1472,26 +1472,26 @@ var require_node_gyp_build2 = __commonJS({
     }
   }
 });
-var require_fallback = __commonJS({
-  "../common/temp/node_modules/.pnpm/bufferutil@4.0.9/node_modules/bufferutil/fallback.js"(exports, module) {
-    "use strict";
-    var mask = (source, mask2, output, offset, length) => {
-      for (var i2 = 0; i2 < length; i2++) {
+const require_fallback = __commonJS({
+  "../common/temp/node_modules/.pnpm/bufferutil@4.0.9/node_modules/bufferutil/fallback.js"(_exports, module) {
+    
+    const mask = (source, mask2, output, offset, length) => {
+      for (let i2 = 0; i2 < length; i2++) {
         output[offset + i2] = source[i2] ^ mask2[i2 & 3];
       }
     };
-    var unmask = (buffer, mask2) => {
+    const unmask = (buffer, mask2) => {
       const length = buffer.length;
-      for (var i2 = 0; i2 < length; i2++) {
+      for (let i2 = 0; i2 < length; i2++) {
         buffer[i2] ^= mask2[i2 & 3];
       }
     };
     module.exports = { mask, unmask };
   }
 });
-var require_bufferutil = __commonJS({
-  "../common/temp/node_modules/.pnpm/bufferutil@4.0.9/node_modules/bufferutil/index.js"(exports, module) {
-    "use strict";
+const require_bufferutil = __commonJS({
+  "../common/temp/node_modules/.pnpm/bufferutil@4.0.9/node_modules/bufferutil/index.js"(_exports, module) {
+    
     try {
       module.exports = require_node_gyp_build2()(__dirname);
     } catch (e) {
@@ -1499,11 +1499,11 @@ var require_bufferutil = __commonJS({
     }
   }
 });
-var require_buffer_util = __commonJS({
-  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/buffer-util.js"(exports, module) {
-    "use strict";
-    var { EMPTY_BUFFER } = require_constants();
-    var FastBuffer = Buffer[Symbol.species];
+const require_buffer_util = __commonJS({
+  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/buffer-util.js"(_exports, module) {
+    
+    const { EMPTY_BUFFER } = require_constants();
+    const FastBuffer = Buffer[Symbol.species];
     function concat(list, totalLength) {
       if (list.length === 0) return EMPTY_BUFFER;
       if (list.length === 1) return list[0];
@@ -1559,11 +1559,11 @@ var require_buffer_util = __commonJS({
     if (!process.env.WS_NO_BUFFER_UTIL) {
       try {
         const bufferUtil = require_bufferutil();
-        module.exports.mask = function(source, mask, output, offset, length) {
+        module.exports.mask = (source, mask, output, offset, length) => {
           if (length < 48) _mask(source, mask, output, offset, length);
           else bufferUtil.mask(source, mask, output, offset, length);
         };
-        module.exports.unmask = function(buffer, mask) {
+        module.exports.unmask = (buffer, mask) => {
           if (buffer.length < 32) _unmask(buffer, mask);
           else bufferUtil.unmask(buffer, mask);
         };
@@ -1572,12 +1572,12 @@ var require_buffer_util = __commonJS({
     }
   }
 });
-var require_limiter = __commonJS({
-  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/limiter.js"(exports, module) {
-    "use strict";
-    var kDone = /* @__PURE__ */ Symbol("kDone");
-    var kRun = /* @__PURE__ */ Symbol("kRun");
-    var Limiter = class {
+const require_limiter = __commonJS({
+  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/limiter.js"(_exports, module) {
+    
+    const kDone = /* @__PURE__ */ Symbol("kDone");
+    const kRun = /* @__PURE__ */ Symbol("kRun");
+    const Limiter = class {
       /**
        * Creates a new `Limiter`.
        *
@@ -1620,22 +1620,22 @@ var require_limiter = __commonJS({
     module.exports = Limiter;
   }
 });
-var require_permessage_deflate = __commonJS({
-  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/permessage-deflate.js"(exports, module) {
-    "use strict";
-    var zlib = __require("zlib");
-    var bufferUtil = require_buffer_util();
-    var Limiter = require_limiter();
-    var { kStatusCode } = require_constants();
-    var FastBuffer = Buffer[Symbol.species];
-    var TRAILER = Buffer.from([0, 0, 255, 255]);
-    var kPerMessageDeflate = /* @__PURE__ */ Symbol("permessage-deflate");
-    var kTotalLength = /* @__PURE__ */ Symbol("total-length");
-    var kCallback = /* @__PURE__ */ Symbol("callback");
-    var kBuffers = /* @__PURE__ */ Symbol("buffers");
-    var kError = /* @__PURE__ */ Symbol("error");
-    var zlibLimiter;
-    var PerMessageDeflate = class {
+const require_permessage_deflate = __commonJS({
+  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/permessage-deflate.js"(_exports, module) {
+    
+    const zlib = __require("zlib");
+    const bufferUtil = require_buffer_util();
+    const Limiter = require_limiter();
+    const { kStatusCode } = require_constants();
+    const FastBuffer = Buffer[Symbol.species];
+    const TRAILER = Buffer.from([0, 0, 255, 255]);
+    const kPerMessageDeflate = /* @__PURE__ */ Symbol("permessage-deflate");
+    const kTotalLength = /* @__PURE__ */ Symbol("total-length");
+    const kCallback = /* @__PURE__ */ Symbol("callback");
+    const kBuffers = /* @__PURE__ */ Symbol("buffers");
+    const kError = /* @__PURE__ */ Symbol("error");
+    let zlibLimiter;
+    const PerMessageDeflate = class {
       /**
        * Creates a PerMessageDeflate instance.
        *
@@ -1997,12 +1997,12 @@ var require_permessage_deflate = __commonJS({
     }
   }
 });
-var require_validation = __commonJS({
-  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/validation.js"(exports, module) {
-    "use strict";
-    var { isUtf8 } = __require("buffer");
-    var { hasBlob } = require_constants();
-    var tokenChars = [
+const require_validation = __commonJS({
+  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/validation.js"(_exports, module) {
+    
+    const { isUtf8 } = __require("buffer");
+    const { hasBlob } = require_constants();
+    const tokenChars = [
       0,
       0,
       0,
@@ -2182,42 +2182,38 @@ var require_validation = __commonJS({
       tokenChars
     };
     if (isUtf8) {
-      module.exports.isValidUTF8 = function(buf) {
-        return buf.length < 24 ? _isValidUTF8(buf) : isUtf8(buf);
-      };
+      module.exports.isValidUTF8 = (buf) => buf.length < 24 ? _isValidUTF8(buf) : isUtf8(buf);
     } else if (!process.env.WS_NO_UTF_8_VALIDATE) {
       try {
         const isValidUTF8 = __require("utf-8-validate");
-        module.exports.isValidUTF8 = function(buf) {
-          return buf.length < 32 ? _isValidUTF8(buf) : isValidUTF8(buf);
-        };
+        module.exports.isValidUTF8 = (buf) => buf.length < 32 ? _isValidUTF8(buf) : isValidUTF8(buf);
       } catch (e) {
       }
     }
   }
 });
-var require_receiver = __commonJS({
-  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/receiver.js"(exports, module) {
-    "use strict";
-    var { Writable } = __require("stream");
-    var PerMessageDeflate = require_permessage_deflate();
-    var {
+const require_receiver = __commonJS({
+  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/receiver.js"(_exports, module) {
+    
+    const { Writable } = __require("stream");
+    const PerMessageDeflate = require_permessage_deflate();
+    const {
       BINARY_TYPES,
       EMPTY_BUFFER,
       kStatusCode,
       kWebSocket
     } = require_constants();
-    var { concat, toArrayBuffer, unmask } = require_buffer_util();
-    var { isValidStatusCode, isValidUTF8 } = require_validation();
-    var FastBuffer = Buffer[Symbol.species];
-    var GET_INFO = 0;
-    var GET_PAYLOAD_LENGTH_16 = 1;
-    var GET_PAYLOAD_LENGTH_64 = 2;
-    var GET_MASK = 3;
-    var GET_DATA = 4;
-    var INFLATING = 5;
-    var DEFER_EVENT = 6;
-    var Receiver2 = class extends Writable {
+    const { concat, toArrayBuffer, unmask } = require_buffer_util();
+    const { isValidStatusCode, isValidUTF8 } = require_validation();
+    const FastBuffer = Buffer[Symbol.species];
+    const GET_INFO = 0;
+    const GET_PAYLOAD_LENGTH_16 = 1;
+    const GET_PAYLOAD_LENGTH_64 = 2;
+    const GET_MASK = 3;
+    const GET_DATA = 4;
+    const INFLATING = 5;
+    const DEFER_EVENT = 6;
+    const Receiver2 = class extends Writable {
       /**
        * Creates a Receiver instance.
        *
@@ -2267,8 +2263,8 @@ var require_receiver = __commonJS({
        * @param {Function} cb Callback
        * @private
        */
-      _write(chunk, encoding, cb) {
-        if (this._opcode === 8 && this._state == GET_INFO) return cb();
+      _write(chunk, _encoding, cb) {
+        if (this._opcode === 8 && this._state === GET_INFO) return cb();
         this._bufferedBytes += chunk.length;
         this._buffers.push(chunk);
         this.startLoop(cb);
@@ -2519,7 +2515,7 @@ var require_receiver = __commonJS({
         }
         const buf = this.consume(8);
         const num = buf.readUInt32BE(0);
-        if (num > Math.pow(2, 53 - 32) - 1) {
+        if (num > 2 ** (53 - 32) - 1) {
           const error = this.createError(
             RangeError,
             "Unsupported WebSocket frame: payload length > 2^53 - 1",
@@ -2530,7 +2526,7 @@ var require_receiver = __commonJS({
           cb(error);
           return;
         }
-        this._payloadLength = num * Math.pow(2, 32) + buf.readUInt32BE(4);
+        this._payloadLength = num * 2 ** 32 + buf.readUInt32BE(4);
         this.haveLength(cb);
       }
       /**
@@ -2786,24 +2782,24 @@ var require_receiver = __commonJS({
     module.exports = Receiver2;
   }
 });
-var require_sender = __commonJS({
-  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/sender.js"(exports, module) {
-    "use strict";
-    var { Duplex } = __require("stream");
-    var { randomFillSync } = __require("crypto");
-    var PerMessageDeflate = require_permessage_deflate();
-    var { EMPTY_BUFFER, kWebSocket, NOOP } = require_constants();
-    var { isBlob, isValidStatusCode } = require_validation();
-    var { mask: applyMask, toBuffer } = require_buffer_util();
-    var kByteLength = /* @__PURE__ */ Symbol("kByteLength");
-    var maskBuffer = Buffer.alloc(4);
-    var RANDOM_POOL_SIZE = 8 * 1024;
-    var randomPool;
-    var randomPoolPointer = RANDOM_POOL_SIZE;
-    var DEFAULT = 0;
-    var DEFLATING = 1;
-    var GET_BLOB_DATA = 2;
-    var Sender2 = class _Sender {
+const require_sender = __commonJS({
+  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/sender.js"(_exports, module) {
+    
+    const { Duplex } = __require("stream");
+    const { randomFillSync } = __require("crypto");
+    const PerMessageDeflate = require_permessage_deflate();
+    const { EMPTY_BUFFER, kWebSocket, NOOP } = require_constants();
+    const { isBlob, isValidStatusCode } = require_validation();
+    const { mask: applyMask, toBuffer } = require_buffer_util();
+    const kByteLength = /* @__PURE__ */ Symbol("kByteLength");
+    const maskBuffer = Buffer.alloc(4);
+    const RANDOM_POOL_SIZE = 8 * 1024;
+    let randomPool;
+    let randomPoolPointer = RANDOM_POOL_SIZE;
+    const DEFAULT = 0;
+    const DEFLATING = 1;
+    const GET_BLOB_DATA = 2;
+    const Sender2 = class _Sender {
       /**
        * Creates a Sender instance.
        *
@@ -3093,7 +3089,7 @@ var require_sender = __commonJS({
         }
         if (this._firstFragment) {
           this._firstFragment = false;
-          if (rsv1 && perMessageDeflate && perMessageDeflate.params[perMessageDeflate._isServer ? "server_no_context_takeover" : "client_no_context_takeover"]) {
+          if (rsv1 && perMessageDeflate?.params[perMessageDeflate._isServer ? "server_no_context_takeover" : "client_no_context_takeover"]) {
             rsv1 = byteLength >= perMessageDeflate._threshold;
           }
           this._compress = rsv1;
@@ -3272,19 +3268,19 @@ var require_sender = __commonJS({
     }
   }
 });
-var require_event_target = __commonJS({
-  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/event-target.js"(exports, module) {
-    "use strict";
-    var { kForOnEventAttribute, kListener } = require_constants();
-    var kCode = /* @__PURE__ */ Symbol("kCode");
-    var kData = /* @__PURE__ */ Symbol("kData");
-    var kError = /* @__PURE__ */ Symbol("kError");
-    var kMessage = /* @__PURE__ */ Symbol("kMessage");
-    var kReason = /* @__PURE__ */ Symbol("kReason");
-    var kTarget = /* @__PURE__ */ Symbol("kTarget");
-    var kType = /* @__PURE__ */ Symbol("kType");
-    var kWasClean = /* @__PURE__ */ Symbol("kWasClean");
-    var Event = class {
+const require_event_target = __commonJS({
+  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/event-target.js"(_exports, module) {
+    
+    const { kForOnEventAttribute, kListener } = require_constants();
+    const kCode = /* @__PURE__ */ Symbol("kCode");
+    const kData = /* @__PURE__ */ Symbol("kData");
+    const kError = /* @__PURE__ */ Symbol("kError");
+    const kMessage = /* @__PURE__ */ Symbol("kMessage");
+    const kReason = /* @__PURE__ */ Symbol("kReason");
+    const kTarget = /* @__PURE__ */ Symbol("kTarget");
+    const kType = /* @__PURE__ */ Symbol("kType");
+    const kWasClean = /* @__PURE__ */ Symbol("kWasClean");
+    const Event = class {
       /**
        * Create a new `Event`.
        *
@@ -3310,7 +3306,7 @@ var require_event_target = __commonJS({
     };
     Object.defineProperty(Event.prototype, "target", { enumerable: true });
     Object.defineProperty(Event.prototype, "type", { enumerable: true });
-    var CloseEvent = class extends Event {
+    const CloseEvent = class extends Event {
       /**
        * Create a new `CloseEvent`.
        *
@@ -3352,7 +3348,7 @@ var require_event_target = __commonJS({
     Object.defineProperty(CloseEvent.prototype, "code", { enumerable: true });
     Object.defineProperty(CloseEvent.prototype, "reason", { enumerable: true });
     Object.defineProperty(CloseEvent.prototype, "wasClean", { enumerable: true });
-    var ErrorEvent = class extends Event {
+    const ErrorEvent = class extends Event {
       /**
        * Create a new `ErrorEvent`.
        *
@@ -3382,7 +3378,7 @@ var require_event_target = __commonJS({
     };
     Object.defineProperty(ErrorEvent.prototype, "error", { enumerable: true });
     Object.defineProperty(ErrorEvent.prototype, "message", { enumerable: true });
-    var MessageEvent = class extends Event {
+    const MessageEvent = class extends Event {
       /**
        * Create a new `MessageEvent`.
        *
@@ -3403,7 +3399,7 @@ var require_event_target = __commonJS({
       }
     };
     Object.defineProperty(MessageEvent.prototype, "data", { enumerable: true });
-    var EventTarget = {
+    const EventTarget = {
       /**
        * Register an event listener.
        *
@@ -3499,10 +3495,10 @@ var require_event_target = __commonJS({
     }
   }
 });
-var require_extension = __commonJS({
-  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/extension.js"(exports, module) {
-    "use strict";
-    var { tokenChars } = require_validation();
+const require_extension = __commonJS({
+  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/extension.js"(_exports, module) {
+    
+    const { tokenChars } = require_validation();
     function push(dest, name, elem) {
       if (dest[name] === void 0) dest[name] = [elem];
       else dest[name].push(elem);
@@ -3650,22 +3646,22 @@ var require_extension = __commonJS({
     module.exports = { format, parse };
   }
 });
-var require_websocket = __commonJS({
-  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/websocket.js"(exports, module) {
-    "use strict";
-    var EventEmitter = __require("events");
-    var https = __require("https");
-    var http = __require("http");
-    var net = __require("net");
-    var tls = __require("tls");
-    var { randomBytes, createHash } = __require("crypto");
-    var { Duplex, Readable } = __require("stream");
-    var { URL: URL2 } = __require("url");
-    var PerMessageDeflate = require_permessage_deflate();
-    var Receiver2 = require_receiver();
-    var Sender2 = require_sender();
-    var { isBlob } = require_validation();
-    var {
+const require_websocket = __commonJS({
+  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/websocket.js"(_exports, module) {
+    
+    const EventEmitter = __require("events");
+    const https = __require("https");
+    const http = __require("http");
+    const net = __require("net");
+    const tls = __require("tls");
+    const { randomBytes, createHash } = __require("crypto");
+    const { Duplex, Readable } = __require("stream");
+    const { URL: URL2 } = __require("url");
+    const PerMessageDeflate = require_permessage_deflate();
+    const Receiver2 = require_receiver();
+    const Sender2 = require_sender();
+    const { isBlob } = require_validation();
+    const {
       BINARY_TYPES,
       EMPTY_BUFFER,
       GUID,
@@ -3675,17 +3671,17 @@ var require_websocket = __commonJS({
       kWebSocket,
       NOOP
     } = require_constants();
-    var {
+    const {
       EventTarget: { addEventListener, removeEventListener }
     } = require_event_target();
-    var { format, parse } = require_extension();
-    var { toBuffer } = require_buffer_util();
-    var closeTimeout = 30 * 1e3;
-    var kAborted = /* @__PURE__ */ Symbol("kAborted");
-    var protocolVersions = [8, 13];
-    var readyStates = ["CONNECTING", "OPEN", "CLOSING", "CLOSED"];
-    var subprotocolRegex = /^[!#$%&'*+\-.0-9A-Z^_`|a-z~]+$/;
-    var WebSocket2 = class _WebSocket extends EventEmitter {
+    const { format, parse } = require_extension();
+    const { toBuffer } = require_buffer_util();
+    const closeTimeout = 30 * 1e3;
+    const kAborted = /* @__PURE__ */ Symbol("kAborted");
+    const protocolVersions = [8, 13];
+    const readyStates = ["CONNECTING", "OPEN", "CLOSING", "CLOSED"];
+    const subprotocolRegex = /^[!#$%&'*+\-.0-9A-Z^_`|a-z~]+$/;
+    const WebSocket2 = class _WebSocket extends EventEmitter {
       /**
        * Create a new `WebSocket`.
        *
@@ -4244,7 +4240,7 @@ var require_websocket = __commonJS({
           websocket._originalIpc = isIpcUrl;
           websocket._originalSecure = isSecure;
           websocket._originalHostOrSocketPath = isIpcUrl ? opts.socketPath : parsedUrl.host;
-          const headers = options && options.headers;
+          const headers = options?.headers;
           options = { ...options, headers: {} };
           if (headers) {
             for (const [key2, value] of Object.entries(headers)) {
@@ -4531,10 +4527,10 @@ var require_websocket = __commonJS({
     }
   }
 });
-var require_subprotocol = __commonJS({
-  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/subprotocol.js"(exports, module) {
-    "use strict";
-    var { tokenChars } = require_validation();
+const require_subprotocol = __commonJS({
+  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/subprotocol.js"(_exports, module) {
+    
+    const { tokenChars } = require_validation();
     function parse(header) {
       const protocols = /* @__PURE__ */ new Set();
       let start = -1;
@@ -4574,23 +4570,23 @@ var require_subprotocol = __commonJS({
     module.exports = { parse };
   }
 });
-var require_websocket_server = __commonJS({
-  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/websocket-server.js"(exports, module) {
-    "use strict";
-    var EventEmitter = __require("events");
-    var http = __require("http");
-    var { Duplex } = __require("stream");
-    var { createHash } = __require("crypto");
-    var extension = require_extension();
-    var PerMessageDeflate = require_permessage_deflate();
-    var subprotocol = require_subprotocol();
-    var WebSocket2 = require_websocket();
-    var { GUID, kWebSocket } = require_constants();
-    var keyRegex = /^[+/0-9A-Za-z]{22}==$/;
-    var RUNNING = 0;
-    var CLOSING = 1;
-    var CLOSED = 2;
-    var WebSocketServer2 = class extends EventEmitter {
+const require_websocket_server = __commonJS({
+  "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/websocket-server.js"(_exports, module) {
+    
+    const EventEmitter = __require("events");
+    const http = __require("http");
+    const { Duplex } = __require("stream");
+    const { createHash } = __require("crypto");
+    const extension = require_extension();
+    const PerMessageDeflate = require_permessage_deflate();
+    const subprotocol = require_subprotocol();
+    const WebSocket2 = require_websocket();
+    const { GUID, kWebSocket } = require_constants();
+    const keyRegex = /^[+/0-9A-Za-z]{22}==$/;
+    const RUNNING = 0;
+    const CLOSING = 1;
+    const CLOSED = 2;
+    const WebSocketServer2 = class extends EventEmitter {
       /**
        * Create a `WebSocketServer` instance.
        *
@@ -4649,7 +4645,7 @@ var require_websocket_server = __commonJS({
           );
         }
         if (options.port != null) {
-          this._server = http.createServer((req, res) => {
+          this._server = http.createServer((_req, res) => {
             const body = http.STATUS_CODES[426];
             res.writeHead(426, {
               "Content-Length": body.length,
@@ -4959,15 +4955,15 @@ var require_websocket_server = __commonJS({
     }
   }
 });
-var import_stream = __toESM(require_stream(), 1);
-var import_receiver = __toESM(require_receiver(), 1);
-var import_sender = __toESM(require_sender(), 1);
-var import_websocket = __toESM(require_websocket(), 1);
-var import_websocket_server = __toESM(require_websocket_server(), 1);
-var wrapper_default = import_websocket.default;
-var nodeWebSocket = wrapper_default;
+const import_stream = __toESM(require_stream(), 1);
+const import_receiver = __toESM(require_receiver(), 1);
+const import_sender = __toESM(require_sender(), 1);
+const import_websocket = __toESM(require_websocket(), 1);
+const import_websocket_server = __toESM(require_websocket_server(), 1);
+const wrapper_default = import_websocket.default;
+const nodeWebSocket = wrapper_default;
 setDefaultWebSocketConstructor(nodeWebSocket);
-var ALLOWED_ORIGIN_PATTERNS = [
+const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -4996,7 +4992,7 @@ function isDisallowedOrigin(req) {
   if (!origin) return false;
   return !isAllowedOrigin(origin);
 }
-var TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 function getClientIp(request) {
   return request.headers.get("x-real-ip") || request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 }
@@ -5070,12 +5066,12 @@ function createIpRateLimiter({ limit, windowMs }) {
   }
   return { isRateLimited, getEntry };
 }
-var config = { runtime: "edge" };
-var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-var PHONE_RE = /^[+(]?\d[\d\s()./-]{4,23}\d$/;
-var MAX_FIELD = 500;
-var MAX_MESSAGE = 2e3;
-var FREE_EMAIL_DOMAINS = /* @__PURE__ */ new Set([
+const config = { runtime: "edge" };
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^[+(]?\d[\d\s()./-]{4,23}\d$/;
+const MAX_FIELD = 500;
+const MAX_MESSAGE = 2e3;
+const FREE_EMAIL_DOMAINS = /* @__PURE__ */ new Set([
   "gmail.com",
   "googlemail.com",
   "yahoo.com",
@@ -5127,9 +5123,9 @@ var FREE_EMAIL_DOMAINS = /* @__PURE__ */ new Set([
   "libero.it",
   "virgilio.it"
 ]);
-var RATE_LIMIT = 3;
-var RATE_WINDOW_MS = 60 * 60 * 1e3;
-var rateLimiter = createIpRateLimiter({ limit: RATE_LIMIT, windowMs: RATE_WINDOW_MS });
+const RATE_LIMIT = 3;
+const RATE_WINDOW_MS = 60 * 60 * 1e3;
+const rateLimiter = createIpRateLimiter({ limit: RATE_LIMIT, windowMs: RATE_WINDOW_MS });
 async function sendNotificationEmail(name, email, organization, phone, message) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) {

@@ -26,8 +26,8 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-var config = { runtime: "edge" };
-var BOOTSTRAP_KEYS = {
+const config = { runtime: "edge" };
+const BOOTSTRAP_KEYS = {
   earthquakes: "seismology:earthquakes:v1",
   outages: "infra:outages:v1",
   sectors: "market:sectors:v1",
@@ -74,7 +74,7 @@ var BOOTSTRAP_KEYS = {
   aiTokens: "market:ai-tokens:v1",
   otherTokens: "market:other-tokens:v1"
 };
-var STANDALONE_KEYS = {
+const STANDALONE_KEYS = {
   serviceStatuses: "infra:service-statuses:v1",
   macroSignals: "economic:macro-signals:v1",
   bisPolicy: "economic:bis:policy:v1",
@@ -110,7 +110,7 @@ var STANDALONE_KEYS = {
   thermalEscalation: "thermal:escalation:v1",
   tariffTrendsUs: "trade:tariffs:v1:840:all:10"
 };
-var SEED_META = {
+const SEED_META = {
   earthquakes: { key: "seed-meta:seismology:earthquakes", maxStaleMin: 30 },
   wildfires: { key: "seed-meta:wildfire:fires", maxStaleMin: 120 },
   outages: { key: "seed-meta:infra:outages", maxStaleMin: 30 },
@@ -201,7 +201,7 @@ var SEED_META = {
   aiTokens: { key: "seed-meta:market:token-panels", maxStaleMin: 90 },
   otherTokens: { key: "seed-meta:market:token-panels", maxStaleMin: 90 }
 };
-var ON_DEMAND_KEYS = /* @__PURE__ */ new Set([
+const ON_DEMAND_KEYS = /* @__PURE__ */ new Set([
   "riskScoresLive",
   "usniFleetStale",
   "positiveEventsLive",
@@ -222,15 +222,15 @@ var ON_DEMAND_KEYS = /* @__PURE__ */ new Set([
   "serviceStatuses"
   // RPC-populated; seed-meta written on fresh fetch only, goes stale between visits
 ]);
-var EMPTY_DATA_OK_KEYS = /* @__PURE__ */ new Set(["notamClosures", "faaDelays", "gpsjam"]);
-var CASCADE_GROUPS = {
+const EMPTY_DATA_OK_KEYS = /* @__PURE__ */ new Set(["notamClosures", "faaDelays", "gpsjam"]);
+const CASCADE_GROUPS = {
   theaterPosture: ["theaterPosture", "theaterPostureLive", "theaterPostureBackup"],
   theaterPostureLive: ["theaterPosture", "theaterPostureLive", "theaterPostureBackup"],
   theaterPostureBackup: ["theaterPosture", "theaterPostureLive", "theaterPostureBackup"],
   militaryFlights: ["militaryFlights", "militaryFlightsStale"],
   militaryFlightsStale: ["militaryFlights", "militaryFlightsStale"]
 };
-var NEG_SENTINEL = "__WM_NEG__";
+const NEG_SENTINEL = "__WM_NEG__";
 async function redisPipeline(commands) {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;

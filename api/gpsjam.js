@@ -1,5 +1,5 @@
 // api/gpsjam.js
-var ALLOWED_ORIGIN_PATTERNS = [
+const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -72,14 +72,14 @@ async function readJsonFromUpstash(key, timeoutMs = 3e3) {
     return null;
   }
 }
-var config = { runtime: "edge" };
-var REDIS_KEY = "intelligence:gpsjam:v2";
-var REDIS_KEY_V1 = "intelligence:gpsjam:v1";
-var cached = null;
-var cachedAt = 0;
-var CACHE_TTL = 3e5;
-var negUntil = 0;
-var NEG_TTL = 6e4;
+const config = { runtime: "edge" };
+const REDIS_KEY = "intelligence:gpsjam:v2";
+const REDIS_KEY_V1 = "intelligence:gpsjam:v1";
+let cached = null;
+let cachedAt = 0;
+const CACHE_TTL = 3e5;
+let negUntil = 0;
+const NEG_TTL = 6e4;
 async function fetchGpsJamData() {
   const now = Date.now();
   if (cached && now - cachedAt < CACHE_TTL) return cached;

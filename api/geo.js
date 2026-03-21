@@ -26,7 +26,7 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-var config = { runtime: "edge" };
+const config = { runtime: "edge" };
 function handler(req) {
   const cfCountry = req.headers.get("cf-ipcountry");
   const country = (cfCountry && cfCountry !== "T1" ? cfCountry : null) || req.headers.get("x-vercel-ip-country") || "XX";

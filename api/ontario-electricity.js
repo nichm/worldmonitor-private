@@ -26,11 +26,11 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-var config = { runtime: "edge" };
-var IESO_PRICE_URL = "https://reports-public.ieso.ca/public/RealtimeOntarioZonalPrice/PUB_RealtimeOntarioZonalPrice.xml";
-var IESO_DEMAND_URL = "https://reports-public.ieso.ca/public/RealtimeConstTotals/PUB_RealtimeConstTotals.xml";
-var CACHE_TTL = 5 * 60;
-async function handler(req) {
+const config = { runtime: "edge" };
+const IESO_PRICE_URL = "https://reports-public.ieso.ca/public/RealtimeOntarioZonalPrice/PUB_RealtimeOntarioZonalPrice.xml";
+const IESO_DEMAND_URL = "https://reports-public.ieso.ca/public/RealtimeConstTotals/PUB_RealtimeConstTotals.xml";
+const CACHE_TTL = 5 * 60;
+async function handler(_req) {
   try {
     const [priceResponse, demandResponse] = await Promise.all([
       fetch(IESO_PRICE_URL, {

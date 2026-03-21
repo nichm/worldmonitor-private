@@ -1,4 +1,4 @@
-// api/_json-response.js
+// api/statcan-toronto.js
 function sanitizeJsonValue(value, depth = 0) {
   if (depth > 20) return "[truncated]";
   if (value instanceof Error) {
@@ -26,10 +26,8 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-
-// api/statcan-toronto.js
-var STATCAN_WDS_BASE = "https://www150.statcan.gc.ca/t1/wds/rest";
-var VECTORS = [
+const STATCAN_WDS_BASE = "https://www150.statcan.gc.ca/t1/wds/rest";
+const VECTORS = [
   "v41690973",
   // CPI - All-items, not seasonally adjusted, Toronto (Index, 2002=100)
   "v41690969",
@@ -41,8 +39,8 @@ var VECTORS = [
   "v111955442"
   // NHPI - New Housing Price Index, Toronto (Index, 2016=100)
 ];
-var config = { runtime: "edge" };
-async function handler(req) {
+const config = { runtime: "edge" };
+async function handler(_req) {
   try {
     const requestBody = {
       vectorIds: VECTORS,
@@ -106,7 +104,7 @@ async function handler(req) {
     const cpiIndicator = indicators.find((i) => i.vector_id === "v41690973");
     const unemploymentIndicator = indicators.find((i) => i.vector_id === "v2062815");
     const alerts = [];
-    if (cpiIndicator && cpiIndicator.mom_change && cpiIndicator.mom_change > 0.5) {
+    if (cpiIndicator?.mom_change && cpiIndicator.mom_change > 0.5) {
       alerts.push({
         id: `statcan-cpi-mom-${Date.now()}`,
         type: "cpi_mom_spike",
@@ -117,7 +115,7 @@ async function handler(req) {
         period: cpiIndicator.latest_period
       });
     }
-    if (unemploymentIndicator && unemploymentIndicator.mom_change && Math.abs(unemploymentIndicator.mom_change) > 0.3) {
+    if (unemploymentIndicator?.mom_change && Math.abs(unemploymentIndicator.mom_change) > 0.3) {
       alerts.push({
         id: `statcan-unemployment-${Date.now()}`,
         type: "unemployment_change",

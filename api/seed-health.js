@@ -1,5 +1,5 @@
 // api/seed-health.js
-var ALLOWED_ORIGIN_PATTERNS = [
+const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -28,13 +28,13 @@ function isDisallowedOrigin(req) {
   if (!origin) return false;
   return !isAllowedOrigin(origin);
 }
-var DESKTOP_ORIGIN_PATTERNS = [
+const DESKTOP_ORIGIN_PATTERNS = [
   /^https?:\/\/tauri\.localhost(:\d+)?$/,
   /^https?:\/\/[a-z0-9-]+\.tauri\.localhost(:\d+)?$/i,
   /^tauri:\/\/localhost$/,
   /^asset:\/\/localhost$/
 ];
-var BROWSER_ORIGIN_PATTERNS = [
+const BROWSER_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   ...process.env.NODE_ENV === "production" ? [] : [
@@ -110,8 +110,8 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-var config = { runtime: "edge" };
-var SEED_DOMAINS = {
+const config = { runtime: "edge" };
+const SEED_DOMAINS = {
   // Phase 1 — Snapshot endpoints
   "seismology:earthquakes": { key: "seed-meta:seismology:earthquakes", intervalMin: 15 },
   "wildfire:fires": { key: "seed-meta:wildfire:fires", intervalMin: 60 },

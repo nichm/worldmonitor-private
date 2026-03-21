@@ -1,5 +1,5 @@
 // api/og-story.js
-var COUNTRY_NAMES = {
+const COUNTRY_NAMES = {
   UA: "Ukraine",
   RU: "Russia",
   CN: "China",
@@ -21,14 +21,14 @@ var COUNTRY_NAMES = {
   MM: "Myanmar",
   VE: "Venezuela"
 };
-var LEVEL_COLORS = {
+const LEVEL_COLORS = {
   critical: "#ef4444",
   high: "#f97316",
   elevated: "#eab308",
   normal: "#22c55e",
   low: "#3b82f6"
 };
-var LEVEL_LABELS = {
+const LEVEL_LABELS = {
   critical: "CRITICAL INSTABILITY",
   high: "HIGH INSTABILITY",
   elevated: "ELEVATED INSTABILITY",

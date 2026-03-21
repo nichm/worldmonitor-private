@@ -26,10 +26,10 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-var config = { runtime: "edge" };
-var ARCGIS_BASE_URL = "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/Major_Crime_Indicators_Open_Data/FeatureServer/0";
-var CACHE_TTL = 6 * 60 * 60;
-async function handler(req) {
+const config = { runtime: "edge" };
+const ARCGIS_BASE_URL = "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/Major_Crime_Indicators_Open_Data/FeatureServer/0";
+const CACHE_TTL = 6 * 60 * 60;
+async function handler(_req) {
   try {
     const now = /* @__PURE__ */ new Date();
     const currentYear = now.getFullYear();

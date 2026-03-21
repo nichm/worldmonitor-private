@@ -1,5 +1,5 @@
 // api/toronto-permits.js
-var ALLOWED_ORIGIN_PATTERNS = [
+const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -55,11 +55,11 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-var config = { runtime: "edge" };
-var CKAN_BASE = "https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/datastore_search";
-var CACHE_TTL = 36e5;
-var cached = null;
-var cachedAt = 0;
+const config = { runtime: "edge" };
+const CKAN_BASE = "https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/datastore_search";
+const CACHE_TTL = 36e5;
+let cached = null;
+let cachedAt = 0;
 async function fetchPermitData() {
   const now = Date.now();
   if (cached && now - cachedAt < CACHE_TTL) return cached;

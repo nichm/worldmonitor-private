@@ -1,4 +1,4 @@
-// api/_json-response.js
+// api/toronto-dinesafe.js
 function sanitizeJsonValue(value, depth = 0) {
   if (depth > 20) return "[truncated]";
   if (value instanceof Error) {
@@ -26,17 +26,15 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-
-// api/toronto-dinesafe.js
-var CKAN_BASE_URL = "https://ckan0.cf.opendata.inter.prod-toronto.ca";
-var DATASET_ID = "dinesafe";
-var TODAY = /* @__PURE__ */ new Date();
-var FOURTEEN_DAYS_AGO = new Date(TODAY.getTime() - 14 * 24 * 60 * 60 * 1e3);
+const CKAN_BASE_URL = "https://ckan0.cf.opendata.inter.prod-toronto.ca";
+const DATASET_ID = "dinesafe";
+const TODAY = /* @__PURE__ */ new Date();
+const FOURTEEN_DAYS_AGO = new Date(TODAY.getTime() - 14 * 24 * 60 * 60 * 1e3);
 function formatDate(date) {
   return date.toISOString().split("T")[0];
 }
-var config = { runtime: "edge" };
-async function handler(req) {
+const config = { runtime: "edge" };
+async function handler(_req) {
   try {
     const query = {
       resource_id: DATASET_ID,

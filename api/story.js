@@ -1,5 +1,5 @@
 // api/story.js
-var COUNTRY_NAMES = {
+const COUNTRY_NAMES = {
   UA: "Ukraine",
   RU: "Russia",
   CN: "China",
@@ -21,7 +21,7 @@ var COUNTRY_NAMES = {
   MM: "Myanmar",
   VE: "Venezuela"
 };
-var BOT_UA = /twitterbot|facebookexternalhit|linkedinbot|slackbot|telegrambot|whatsapp|discordbot|redditbot|googlebot/i;
+const BOT_UA = /twitterbot|facebookexternalhit|linkedinbot|slackbot|telegrambot|whatsapp|discordbot|redditbot|googlebot/i;
 function handler(req, res) {
   const url = new URL(req.url, `https://${req.headers.host}`);
   const countryCode = (url.searchParams.get("c") || "").toUpperCase();

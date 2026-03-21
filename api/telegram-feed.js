@@ -1,22 +1,22 @@
 // api/telegram-feed.js
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __commonJS = (cb, mod) => function __require() {
+const __create = Object.create;
+const __defProp = Object.defineProperty;
+const __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+const __getOwnPropNames = Object.getOwnPropertyNames;
+const __getProtoOf = Object.getPrototypeOf;
+const __hasOwnProp = Object.prototype.hasOwnProperty;
+const __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
-var __copyProps = (to, from, except, desc) => {
+const __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
+    for (const key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
         __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+const __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
@@ -24,25 +24,25 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var require_dist = __commonJS({
-  "node_modules/@upstash/core-analytics/dist/index.js"(exports, module) {
-    "use strict";
-    var g = Object.defineProperty;
-    var k = Object.getOwnPropertyDescriptor;
-    var _ = Object.getOwnPropertyNames;
-    var y = Object.prototype.hasOwnProperty;
-    var w = (l, e) => {
-      for (var t in e) g(l, t, { get: e[t], enumerable: true });
+const require_dist = __commonJS({
+  "node_modules/@upstash/core-analytics/dist/index.js"(_exports, module) {
+    
+    const g = Object.defineProperty;
+    const k = Object.getOwnPropertyDescriptor;
+    const _ = Object.getOwnPropertyNames;
+    const y = Object.prototype.hasOwnProperty;
+    const w = (l, e) => {
+      for (const t in e) g(l, t, { get: e[t], enumerable: true });
     };
-    var A = (l, e, t, i) => {
-      if (e && typeof e == "object" || typeof e == "function") for (let s of _(e)) !y.call(l, s) && s !== t && g(l, s, { get: () => e[s], enumerable: !(i = k(e, s)) || i.enumerable });
+    const A = (l, e, t, i) => {
+      if (e && typeof e === "object" || typeof e === "function") for (const s of _(e)) !y.call(l, s) && s !== t && g(l, s, { get: () => e[s], enumerable: !(i = k(e, s)) || i.enumerable });
       return l;
     };
-    var x = (l) => A(g({}, "__esModule", { value: true }), l);
-    var S = {};
+    const x = (l) => A(g({}, "__esModule", { value: true }), l);
+    const S = {};
     w(S, { Analytics: () => b });
     module.exports = x(S);
-    var p = `
+    const p = `
 local key = KEYS[1]
 local field = ARGV[1]
 
@@ -70,7 +70,7 @@ end
 
 return result
 `;
-    var f = `
+    const f = `
 local prefix = KEYS[1]
 local first_timestamp = tonumber(ARGV[1]) -- First timestamp to check
 local increment = tonumber(ARGV[2])       -- Increment between each timestamp
@@ -122,7 +122,7 @@ end
 
 return {true_group, false_group, denied_group}
 `;
-    var h = `
+    const h = `
 local prefix = KEYS[1]
 local first_timestamp = tonumber(ARGV[1])
 local increment = tonumber(ARGV[2])
@@ -141,7 +141,7 @@ local result = redis.call(unpack(zunion_params))
 
 return result
 `;
-    var b = class {
+    const b = class {
       redis;
       prefix;
       bucketSize;
@@ -152,13 +152,13 @@ return result
         if (!/^[a-zA-Z0-9_-]+$/.test(e)) throw new Error(`Invalid table name: ${e}. Table names can only contain letters, numbers, dashes and underscores.`);
       }
       parseWindow(e) {
-        if (typeof e == "number") {
+        if (typeof e === "number") {
           if (e <= 0) throw new Error(`Invalid window: ${e}`);
           return e;
         }
-        let t = /^(\d+)([smhd])$/;
+        const t = /^(\d+)([smhd])$/;
         if (!t.test(e)) throw new Error(`Invalid window: ${e}`);
-        let [, i, s] = e.match(t), n = parseInt(i);
+        const [, i, s] = e.match(t), n = parseInt(i, 10);
         switch (s) {
           case "s":
             return n * 1e3;
@@ -173,24 +173,24 @@ return result
         }
       }
       getBucket(e) {
-        let t = e ?? Date.now();
+        const t = e ?? Date.now();
         return Math.floor(t / this.bucketSize) * this.bucketSize;
       }
       async ingest(e, ...t) {
         this.validateTableName(e), await Promise.all(t.map(async (i) => {
-          let s = this.getBucket(i.time), n = [this.prefix, e, s].join(":");
+          const s = this.getBucket(i.time), n = [this.prefix, e, s].join(":");
           await this.redis.zincrby(n, 1, JSON.stringify({ ...i, time: void 0 }));
         }));
       }
       formatBucketAggregate(e, t, i) {
-        let s = {};
+        const s = {};
         return e.forEach(([n, r]) => {
-          t == "success" && (n = n === 1 ? "true" : n === null ? "false" : n), s[t] = s[t] || {}, s[t][(n ?? "null").toString()] = r;
+          t === "success" && (n = n === 1 ? "true" : n === null ? "false" : n), s[t] = s[t] || {}, s[t][(n ?? "null").toString()] = r;
         }), { time: i, ...s };
       }
       async aggregateBucket(e, t, i) {
         this.validateTableName(e);
-        let s = this.getBucket(i), n = [this.prefix, e, s].join(":"), r = await this.redis.eval(p, [n], [t]);
+        const s = this.getBucket(i), n = [this.prefix, e, s].join(":"), r = await this.redis.eval(p, [n], [t]);
         return this.formatBucketAggregate(r, t, s);
       }
       async aggregateBuckets(e, t, i, s) {
@@ -203,29 +203,29 @@ return result
         this.validateTableName(e), n = n ?? 48;
         let r = this.getBucket(s), o = [], c = this.redis.pipeline(), u = [];
         for (let a = 1; a <= i; a += 1) {
-          let d = [this.prefix, e, r].join(":");
-          c.eval(p, [d], [t]), o.push(r), r = r - this.bucketSize, (a % n == 0 || a == i) && (u.push(c.exec()), c = this.redis.pipeline());
+          const d = [this.prefix, e, r].join(":");
+          c.eval(p, [d], [t]), o.push(r), r = r - this.bucketSize, (a % n === 0 || a === i) && (u.push(c.exec()), c = this.redis.pipeline());
         }
         return (await Promise.all(u)).flat().map((a, d) => this.formatBucketAggregate(a, t, o[d]));
       }
       async getAllowedBlocked(e, t, i) {
         this.validateTableName(e);
-        let s = [this.prefix, e].join(":"), n = this.getBucket(i), r = await this.redis.eval(h, [s], [n, this.bucketSize, t]), o = {};
+        const s = [this.prefix, e].join(":"), n = this.getBucket(i), r = await this.redis.eval(h, [s], [n, this.bucketSize, t]), o = {};
         for (let c = 0; c < r.length; c += 2) {
-          let u = r[c], m = u.identifier, a = +r[c + 1];
+          const u = r[c], m = u.identifier, a = +r[c + 1];
           o[m] || (o[m] = { success: 0, blocked: 0 }), o[m][u.success ? "success" : "blocked"] = a;
         }
         return o;
       }
       async getMostAllowedBlocked(e, t, i, s, n) {
         this.validateTableName(e);
-        let r = [this.prefix, e].join(":"), o = this.getBucket(s), c = n ?? i * 5, [u, m, a] = await this.redis.eval(f, [r], [o, this.bucketSize, t, i, c]);
+        const r = [this.prefix, e].join(":"), o = this.getBucket(s), c = n ?? i * 5, [u, m, a] = await this.redis.eval(f, [r], [o, this.bucketSize, t, i, c]);
         return { allowed: this.toDicts(u), ratelimited: this.toDicts(m), denied: this.toDicts(a) };
       }
       toDicts(e) {
-        let t = [];
+        const t = [];
         for (let i = 0; i < e.length; i += 1) {
-          let s = +e[i][0], n = e[i][1];
+          const s = +e[i][0], n = e[i][1];
           t.push({ identifier: n.identifier, count: s });
         }
         return t;
@@ -233,27 +233,27 @@ return result
     };
   }
 });
-var require_dist2 = __commonJS({
-  "node_modules/@upstash/ratelimit/dist/index.js"(exports, module) {
-    "use strict";
-    var __defProp3 = Object.defineProperty;
-    var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
-    var __getOwnPropNames2 = Object.getOwnPropertyNames;
-    var __hasOwnProp2 = Object.prototype.hasOwnProperty;
-    var __export2 = (target, all) => {
-      for (var name in all)
+const require_dist2 = __commonJS({
+  "node_modules/@upstash/ratelimit/dist/index.js"(_exports, module) {
+    
+    const __defProp3 = Object.defineProperty;
+    const __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
+    const __getOwnPropNames2 = Object.getOwnPropertyNames;
+    const __hasOwnProp2 = Object.prototype.hasOwnProperty;
+    const __export2 = (target, all) => {
+      for (const name in all)
         __defProp3(target, name, { get: all[name], enumerable: true });
     };
-    var __copyProps2 = (to, from, except, desc) => {
+    const __copyProps2 = (to, from, except, desc) => {
       if (from && typeof from === "object" || typeof from === "function") {
-        for (let key of __getOwnPropNames2(from))
+        for (const key of __getOwnPropNames2(from))
           if (!__hasOwnProp2.call(to, key) && key !== except)
             __defProp3(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc2(from, key)) || desc.enumerable });
       }
       return to;
     };
-    var __toCommonJS = (mod) => __copyProps2(__defProp3({}, "__esModule", { value: true }), mod);
-    var src_exports = {};
+    const __toCommonJS = (mod) => __copyProps2(__defProp3({}, "__esModule", { value: true }), mod);
+    const src_exports = {};
     __export2(src_exports, {
       Analytics: () => Analytics2,
       IpDenyList: () => ip_deny_list_exports,
@@ -261,8 +261,8 @@ var require_dist2 = __commonJS({
       Ratelimit: () => RegionRatelimit
     });
     module.exports = __toCommonJS(src_exports);
-    var import_core_analytics = require_dist();
-    var Analytics2 = class {
+    const import_core_analytics = require_dist();
+    const Analytics2 = class {
       analytics;
       table = "events";
       constructor(config2) {
@@ -318,7 +318,7 @@ var require_dist2 = __commonJS({
         return this.analytics.getMostAllowedBlocked(this.table, timestampCount, getTop, timestamp, checkAtMost);
       }
     };
-    var Cache = class {
+    const Cache = class {
       /**
        * Stores identifier -> reset (in milliseconds)
        */
@@ -362,14 +362,14 @@ var require_dist2 = __commonJS({
         return this.cache.size;
       }
     };
-    var DYNAMIC_LIMIT_KEY_SUFFIX = ":dynamic:global";
-    var DEFAULT_PREFIX = "@upstash/ratelimit";
+    const DYNAMIC_LIMIT_KEY_SUFFIX = ":dynamic:global";
+    const DEFAULT_PREFIX = "@upstash/ratelimit";
     function ms(d) {
       const match = d.match(/^(\d+)\s?(ms|s|m|h|d)$/);
       if (!match) {
         throw new Error(`Unable to parse window size: ${d}`);
       }
-      const time = Number.parseInt(match[1]);
+      const time = Number.parseInt(match[1], 10);
       const unit = match[2];
       switch (unit) {
         case "ms": {
@@ -392,7 +392,7 @@ var require_dist2 = __commonJS({
         }
       }
     }
-    var safeEval = async (ctx, script, keys, args) => {
+    const safeEval = async (ctx, script, keys, args) => {
       try {
         return await ctx.redis.evalsha(script.hash, keys, args);
       } catch (error) {
@@ -402,7 +402,7 @@ var require_dist2 = __commonJS({
         throw error;
       }
     };
-    var fixedWindowLimitScript = `
+    const fixedWindowLimitScript = `
   local key           = KEYS[1]
   local dynamicLimitKey = KEYS[2]  -- optional: key for dynamic limit in redis
   local tokens        = tonumber(ARGV[1])  -- default limit
@@ -427,7 +427,7 @@ var require_dist2 = __commonJS({
 
   return {r, effectiveLimit}
 `;
-    var fixedWindowRemainingTokensScript = `
+    const fixedWindowRemainingTokensScript = `
   local key = KEYS[1]
   local dynamicLimitKey = KEYS[2]  -- optional: key for dynamic limit in redis
   local tokens = tonumber(ARGV[1])  -- default limit
@@ -449,7 +449,7 @@ var require_dist2 = __commonJS({
   
   return {effectiveLimit - usedTokens, effectiveLimit}
 `;
-    var slidingWindowLimitScript = `
+    const slidingWindowLimitScript = `
   local currentKey  = KEYS[1]           -- identifier including prefixes
   local previousKey = KEYS[2]           -- key of the previous bucket
   local dynamicLimitKey = KEYS[3]       -- optional: key for dynamic limit in redis
@@ -493,7 +493,7 @@ var require_dist2 = __commonJS({
   end
   return {effectiveLimit - ( newValue + requestsInPreviousWindow ), effectiveLimit}
 `;
-    var slidingWindowRemainingTokensScript = `
+    const slidingWindowRemainingTokensScript = `
   local currentKey  = KEYS[1]           -- identifier including prefixes
   local previousKey = KEYS[2]           -- key of the previous bucket
   local dynamicLimitKey = KEYS[3]       -- optional: key for dynamic limit in redis
@@ -527,7 +527,7 @@ var require_dist2 = __commonJS({
   local usedTokens = requestsInPreviousWindow + requestsInCurrentWindow
   return {effectiveLimit - usedTokens, effectiveLimit}
 `;
-    var tokenBucketLimitScript = `
+    const tokenBucketLimitScript = `
   local key         = KEYS[1]           -- identifier including prefixes
   local dynamicLimitKey = KEYS[2]       -- optional: key for dynamic limit in redis
   local maxTokens   = tonumber(ARGV[1]) -- default maximum number of tokens
@@ -580,8 +580,8 @@ var require_dist2 = __commonJS({
   end
   return {remaining, refilledAt + interval, effectiveLimit}
 `;
-    var tokenBucketIdentifierNotFound = -1;
-    var tokenBucketRemainingTokensScript = `
+    const tokenBucketIdentifierNotFound = -1;
+    const tokenBucketRemainingTokensScript = `
   local key         = KEYS[1]
   local dynamicLimitKey = KEYS[2]       -- optional: key for dynamic limit in redis
   local maxTokens   = tonumber(ARGV[1]) -- default maximum number of tokens
@@ -603,7 +603,7 @@ var require_dist2 = __commonJS({
         
   return {tonumber(bucket[2]), tonumber(bucket[1]), effectiveLimit}
 `;
-    var cachedFixedWindowLimitScript = `
+    const cachedFixedWindowLimitScript = `
   local key     = KEYS[1]
   local window  = ARGV[1]
   local incrementBy   = ARGV[2] -- increment rate per request at a given value, default is 1
@@ -617,7 +617,7 @@ var require_dist2 = __commonJS({
       
   return r
 `;
-    var cachedFixedWindowRemainingTokenScript = `
+    const cachedFixedWindowRemainingTokenScript = `
   local key = KEYS[1]
   local tokens = 0
 
@@ -627,7 +627,7 @@ var require_dist2 = __commonJS({
   end
   return tokens
 `;
-    var fixedWindowLimitScript2 = `
+    const fixedWindowLimitScript2 = `
 	local key           = KEYS[1]
 	local id            = ARGV[1]
 	local window        = ARGV[2]
@@ -643,7 +643,7 @@ var require_dist2 = __commonJS({
 
 	return fields
 `;
-    var fixedWindowRemainingTokensScript2 = `
+    const fixedWindowRemainingTokensScript2 = `
       local key = KEYS[1]
       local tokens = 0
 
@@ -651,7 +651,7 @@ var require_dist2 = __commonJS({
 
       return fields
     `;
-    var slidingWindowLimitScript2 = `
+    const slidingWindowLimitScript2 = `
 	local currentKey    = KEYS[1]           -- identifier including prefixes
 	local previousKey   = KEYS[2]           -- key of the previous bucket
 	local tokens        = tonumber(ARGV[1]) -- tokens per window
@@ -688,7 +688,7 @@ var require_dist2 = __commonJS({
 	end
 	return {currentFields, previousFields, true}
 `;
-    var slidingWindowRemainingTokensScript2 = `
+    const slidingWindowRemainingTokensScript2 = `
 	local currentKey    = KEYS[1]           -- identifier including prefixes
 	local previousKey   = KEYS[2]           -- key of the previous bucket
 	local now         	= ARGV[1]           -- current timestamp in milliseconds
@@ -711,7 +711,7 @@ var require_dist2 = __commonJS({
 	
 	return requestsInCurrentWindow + requestsInPreviousWindow
 `;
-    var resetScript = `
+    const resetScript = `
       local pattern = KEYS[1]
 
       -- Initialize cursor to start from 0
@@ -734,7 +734,7 @@ var require_dist2 = __commonJS({
       -- Continue scanning until cursor is 0 (end of keyspace)
       until cursor == "0"
     `;
-    var SCRIPTS = {
+    const SCRIPTS = {
       singleRegion: {
         fixedWindow: {
           limit: {
@@ -800,14 +800,14 @@ var require_dist2 = __commonJS({
         }
       }
     };
-    var RESET_SCRIPT = {
+    const RESET_SCRIPT = {
       script: resetScript,
       hash: "54bd274ddc59fb3be0f42deee2f64322a10e2b50"
     };
-    var DenyListExtension = "denyList";
-    var IpDenyListKey = "ipDenyList";
-    var IpDenyListStatusKey = "ipDenyListStatus";
-    var checkDenyListScript = `
+    const DenyListExtension = "denyList";
+    const IpDenyListKey = "ipDenyList";
+    const IpDenyListStatusKey = "ipDenyListStatus";
+    const checkDenyListScript = `
   -- Checks if values provideed in ARGV are present in the deny lists.
   -- This is done using the allDenyListsKey below.
 
@@ -833,28 +833,28 @@ var require_dist2 = __commonJS({
 
   return { results, status }
 `;
-    var ip_deny_list_exports = {};
+    const ip_deny_list_exports = {};
     __export2(ip_deny_list_exports, {
       ThresholdError: () => ThresholdError,
       disableIpDenyList: () => disableIpDenyList,
       updateIpDenyList: () => updateIpDenyList
     });
-    var MILLISECONDS_IN_HOUR = 60 * 60 * 1e3;
-    var MILLISECONDS_IN_DAY = 24 * MILLISECONDS_IN_HOUR;
-    var MILLISECONDS_TO_2AM = 2 * MILLISECONDS_IN_HOUR;
-    var getIpListTTL = (time) => {
+    const MILLISECONDS_IN_HOUR = 60 * 60 * 1e3;
+    const MILLISECONDS_IN_DAY = 24 * MILLISECONDS_IN_HOUR;
+    const MILLISECONDS_TO_2AM = 2 * MILLISECONDS_IN_HOUR;
+    const getIpListTTL = (time) => {
       const now = time || Date.now();
       const timeSinceLast2AM = (now - MILLISECONDS_TO_2AM) % MILLISECONDS_IN_DAY;
       return MILLISECONDS_IN_DAY - timeSinceLast2AM;
     };
-    var baseUrl = "https://raw.githubusercontent.com/stamparm/ipsum/master/levels";
-    var ThresholdError = class extends Error {
+    const baseUrl = "https://raw.githubusercontent.com/stamparm/ipsum/master/levels";
+    const ThresholdError = class extends Error {
       constructor(threshold) {
         super(`Allowed threshold values are from 1 to 8, 1 and 8 included. Received: ${threshold}`);
         this.name = "ThresholdError";
       }
     };
-    var getIpDenyList = async (threshold) => {
+    const getIpDenyList = async (threshold) => {
       if (typeof threshold !== "number" || threshold < 1 || threshold > 8) {
         throw new ThresholdError(threshold);
       }
@@ -870,7 +870,7 @@ var require_dist2 = __commonJS({
         throw new Error(`Failed to fetch ip deny list: ${error}`);
       }
     };
-    var updateIpDenyList = async (redis, prefix, threshold, ttl) => {
+    const updateIpDenyList = async (redis, prefix, threshold, ttl) => {
       const allIps = await getIpDenyList(threshold);
       const allDenyLists = [prefix, DenyListExtension, "all"].join(":");
       const ipDenyList = [prefix, DenyListExtension, IpDenyListKey].join(":");
@@ -884,7 +884,7 @@ var require_dist2 = __commonJS({
       transaction.set(statusKey, "valid", { px: ttl ?? getIpListTTL() });
       return await transaction.exec();
     };
-    var disableIpDenyList = async (redis, prefix) => {
+    const disableIpDenyList = async (redis, prefix) => {
       const allDenyListsKey = [prefix, DenyListExtension, "all"].join(":");
       const ipDenyListKey = [prefix, DenyListExtension, IpDenyListKey].join(":");
       const statusKey = [prefix, IpDenyListStatusKey].join(":");
@@ -894,18 +894,18 @@ var require_dist2 = __commonJS({
       transaction.set(statusKey, "disabled");
       return await transaction.exec();
     };
-    var denyListCache = new Cache(/* @__PURE__ */ new Map());
-    var checkDenyListCache = (members) => {
+    const denyListCache = new Cache(/* @__PURE__ */ new Map());
+    const checkDenyListCache = (members) => {
       return members.find(
         (member) => denyListCache.isBlocked(member).blocked
       );
     };
-    var blockMember = (member) => {
+    const blockMember = (member) => {
       if (denyListCache.size() > 1e3)
         denyListCache.empty();
       denyListCache.blockUntil(member, Date.now() + 6e4);
     };
-    var checkDenyList = async (redis, prefix, members) => {
+    const checkDenyList = async (redis, prefix, members) => {
       const [deniedValues, ipDenyListStatus] = await redis.eval(
         checkDenyListScript,
         [
@@ -926,7 +926,7 @@ var require_dist2 = __commonJS({
         invalidIpDenyList: ipDenyListStatus === -2
       };
     };
-    var resolveLimitPayload = (redis, prefix, [ratelimitResponse, denyListResponse], threshold) => {
+    const resolveLimitPayload = (redis, prefix, [ratelimitResponse, denyListResponse], threshold) => {
       if (denyListResponse.deniedValue) {
         ratelimitResponse.success = false;
         ratelimitResponse.remaining = 0;
@@ -942,7 +942,7 @@ var require_dist2 = __commonJS({
       }
       return ratelimitResponse;
     };
-    var defaultDeniedResponse = (deniedValue) => {
+    const defaultDeniedResponse = (deniedValue) => {
       return {
         success: false,
         limit: 0,
@@ -953,7 +953,7 @@ var require_dist2 = __commonJS({
         deniedValue
       };
     };
-    var Ratelimit2 = class {
+    const Ratelimit2 = class {
       limiter;
       ctx;
       prefix;
@@ -1270,7 +1270,7 @@ var require_dist2 = __commonJS({
       }
       return result;
     }
-    var MultiRegionRatelimit = class extends Ratelimit2 {
+    const MultiRegionRatelimit = class extends Ratelimit2 {
       /**
        * Create a new Ratelimit instance by providing a `@upstash/redis` instance and the algorithn of your choice.
        */
@@ -1348,7 +1348,7 @@ var require_dist2 = __commonJS({
               (accTokens, usedToken, index) => {
                 let parsedToken = 0;
                 if (index % 2) {
-                  parsedToken = Number.parseInt(usedToken);
+                  parsedToken = Number.parseInt(usedToken, 10);
                 }
                 return accTokens + parsedToken;
               },
@@ -1373,7 +1373,7 @@ var require_dist2 = __commonJS({
                   (accTokens, usedToken, index) => {
                     let parsedToken = 0;
                     if (index % 2) {
-                      parsedToken = Number.parseInt(usedToken);
+                      parsedToken = Number.parseInt(usedToken, 10);
                     }
                     return accTokens + parsedToken;
                   },
@@ -1435,7 +1435,7 @@ var require_dist2 = __commonJS({
               (accTokens, usedToken, index) => {
                 let parsedToken = 0;
                 if (index % 2) {
-                  parsedToken = Number.parseInt(usedToken);
+                  parsedToken = Number.parseInt(usedToken, 10);
                 }
                 return accTokens + parsedToken;
               },
@@ -1522,7 +1522,7 @@ var require_dist2 = __commonJS({
               (accTokens, usedToken, index) => {
                 let parsedToken = 0;
                 if (index % 2) {
-                  parsedToken = Number.parseInt(usedToken);
+                  parsedToken = Number.parseInt(usedToken, 10);
                 }
                 return accTokens + parsedToken;
               },
@@ -1532,7 +1532,7 @@ var require_dist2 = __commonJS({
               (accTokens, usedToken, index) => {
                 let parsedToken = 0;
                 if (index % 2) {
-                  parsedToken = Number.parseInt(usedToken);
+                  parsedToken = Number.parseInt(usedToken, 10);
                 }
                 return accTokens + parsedToken;
               },
@@ -1567,7 +1567,7 @@ var require_dist2 = __commonJS({
                   (accTokens, usedToken, index) => {
                     let parsedToken = 0;
                     if (index % 2) {
-                      parsedToken = Number.parseInt(usedToken);
+                      parsedToken = Number.parseInt(usedToken, 10);
                     }
                     return accTokens + parsedToken;
                   },
@@ -1638,7 +1638,7 @@ var require_dist2 = __commonJS({
         });
       }
     };
-    var RegionRatelimit = class extends Ratelimit2 {
+    const RegionRatelimit = class extends Ratelimit2 {
       /**
        * Create a new Ratelimit instance by providing a `@upstash/redis` instance and the algorithm of your choice.
        */
@@ -2053,7 +2053,7 @@ var require_dist2 = __commonJS({
     };
   }
 });
-var ALLOWED_ORIGIN_PATTERNS = [
+const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -2082,7 +2082,7 @@ function isDisallowedOrigin(req) {
   if (!origin) return false;
   return !isAllowedOrigin(origin);
 }
-var BROWSER_ORIGIN_PATTERNS = [
+const BROWSER_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   ...process.env.NODE_ENV === "production" ? [] : [
@@ -2090,25 +2090,25 @@ var BROWSER_ORIGIN_PATTERNS = [
     /^https?:\/\/127\.0\.0\.1(:\d+)?$/
   ]
 ];
-var import_ratelimit = __toESM(require_dist2(), 1);
-var __defProp2 = Object.defineProperty;
-var __export = (target, all) => {
-  for (var name in all)
+const import_ratelimit = __toESM(require_dist2(), 1);
+const __defProp2 = Object.defineProperty;
+const __export = (target, all) => {
+  for (const name in all)
     __defProp2(target, name, { get: all[name], enumerable: true });
 };
-var error_exports = {};
+const error_exports = {};
 __export(error_exports, {
   UpstashError: () => UpstashError,
   UpstashJSONParseError: () => UpstashJSONParseError,
   UrlError: () => UrlError
 });
-var UpstashError = class extends Error {
+const UpstashError = class extends Error {
   constructor(message, options) {
     super(message, options);
     this.name = "UpstashError";
   }
 };
-var UrlError = class extends Error {
+const UrlError = class extends Error {
   constructor(url) {
     super(
       `Upstash Redis client was passed an invalid URL. You should pass a URL starting with https. Received: "${url}". `
@@ -2116,14 +2116,14 @@ var UrlError = class extends Error {
     this.name = "UrlError";
   }
 };
-var UpstashJSONParseError = class extends UpstashError {
+const UpstashJSONParseError = class extends UpstashError {
   constructor(body, options) {
     const truncatedBody = body.length > 200 ? body.slice(0, 200) + "..." : body;
     super(`Unable to parse response body: ${truncatedBody}`, options);
     this.name = "UpstashJSONParseError";
   }
 };
-var MAX_BUFFER_SIZE = 1024 * 1024;
+const MAX_BUFFER_SIZE = 1024 * 1024;
 if (typeof atob === "undefined") {
   global.atob = (b64) => Buffer.from(b64, "base64").toString("utf8");
 }
@@ -2197,7 +2197,7 @@ function buildRelayResponse(response, body, headers) {
     }
   );
 }
-var config = { runtime: "edge" };
+const config = { runtime: "edge" };
 async function handler(req) {
   const corsHeaders = getCorsHeaders(req, "GET, OPTIONS");
   if (isDisallowedOrigin(req)) {

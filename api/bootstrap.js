@@ -1,5 +1,5 @@
 // api/bootstrap.js
-var ALLOWED_ORIGIN_PATTERNS = [
+const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -36,13 +36,13 @@ function isDisallowedOrigin(req) {
   if (!origin) return false;
   return !isAllowedOrigin(origin);
 }
-var DESKTOP_ORIGIN_PATTERNS = [
+const DESKTOP_ORIGIN_PATTERNS = [
   /^https?:\/\/tauri\.localhost(:\d+)?$/,
   /^https?:\/\/[a-z0-9-]+\.tauri\.localhost(:\d+)?$/i,
   /^tauri:\/\/localhost$/,
   /^asset:\/\/localhost$/
 ];
-var BROWSER_ORIGIN_PATTERNS = [
+const BROWSER_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   ...process.env.NODE_ENV === "production" ? [] : [
@@ -118,8 +118,8 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-var config = { runtime: "edge" };
-var BOOTSTRAP_CACHE_KEYS = {
+const config = { runtime: "edge" };
+const BOOTSTRAP_CACHE_KEYS = {
   earthquakes: "seismology:earthquakes:v1",
   outages: "infra:outages:v1",
   serviceStatuses: "infra:service-statuses:v1",
@@ -179,7 +179,7 @@ var BOOTSTRAP_CACHE_KEYS = {
   bigmac: "economic:bigmac:v1",
   nationalDebt: "economic:national-debt:v1"
 };
-var SLOW_KEYS = /* @__PURE__ */ new Set([
+const SLOW_KEYS = /* @__PURE__ */ new Set([
   "bisPolicy",
   "bisExchange",
   "bisCredit",
@@ -217,7 +217,7 @@ var SLOW_KEYS = /* @__PURE__ */ new Set([
   "bigmac",
   "nationalDebt"
 ]);
-var FAST_KEYS = /* @__PURE__ */ new Set([
+const FAST_KEYS = /* @__PURE__ */ new Set([
   "earthquakes",
   "outages",
   "serviceStatuses",
@@ -241,15 +241,15 @@ var FAST_KEYS = /* @__PURE__ */ new Set([
   "forecasts",
   "shippingRates"
 ]);
-var TIER_CACHE = {
+const TIER_CACHE = {
   slow: "max-age=300, stale-while-revalidate=600, stale-if-error=3600",
   fast: "max-age=60, stale-while-revalidate=120, stale-if-error=900"
 };
-var TIER_CDN_CACHE = {
+const TIER_CDN_CACHE = {
   slow: "public, s-maxage=7200, stale-while-revalidate=1800, stale-if-error=7200",
   fast: "public, s-maxage=600, stale-while-revalidate=120, stale-if-error=900"
 };
-var NEG_SENTINEL = "__WM_NEG__";
+const NEG_SENTINEL = "__WM_NEG__";
 async function getCachedJsonBatch(keys) {
   const result = /* @__PURE__ */ new Map();
   if (keys.length === 0) return result;

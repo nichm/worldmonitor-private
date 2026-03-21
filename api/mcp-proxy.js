@@ -1,5 +1,5 @@
 // api/mcp-proxy.js
-var ALLOWED_ORIGIN_PATTERNS = [
+const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -55,12 +55,12 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-var config = { runtime: "edge" };
-var TIMEOUT_MS = 15e3;
-var SSE_CONNECT_TIMEOUT_MS = 1e4;
-var SSE_RPC_TIMEOUT_MS = 12e3;
-var MCP_PROTOCOL_VERSION = "2025-03-26";
-var BLOCKED_HOST_PATTERNS = [
+const config = { runtime: "edge" };
+const TIMEOUT_MS = 15e3;
+const SSE_CONNECT_TIMEOUT_MS = 1e4;
+const SSE_RPC_TIMEOUT_MS = 12e3;
+const MCP_PROTOCOL_VERSION = "2025-03-26";
+const BLOCKED_HOST_PATTERNS = [
   /^localhost$/i,
   /^127\./,
   /^10\./,
@@ -202,7 +202,7 @@ function makeDeferred() {
   });
   return { promise, resolve, reject };
 }
-var SseSession = class {
+const SseSession = class {
   constructor(sseUrl, headers) {
     this._sseUrl = sseUrl;
     this._headers = headers;

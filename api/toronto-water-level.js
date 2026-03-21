@@ -34,10 +34,10 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-var config = { runtime: "edge" };
-var DFO_API_BASE = "https://api.iwls.dfo-mpo.gc.ca/api/v1";
-var STATION_ID = "5160-DHO-002";
-var CACHE_TTL = 3600;
+const config = { runtime: "edge" };
+const DFO_API_BASE = "https://api.iwls.dfo-mpo.gc.ca/api/v1";
+const STATION_ID = "5160-DHO-002";
+const CACHE_TTL = 3600;
 async function fetchWaterLevelData() {
   try {
     const wloUrl = `${DFO_API_BASE}/stations/${STATION_ID}/wlo?time-range=24`;
@@ -69,7 +69,7 @@ async function fetchWaterLevelData() {
     if (latestObserved && latestPredicted) {
       const observedVal = latestObserved.QC !== "NQC" ? parseFloat(latestObserved.VALUE) : null;
       const predictedVal = parseFloat(latestPredicted.VALUE);
-      if (observedVal !== null && !isNaN(observedVal) && !isNaN(predictedVal)) {
+      if (observedVal !== null && !Number.isNaN(observedVal) && !Number.isNaN(predictedVal)) {
         deviation = observedVal - predictedVal;
       }
     }

@@ -1,4 +1,4 @@
-// api/_json-response.js
+// api/toronto-development.js
 function sanitizeJsonValue(value, depth = 0) {
   if (depth > 20) return "[truncated]";
   if (value instanceof Error) {
@@ -26,17 +26,15 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-
-// api/toronto-development.js
-var CKAN_BASE_URL = "https://ckan0.cf.opendata.inter.prod-toronto.ca";
-var DATASET_ID = "development_applications";
-var config = { runtime: "edge" };
-var TODAY = /* @__PURE__ */ new Date();
-var ONE_YEAR_AGO = new Date(TODAY.getTime() - 365 * 24 * 60 * 60 * 1e3);
+const CKAN_BASE_URL = "https://ckan0.cf.opendata.inter.prod-toronto.ca";
+const DATASET_ID = "development_applications";
+const config = { runtime: "edge" };
+const TODAY = /* @__PURE__ */ new Date();
+const ONE_YEAR_AGO = new Date(TODAY.getTime() - 365 * 24 * 60 * 60 * 1e3);
 function formatDate(date) {
   return date.toISOString().split("T")[0];
 }
-async function handler(req) {
+async function handler(_req) {
   try {
     const sql = `
       SELECT

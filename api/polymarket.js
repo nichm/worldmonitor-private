@@ -1,23 +1,23 @@
 // api/polymarket.js
 import nodeCrypto from "node:crypto";
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __commonJS = (cb, mod) => function __require() {
+const __create = Object.create;
+const __defProp = Object.defineProperty;
+const __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+const __getOwnPropNames = Object.getOwnPropertyNames;
+const __getProtoOf = Object.getPrototypeOf;
+const __hasOwnProp = Object.prototype.hasOwnProperty;
+const __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
-var __copyProps = (to, from, except, desc) => {
+const __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
+    for (const key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
         __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+const __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
@@ -25,25 +25,25 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var require_dist = __commonJS({
-  "node_modules/@upstash/core-analytics/dist/index.js"(exports, module) {
-    "use strict";
-    var g = Object.defineProperty;
-    var k = Object.getOwnPropertyDescriptor;
-    var _ = Object.getOwnPropertyNames;
-    var y = Object.prototype.hasOwnProperty;
-    var w = (l, e) => {
-      for (var t in e) g(l, t, { get: e[t], enumerable: true });
+const require_dist = __commonJS({
+  "node_modules/@upstash/core-analytics/dist/index.js"(_exports, module) {
+    
+    const g = Object.defineProperty;
+    const k = Object.getOwnPropertyDescriptor;
+    const _ = Object.getOwnPropertyNames;
+    const y = Object.prototype.hasOwnProperty;
+    const w = (l, e) => {
+      for (const t in e) g(l, t, { get: e[t], enumerable: true });
     };
-    var A = (l, e, t, i) => {
-      if (e && typeof e == "object" || typeof e == "function") for (let s of _(e)) !y.call(l, s) && s !== t && g(l, s, { get: () => e[s], enumerable: !(i = k(e, s)) || i.enumerable });
+    const A = (l, e, t, i) => {
+      if (e && typeof e === "object" || typeof e === "function") for (const s of _(e)) !y.call(l, s) && s !== t && g(l, s, { get: () => e[s], enumerable: !(i = k(e, s)) || i.enumerable });
       return l;
     };
-    var x = (l) => A(g({}, "__esModule", { value: true }), l);
-    var S = {};
+    const x = (l) => A(g({}, "__esModule", { value: true }), l);
+    const S = {};
     w(S, { Analytics: () => b });
     module.exports = x(S);
-    var p = `
+    const p = `
 local key = KEYS[1]
 local field = ARGV[1]
 
@@ -71,7 +71,7 @@ end
 
 return result
 `;
-    var f = `
+    const f = `
 local prefix = KEYS[1]
 local first_timestamp = tonumber(ARGV[1]) -- First timestamp to check
 local increment = tonumber(ARGV[2])       -- Increment between each timestamp
@@ -123,7 +123,7 @@ end
 
 return {true_group, false_group, denied_group}
 `;
-    var h = `
+    const h = `
 local prefix = KEYS[1]
 local first_timestamp = tonumber(ARGV[1])
 local increment = tonumber(ARGV[2])
@@ -142,7 +142,7 @@ local result = redis.call(unpack(zunion_params))
 
 return result
 `;
-    var b = class {
+    const b = class {
       redis;
       prefix;
       bucketSize;
@@ -153,13 +153,13 @@ return result
         if (!/^[a-zA-Z0-9_-]+$/.test(e)) throw new Error(`Invalid table name: ${e}. Table names can only contain letters, numbers, dashes and underscores.`);
       }
       parseWindow(e) {
-        if (typeof e == "number") {
+        if (typeof e === "number") {
           if (e <= 0) throw new Error(`Invalid window: ${e}`);
           return e;
         }
-        let t = /^(\d+)([smhd])$/;
+        const t = /^(\d+)([smhd])$/;
         if (!t.test(e)) throw new Error(`Invalid window: ${e}`);
-        let [, i, s] = e.match(t), n = parseInt(i);
+        const [, i, s] = e.match(t), n = parseInt(i, 10);
         switch (s) {
           case "s":
             return n * 1e3;
@@ -174,24 +174,24 @@ return result
         }
       }
       getBucket(e) {
-        let t = e ?? Date.now();
+        const t = e ?? Date.now();
         return Math.floor(t / this.bucketSize) * this.bucketSize;
       }
       async ingest(e, ...t) {
         this.validateTableName(e), await Promise.all(t.map(async (i) => {
-          let s = this.getBucket(i.time), n = [this.prefix, e, s].join(":");
+          const s = this.getBucket(i.time), n = [this.prefix, e, s].join(":");
           await this.redis.zincrby(n, 1, JSON.stringify({ ...i, time: void 0 }));
         }));
       }
       formatBucketAggregate(e, t, i) {
-        let s = {};
+        const s = {};
         return e.forEach(([n, r]) => {
-          t == "success" && (n = n === 1 ? "true" : n === null ? "false" : n), s[t] = s[t] || {}, s[t][(n ?? "null").toString()] = r;
+          t === "success" && (n = n === 1 ? "true" : n === null ? "false" : n), s[t] = s[t] || {}, s[t][(n ?? "null").toString()] = r;
         }), { time: i, ...s };
       }
       async aggregateBucket(e, t, i) {
         this.validateTableName(e);
-        let s = this.getBucket(i), n = [this.prefix, e, s].join(":"), r = await this.redis.eval(p, [n], [t]);
+        const s = this.getBucket(i), n = [this.prefix, e, s].join(":"), r = await this.redis.eval(p, [n], [t]);
         return this.formatBucketAggregate(r, t, s);
       }
       async aggregateBuckets(e, t, i, s) {
@@ -204,29 +204,29 @@ return result
         this.validateTableName(e), n = n ?? 48;
         let r = this.getBucket(s), o = [], c = this.redis.pipeline(), u = [];
         for (let a = 1; a <= i; a += 1) {
-          let d = [this.prefix, e, r].join(":");
-          c.eval(p, [d], [t]), o.push(r), r = r - this.bucketSize, (a % n == 0 || a == i) && (u.push(c.exec()), c = this.redis.pipeline());
+          const d = [this.prefix, e, r].join(":");
+          c.eval(p, [d], [t]), o.push(r), r = r - this.bucketSize, (a % n === 0 || a === i) && (u.push(c.exec()), c = this.redis.pipeline());
         }
         return (await Promise.all(u)).flat().map((a, d) => this.formatBucketAggregate(a, t, o[d]));
       }
       async getAllowedBlocked(e, t, i) {
         this.validateTableName(e);
-        let s = [this.prefix, e].join(":"), n = this.getBucket(i), r = await this.redis.eval(h, [s], [n, this.bucketSize, t]), o = {};
+        const s = [this.prefix, e].join(":"), n = this.getBucket(i), r = await this.redis.eval(h, [s], [n, this.bucketSize, t]), o = {};
         for (let c = 0; c < r.length; c += 2) {
-          let u = r[c], m = u.identifier, a = +r[c + 1];
+          const u = r[c], m = u.identifier, a = +r[c + 1];
           o[m] || (o[m] = { success: 0, blocked: 0 }), o[m][u.success ? "success" : "blocked"] = a;
         }
         return o;
       }
       async getMostAllowedBlocked(e, t, i, s, n) {
         this.validateTableName(e);
-        let r = [this.prefix, e].join(":"), o = this.getBucket(s), c = n ?? i * 5, [u, m, a] = await this.redis.eval(f, [r], [o, this.bucketSize, t, i, c]);
+        const r = [this.prefix, e].join(":"), o = this.getBucket(s), c = n ?? i * 5, [u, m, a] = await this.redis.eval(f, [r], [o, this.bucketSize, t, i, c]);
         return { allowed: this.toDicts(u), ratelimited: this.toDicts(m), denied: this.toDicts(a) };
       }
       toDicts(e) {
-        let t = [];
+        const t = [];
         for (let i = 0; i < e.length; i += 1) {
-          let s = +e[i][0], n = e[i][1];
+          const s = +e[i][0], n = e[i][1];
           t.push({ identifier: n.identifier, count: s });
         }
         return t;
@@ -234,27 +234,27 @@ return result
     };
   }
 });
-var require_dist2 = __commonJS({
-  "node_modules/@upstash/ratelimit/dist/index.js"(exports, module) {
-    "use strict";
-    var __defProp3 = Object.defineProperty;
-    var __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
-    var __getOwnPropNames2 = Object.getOwnPropertyNames;
-    var __hasOwnProp2 = Object.prototype.hasOwnProperty;
-    var __export2 = (target, all) => {
-      for (var name in all)
+const require_dist2 = __commonJS({
+  "node_modules/@upstash/ratelimit/dist/index.js"(_exports, module) {
+    
+    const __defProp3 = Object.defineProperty;
+    const __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
+    const __getOwnPropNames2 = Object.getOwnPropertyNames;
+    const __hasOwnProp2 = Object.prototype.hasOwnProperty;
+    const __export2 = (target, all) => {
+      for (const name in all)
         __defProp3(target, name, { get: all[name], enumerable: true });
     };
-    var __copyProps2 = (to, from, except, desc) => {
+    const __copyProps2 = (to, from, except, desc) => {
       if (from && typeof from === "object" || typeof from === "function") {
-        for (let key of __getOwnPropNames2(from))
+        for (const key of __getOwnPropNames2(from))
           if (!__hasOwnProp2.call(to, key) && key !== except)
             __defProp3(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc2(from, key)) || desc.enumerable });
       }
       return to;
     };
-    var __toCommonJS = (mod) => __copyProps2(__defProp3({}, "__esModule", { value: true }), mod);
-    var src_exports = {};
+    const __toCommonJS = (mod) => __copyProps2(__defProp3({}, "__esModule", { value: true }), mod);
+    const src_exports = {};
     __export2(src_exports, {
       Analytics: () => Analytics2,
       IpDenyList: () => ip_deny_list_exports,
@@ -262,8 +262,8 @@ var require_dist2 = __commonJS({
       Ratelimit: () => RegionRatelimit
     });
     module.exports = __toCommonJS(src_exports);
-    var import_core_analytics = require_dist();
-    var Analytics2 = class {
+    const import_core_analytics = require_dist();
+    const Analytics2 = class {
       analytics;
       table = "events";
       constructor(config2) {
@@ -319,7 +319,7 @@ var require_dist2 = __commonJS({
         return this.analytics.getMostAllowedBlocked(this.table, timestampCount, getTop, timestamp, checkAtMost);
       }
     };
-    var Cache = class {
+    const Cache = class {
       /**
        * Stores identifier -> reset (in milliseconds)
        */
@@ -363,14 +363,14 @@ var require_dist2 = __commonJS({
         return this.cache.size;
       }
     };
-    var DYNAMIC_LIMIT_KEY_SUFFIX = ":dynamic:global";
-    var DEFAULT_PREFIX = "@upstash/ratelimit";
+    const DYNAMIC_LIMIT_KEY_SUFFIX = ":dynamic:global";
+    const DEFAULT_PREFIX = "@upstash/ratelimit";
     function ms(d) {
       const match = d.match(/^(\d+)\s?(ms|s|m|h|d)$/);
       if (!match) {
         throw new Error(`Unable to parse window size: ${d}`);
       }
-      const time = Number.parseInt(match[1]);
+      const time = Number.parseInt(match[1], 10);
       const unit = match[2];
       switch (unit) {
         case "ms": {
@@ -393,7 +393,7 @@ var require_dist2 = __commonJS({
         }
       }
     }
-    var safeEval = async (ctx, script, keys, args) => {
+    const safeEval = async (ctx, script, keys, args) => {
       try {
         return await ctx.redis.evalsha(script.hash, keys, args);
       } catch (error) {
@@ -403,7 +403,7 @@ var require_dist2 = __commonJS({
         throw error;
       }
     };
-    var fixedWindowLimitScript = `
+    const fixedWindowLimitScript = `
   local key           = KEYS[1]
   local dynamicLimitKey = KEYS[2]  -- optional: key for dynamic limit in redis
   local tokens        = tonumber(ARGV[1])  -- default limit
@@ -428,7 +428,7 @@ var require_dist2 = __commonJS({
 
   return {r, effectiveLimit}
 `;
-    var fixedWindowRemainingTokensScript = `
+    const fixedWindowRemainingTokensScript = `
   local key = KEYS[1]
   local dynamicLimitKey = KEYS[2]  -- optional: key for dynamic limit in redis
   local tokens = tonumber(ARGV[1])  -- default limit
@@ -450,7 +450,7 @@ var require_dist2 = __commonJS({
   
   return {effectiveLimit - usedTokens, effectiveLimit}
 `;
-    var slidingWindowLimitScript = `
+    const slidingWindowLimitScript = `
   local currentKey  = KEYS[1]           -- identifier including prefixes
   local previousKey = KEYS[2]           -- key of the previous bucket
   local dynamicLimitKey = KEYS[3]       -- optional: key for dynamic limit in redis
@@ -494,7 +494,7 @@ var require_dist2 = __commonJS({
   end
   return {effectiveLimit - ( newValue + requestsInPreviousWindow ), effectiveLimit}
 `;
-    var slidingWindowRemainingTokensScript = `
+    const slidingWindowRemainingTokensScript = `
   local currentKey  = KEYS[1]           -- identifier including prefixes
   local previousKey = KEYS[2]           -- key of the previous bucket
   local dynamicLimitKey = KEYS[3]       -- optional: key for dynamic limit in redis
@@ -528,7 +528,7 @@ var require_dist2 = __commonJS({
   local usedTokens = requestsInPreviousWindow + requestsInCurrentWindow
   return {effectiveLimit - usedTokens, effectiveLimit}
 `;
-    var tokenBucketLimitScript = `
+    const tokenBucketLimitScript = `
   local key         = KEYS[1]           -- identifier including prefixes
   local dynamicLimitKey = KEYS[2]       -- optional: key for dynamic limit in redis
   local maxTokens   = tonumber(ARGV[1]) -- default maximum number of tokens
@@ -581,8 +581,8 @@ var require_dist2 = __commonJS({
   end
   return {remaining, refilledAt + interval, effectiveLimit}
 `;
-    var tokenBucketIdentifierNotFound = -1;
-    var tokenBucketRemainingTokensScript = `
+    const tokenBucketIdentifierNotFound = -1;
+    const tokenBucketRemainingTokensScript = `
   local key         = KEYS[1]
   local dynamicLimitKey = KEYS[2]       -- optional: key for dynamic limit in redis
   local maxTokens   = tonumber(ARGV[1]) -- default maximum number of tokens
@@ -604,7 +604,7 @@ var require_dist2 = __commonJS({
         
   return {tonumber(bucket[2]), tonumber(bucket[1]), effectiveLimit}
 `;
-    var cachedFixedWindowLimitScript = `
+    const cachedFixedWindowLimitScript = `
   local key     = KEYS[1]
   local window  = ARGV[1]
   local incrementBy   = ARGV[2] -- increment rate per request at a given value, default is 1
@@ -618,7 +618,7 @@ var require_dist2 = __commonJS({
       
   return r
 `;
-    var cachedFixedWindowRemainingTokenScript = `
+    const cachedFixedWindowRemainingTokenScript = `
   local key = KEYS[1]
   local tokens = 0
 
@@ -628,7 +628,7 @@ var require_dist2 = __commonJS({
   end
   return tokens
 `;
-    var fixedWindowLimitScript2 = `
+    const fixedWindowLimitScript2 = `
 	local key           = KEYS[1]
 	local id            = ARGV[1]
 	local window        = ARGV[2]
@@ -644,7 +644,7 @@ var require_dist2 = __commonJS({
 
 	return fields
 `;
-    var fixedWindowRemainingTokensScript2 = `
+    const fixedWindowRemainingTokensScript2 = `
       local key = KEYS[1]
       local tokens = 0
 
@@ -652,7 +652,7 @@ var require_dist2 = __commonJS({
 
       return fields
     `;
-    var slidingWindowLimitScript2 = `
+    const slidingWindowLimitScript2 = `
 	local currentKey    = KEYS[1]           -- identifier including prefixes
 	local previousKey   = KEYS[2]           -- key of the previous bucket
 	local tokens        = tonumber(ARGV[1]) -- tokens per window
@@ -689,7 +689,7 @@ var require_dist2 = __commonJS({
 	end
 	return {currentFields, previousFields, true}
 `;
-    var slidingWindowRemainingTokensScript2 = `
+    const slidingWindowRemainingTokensScript2 = `
 	local currentKey    = KEYS[1]           -- identifier including prefixes
 	local previousKey   = KEYS[2]           -- key of the previous bucket
 	local now         	= ARGV[1]           -- current timestamp in milliseconds
@@ -712,7 +712,7 @@ var require_dist2 = __commonJS({
 	
 	return requestsInCurrentWindow + requestsInPreviousWindow
 `;
-    var resetScript = `
+    const resetScript = `
       local pattern = KEYS[1]
 
       -- Initialize cursor to start from 0
@@ -735,7 +735,7 @@ var require_dist2 = __commonJS({
       -- Continue scanning until cursor is 0 (end of keyspace)
       until cursor == "0"
     `;
-    var SCRIPTS = {
+    const SCRIPTS = {
       singleRegion: {
         fixedWindow: {
           limit: {
@@ -801,14 +801,14 @@ var require_dist2 = __commonJS({
         }
       }
     };
-    var RESET_SCRIPT = {
+    const RESET_SCRIPT = {
       script: resetScript,
       hash: "54bd274ddc59fb3be0f42deee2f64322a10e2b50"
     };
-    var DenyListExtension = "denyList";
-    var IpDenyListKey = "ipDenyList";
-    var IpDenyListStatusKey = "ipDenyListStatus";
-    var checkDenyListScript = `
+    const DenyListExtension = "denyList";
+    const IpDenyListKey = "ipDenyList";
+    const IpDenyListStatusKey = "ipDenyListStatus";
+    const checkDenyListScript = `
   -- Checks if values provideed in ARGV are present in the deny lists.
   -- This is done using the allDenyListsKey below.
 
@@ -834,28 +834,28 @@ var require_dist2 = __commonJS({
 
   return { results, status }
 `;
-    var ip_deny_list_exports = {};
+    const ip_deny_list_exports = {};
     __export2(ip_deny_list_exports, {
       ThresholdError: () => ThresholdError,
       disableIpDenyList: () => disableIpDenyList,
       updateIpDenyList: () => updateIpDenyList
     });
-    var MILLISECONDS_IN_HOUR = 60 * 60 * 1e3;
-    var MILLISECONDS_IN_DAY = 24 * MILLISECONDS_IN_HOUR;
-    var MILLISECONDS_TO_2AM = 2 * MILLISECONDS_IN_HOUR;
-    var getIpListTTL = (time) => {
+    const MILLISECONDS_IN_HOUR = 60 * 60 * 1e3;
+    const MILLISECONDS_IN_DAY = 24 * MILLISECONDS_IN_HOUR;
+    const MILLISECONDS_TO_2AM = 2 * MILLISECONDS_IN_HOUR;
+    const getIpListTTL = (time) => {
       const now = time || Date.now();
       const timeSinceLast2AM = (now - MILLISECONDS_TO_2AM) % MILLISECONDS_IN_DAY;
       return MILLISECONDS_IN_DAY - timeSinceLast2AM;
     };
-    var baseUrl = "https://raw.githubusercontent.com/stamparm/ipsum/master/levels";
-    var ThresholdError = class extends Error {
+    const baseUrl = "https://raw.githubusercontent.com/stamparm/ipsum/master/levels";
+    const ThresholdError = class extends Error {
       constructor(threshold) {
         super(`Allowed threshold values are from 1 to 8, 1 and 8 included. Received: ${threshold}`);
         this.name = "ThresholdError";
       }
     };
-    var getIpDenyList = async (threshold) => {
+    const getIpDenyList = async (threshold) => {
       if (typeof threshold !== "number" || threshold < 1 || threshold > 8) {
         throw new ThresholdError(threshold);
       }
@@ -871,7 +871,7 @@ var require_dist2 = __commonJS({
         throw new Error(`Failed to fetch ip deny list: ${error}`);
       }
     };
-    var updateIpDenyList = async (redis, prefix, threshold, ttl) => {
+    const updateIpDenyList = async (redis, prefix, threshold, ttl) => {
       const allIps = await getIpDenyList(threshold);
       const allDenyLists = [prefix, DenyListExtension, "all"].join(":");
       const ipDenyList = [prefix, DenyListExtension, IpDenyListKey].join(":");
@@ -885,7 +885,7 @@ var require_dist2 = __commonJS({
       transaction.set(statusKey, "valid", { px: ttl ?? getIpListTTL() });
       return await transaction.exec();
     };
-    var disableIpDenyList = async (redis, prefix) => {
+    const disableIpDenyList = async (redis, prefix) => {
       const allDenyListsKey = [prefix, DenyListExtension, "all"].join(":");
       const ipDenyListKey = [prefix, DenyListExtension, IpDenyListKey].join(":");
       const statusKey = [prefix, IpDenyListStatusKey].join(":");
@@ -895,18 +895,18 @@ var require_dist2 = __commonJS({
       transaction.set(statusKey, "disabled");
       return await transaction.exec();
     };
-    var denyListCache = new Cache(/* @__PURE__ */ new Map());
-    var checkDenyListCache = (members) => {
+    const denyListCache = new Cache(/* @__PURE__ */ new Map());
+    const checkDenyListCache = (members) => {
       return members.find(
         (member) => denyListCache.isBlocked(member).blocked
       );
     };
-    var blockMember = (member) => {
+    const blockMember = (member) => {
       if (denyListCache.size() > 1e3)
         denyListCache.empty();
       denyListCache.blockUntil(member, Date.now() + 6e4);
     };
-    var checkDenyList = async (redis, prefix, members) => {
+    const checkDenyList = async (redis, prefix, members) => {
       const [deniedValues, ipDenyListStatus] = await redis.eval(
         checkDenyListScript,
         [
@@ -927,7 +927,7 @@ var require_dist2 = __commonJS({
         invalidIpDenyList: ipDenyListStatus === -2
       };
     };
-    var resolveLimitPayload = (redis, prefix, [ratelimitResponse, denyListResponse], threshold) => {
+    const resolveLimitPayload = (redis, prefix, [ratelimitResponse, denyListResponse], threshold) => {
       if (denyListResponse.deniedValue) {
         ratelimitResponse.success = false;
         ratelimitResponse.remaining = 0;
@@ -943,7 +943,7 @@ var require_dist2 = __commonJS({
       }
       return ratelimitResponse;
     };
-    var defaultDeniedResponse = (deniedValue) => {
+    const defaultDeniedResponse = (deniedValue) => {
       return {
         success: false,
         limit: 0,
@@ -954,7 +954,7 @@ var require_dist2 = __commonJS({
         deniedValue
       };
     };
-    var Ratelimit2 = class {
+    const Ratelimit2 = class {
       limiter;
       ctx;
       prefix;
@@ -1271,7 +1271,7 @@ var require_dist2 = __commonJS({
       }
       return result;
     }
-    var MultiRegionRatelimit = class extends Ratelimit2 {
+    const MultiRegionRatelimit = class extends Ratelimit2 {
       /**
        * Create a new Ratelimit instance by providing a `@upstash/redis` instance and the algorithn of your choice.
        */
@@ -1349,7 +1349,7 @@ var require_dist2 = __commonJS({
               (accTokens, usedToken, index) => {
                 let parsedToken = 0;
                 if (index % 2) {
-                  parsedToken = Number.parseInt(usedToken);
+                  parsedToken = Number.parseInt(usedToken, 10);
                 }
                 return accTokens + parsedToken;
               },
@@ -1374,7 +1374,7 @@ var require_dist2 = __commonJS({
                   (accTokens, usedToken, index) => {
                     let parsedToken = 0;
                     if (index % 2) {
-                      parsedToken = Number.parseInt(usedToken);
+                      parsedToken = Number.parseInt(usedToken, 10);
                     }
                     return accTokens + parsedToken;
                   },
@@ -1436,7 +1436,7 @@ var require_dist2 = __commonJS({
               (accTokens, usedToken, index) => {
                 let parsedToken = 0;
                 if (index % 2) {
-                  parsedToken = Number.parseInt(usedToken);
+                  parsedToken = Number.parseInt(usedToken, 10);
                 }
                 return accTokens + parsedToken;
               },
@@ -1523,7 +1523,7 @@ var require_dist2 = __commonJS({
               (accTokens, usedToken, index) => {
                 let parsedToken = 0;
                 if (index % 2) {
-                  parsedToken = Number.parseInt(usedToken);
+                  parsedToken = Number.parseInt(usedToken, 10);
                 }
                 return accTokens + parsedToken;
               },
@@ -1533,7 +1533,7 @@ var require_dist2 = __commonJS({
               (accTokens, usedToken, index) => {
                 let parsedToken = 0;
                 if (index % 2) {
-                  parsedToken = Number.parseInt(usedToken);
+                  parsedToken = Number.parseInt(usedToken, 10);
                 }
                 return accTokens + parsedToken;
               },
@@ -1568,7 +1568,7 @@ var require_dist2 = __commonJS({
                   (accTokens, usedToken, index) => {
                     let parsedToken = 0;
                     if (index % 2) {
-                      parsedToken = Number.parseInt(usedToken);
+                      parsedToken = Number.parseInt(usedToken, 10);
                     }
                     return accTokens + parsedToken;
                   },
@@ -1639,7 +1639,7 @@ var require_dist2 = __commonJS({
         });
       }
     };
-    var RegionRatelimit = class extends Ratelimit2 {
+    const RegionRatelimit = class extends Ratelimit2 {
       /**
        * Create a new Ratelimit instance by providing a `@upstash/redis` instance and the algorithm of your choice.
        */
@@ -2054,7 +2054,7 @@ var require_dist2 = __commonJS({
     };
   }
 });
-var ALLOWED_ORIGIN_PATTERNS = [
+const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -2083,13 +2083,13 @@ function isDisallowedOrigin(req) {
   if (!origin) return false;
   return !isAllowedOrigin(origin);
 }
-var DESKTOP_ORIGIN_PATTERNS = [
+const DESKTOP_ORIGIN_PATTERNS = [
   /^https?:\/\/tauri\.localhost(:\d+)?$/,
   /^https?:\/\/[a-z0-9-]+\.tauri\.localhost(:\d+)?$/i,
   /^tauri:\/\/localhost$/,
   /^asset:\/\/localhost$/
 ];
-var BROWSER_ORIGIN_PATTERNS = [
+const BROWSER_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   ...process.env.NODE_ENV === "production" ? [] : [
@@ -2138,26 +2138,26 @@ function validateApiKey(req, options = {}) {
   }
   return { valid: false, required: true, error: "API key required" };
 }
-var import_ratelimit = __toESM(require_dist2(), 1);
-var subtle = nodeCrypto.webcrypto?.subtle || {};
-var __defProp2 = Object.defineProperty;
-var __export = (target, all) => {
-  for (var name in all)
+const import_ratelimit = __toESM(require_dist2(), 1);
+const subtle = nodeCrypto.webcrypto?.subtle || {};
+const __defProp2 = Object.defineProperty;
+const __export = (target, all) => {
+  for (const name in all)
     __defProp2(target, name, { get: all[name], enumerable: true });
 };
-var error_exports = {};
+const error_exports = {};
 __export(error_exports, {
   UpstashError: () => UpstashError,
   UpstashJSONParseError: () => UpstashJSONParseError,
   UrlError: () => UrlError
 });
-var UpstashError = class extends Error {
+const UpstashError = class extends Error {
   constructor(message, options) {
     super(message, options);
     this.name = "UpstashError";
   }
 };
-var UrlError = class extends Error {
+const UrlError = class extends Error {
   constructor(url) {
     super(
       `Upstash Redis client was passed an invalid URL. You should pass a URL starting with https. Received: "${url}". `
@@ -2165,7 +2165,7 @@ var UrlError = class extends Error {
     this.name = "UrlError";
   }
 };
-var UpstashJSONParseError = class extends UpstashError {
+const UpstashJSONParseError = class extends UpstashError {
   constructor(body, options) {
     const truncatedBody = body.length > 200 ? body.slice(0, 200) + "..." : body;
     super(`Unable to parse response body: ${truncatedBody}`, options);
@@ -2224,8 +2224,8 @@ function kvArrayToObject(v) {
   }
   return obj;
 }
-var MAX_BUFFER_SIZE = 1024 * 1024;
-var HttpClient = class {
+const MAX_BUFFER_SIZE = 1024 * 1024;
+const HttpClient = class {
   baseUrl;
   headers;
   options;
@@ -2343,7 +2343,7 @@ var HttpClient = class {
       const headers = res.headers;
       this.upstashSyncToken = headers.get("upstash-sync-token") ?? "";
     }
-    if (isEventStream && req && req.onMessage && res.body) {
+    if (isEventStream && req?.onMessage && res.body) {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       (async () => {
@@ -2455,7 +2455,7 @@ function merge(obj, key, value) {
   obj[key] = obj[key] ? [obj[key], value].join(",") : value;
   return obj;
 }
-var defaultSerializer = (c) => {
+const defaultSerializer = (c) => {
   switch (typeof c) {
     case "string":
     case "number":
@@ -2467,7 +2467,7 @@ var defaultSerializer = (c) => {
     }
   }
 };
-var Command = class {
+const Command = class {
   command;
   serialize;
   deserialize;
@@ -2542,7 +2542,7 @@ function deserialize(result) {
   }
   return obj;
 }
-var HRandFieldCommand = class extends Command {
+const HRandFieldCommand = class extends Command {
   constructor(cmd, opts) {
     const command = ["hrandfield", cmd[0]];
     if (typeof cmd[1] === "number") {
@@ -2558,12 +2558,12 @@ var HRandFieldCommand = class extends Command {
     });
   }
 };
-var AppendCommand = class extends Command {
+const AppendCommand = class extends Command {
   constructor(cmd, opts) {
     super(["append", ...cmd], opts);
   }
 };
-var BitCountCommand = class extends Command {
+const BitCountCommand = class extends Command {
   constructor([key, start, end], opts) {
     const command = ["bitcount", key];
     if (typeof start === "number") {
@@ -2575,7 +2575,7 @@ var BitCountCommand = class extends Command {
     super(command, opts);
   }
 };
-var BitFieldCommand = class {
+const BitFieldCommand = class {
   constructor(args, client, opts, execOperation = (command) => command.exec(this.client)) {
     this.client = client;
     this.opts = opts;
@@ -2604,17 +2604,17 @@ var BitFieldCommand = class {
     return this.execOperation(command);
   }
 };
-var BitOpCommand = class extends Command {
+const BitOpCommand = class extends Command {
   constructor(cmd, opts) {
     super(["bitop", ...cmd], opts);
   }
 };
-var BitPosCommand = class extends Command {
+const BitPosCommand = class extends Command {
   constructor(cmd, opts) {
     super(["bitpos", ...cmd], opts);
   }
 };
-var CopyCommand = class extends Command {
+const CopyCommand = class extends Command {
   constructor([key, destinationKey, opts], commandOptions) {
     super(["COPY", key, destinationKey, ...opts?.replace ? ["REPLACE"] : []], {
       ...commandOptions,
@@ -2627,78 +2627,78 @@ var CopyCommand = class extends Command {
     });
   }
 };
-var DBSizeCommand = class extends Command {
+const DBSizeCommand = class extends Command {
   constructor(opts) {
     super(["dbsize"], opts);
   }
 };
-var DecrCommand = class extends Command {
+const DecrCommand = class extends Command {
   constructor(cmd, opts) {
     super(["decr", ...cmd], opts);
   }
 };
-var DecrByCommand = class extends Command {
+const DecrByCommand = class extends Command {
   constructor(cmd, opts) {
     super(["decrby", ...cmd], opts);
   }
 };
-var DelCommand = class extends Command {
+const DelCommand = class extends Command {
   constructor(cmd, opts) {
     super(["del", ...cmd], opts);
   }
 };
-var EchoCommand = class extends Command {
+const EchoCommand = class extends Command {
   constructor(cmd, opts) {
     super(["echo", ...cmd], opts);
   }
 };
-var EvalROCommand = class extends Command {
+const EvalROCommand = class extends Command {
   constructor([script, keys, args], opts) {
     super(["eval_ro", script, keys.length, ...keys, ...args ?? []], opts);
   }
 };
-var EvalCommand = class extends Command {
+const EvalCommand = class extends Command {
   constructor([script, keys, args], opts) {
     super(["eval", script, keys.length, ...keys, ...args ?? []], opts);
   }
 };
-var EvalshaROCommand = class extends Command {
+const EvalshaROCommand = class extends Command {
   constructor([sha, keys, args], opts) {
     super(["evalsha_ro", sha, keys.length, ...keys, ...args ?? []], opts);
   }
 };
-var EvalshaCommand = class extends Command {
+const EvalshaCommand = class extends Command {
   constructor([sha, keys, args], opts) {
     super(["evalsha", sha, keys.length, ...keys, ...args ?? []], opts);
   }
 };
-var ExecCommand = class extends Command {
+const ExecCommand = class extends Command {
   constructor(cmd, opts) {
     const normalizedCmd = cmd.map((arg) => typeof arg === "string" ? arg : String(arg));
     super(normalizedCmd, opts);
   }
 };
-var ExistsCommand = class extends Command {
+const ExistsCommand = class extends Command {
   constructor(cmd, opts) {
     super(["exists", ...cmd], opts);
   }
 };
-var ExpireCommand = class extends Command {
+const ExpireCommand = class extends Command {
   constructor(cmd, opts) {
     super(["expire", ...cmd.filter(Boolean)], opts);
   }
 };
-var ExpireAtCommand = class extends Command {
+const ExpireAtCommand = class extends Command {
   constructor(cmd, opts) {
     super(["expireat", ...cmd], opts);
   }
 };
-var FCallCommand = class extends Command {
+const FCallCommand = class extends Command {
   constructor([functionName, keys, args], opts) {
     super(["fcall", functionName, ...keys ? [keys.length, ...keys] : [0], ...args ?? []], opts);
   }
 };
-var FCallRoCommand = class extends Command {
+const FCallRoCommand = class extends Command {
   constructor([functionName, keys, args], opts) {
     super(
       ["fcall_ro", functionName, ...keys ? [keys.length, ...keys] : [0], ...args ?? []],
@@ -2706,7 +2706,7 @@ var FCallRoCommand = class extends Command {
     );
   }
 };
-var FlushAllCommand = class extends Command {
+const FlushAllCommand = class extends Command {
   constructor(args, opts) {
     const command = ["flushall"];
     if (args && args.length > 0 && args[0].async) {
@@ -2715,7 +2715,7 @@ var FlushAllCommand = class extends Command {
     super(command, opts);
   }
 };
-var FlushDBCommand = class extends Command {
+const FlushDBCommand = class extends Command {
   constructor([opts], cmdOpts) {
     const command = ["flushdb"];
     if (opts?.async) {
@@ -2724,17 +2724,17 @@ var FlushDBCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-var FunctionDeleteCommand = class extends Command {
+const FunctionDeleteCommand = class extends Command {
   constructor([libraryName], opts) {
     super(["function", "delete", libraryName], opts);
   }
 };
-var FunctionFlushCommand = class extends Command {
+const FunctionFlushCommand = class extends Command {
   constructor(opts) {
     super(["function", "flush"], opts);
   }
 };
-var FunctionListCommand = class extends Command {
+const FunctionListCommand = class extends Command {
   constructor([args], opts) {
     const command = ["function", "list"];
     if (args?.libraryName) {
@@ -2765,12 +2765,12 @@ function deserialize2(result) {
     };
   });
 }
-var FunctionLoadCommand = class extends Command {
+const FunctionLoadCommand = class extends Command {
   constructor([args], opts) {
     super(["function", "load", ...args.replace ? ["replace"] : [], args.code], opts);
   }
 };
-var FunctionStatsCommand = class extends Command {
+const FunctionStatsCommand = class extends Command {
   constructor(opts) {
     super(["function", "stats"], { deserialize: deserialize3, ...opts });
   }
@@ -2793,7 +2793,7 @@ function deserialize3(result) {
   };
   return final;
 }
-var GeoAddCommand = class extends Command {
+const GeoAddCommand = class extends Command {
   constructor([key, arg1, ...arg2], opts) {
     const command = ["geoadd", key];
     if ("nx" in arg1 && arg1.nx) {
@@ -2813,19 +2813,19 @@ var GeoAddCommand = class extends Command {
     super(command, opts);
   }
 };
-var GeoDistCommand = class extends Command {
+const GeoDistCommand = class extends Command {
   constructor([key, member1, member2, unit = "M"], opts) {
     super(["GEODIST", key, member1, member2, unit], opts);
   }
 };
-var GeoHashCommand = class extends Command {
+const GeoHashCommand = class extends Command {
   constructor(cmd, opts) {
     const [key] = cmd;
     const members = Array.isArray(cmd[1]) ? cmd[1] : cmd.slice(1);
     super(["GEOHASH", key, ...members], opts);
   }
 };
-var GeoPosCommand = class extends Command {
+const GeoPosCommand = class extends Command {
   constructor(cmd, opts) {
     const [key] = cmd;
     const members = Array.isArray(cmd[1]) ? cmd[1] : cmd.slice(1);
@@ -2845,7 +2845,7 @@ function transform(result) {
   }
   return final;
 }
-var GeoSearchCommand = class extends Command {
+const GeoSearchCommand = class extends Command {
   constructor([key, centerPoint, shape, order, opts], commandOptions) {
     const command = ["GEOSEARCH", key];
     if (centerPoint.type === "FROMMEMBER" || centerPoint.type === "frommember") {
@@ -2911,7 +2911,7 @@ var GeoSearchCommand = class extends Command {
     );
   }
 };
-var GeoSearchStoreCommand = class extends Command {
+const GeoSearchStoreCommand = class extends Command {
   constructor([destination, key, centerPoint, shape, order, opts], commandOptions) {
     const command = ["GEOSEARCHSTORE", destination, key];
     if (centerPoint.type === "FROMMEMBER" || centerPoint.type === "frommember") {
@@ -2933,22 +2933,22 @@ var GeoSearchStoreCommand = class extends Command {
     super([...command, ...opts?.storeDist ? ["STOREDIST"] : []], commandOptions);
   }
 };
-var GetCommand = class extends Command {
+const GetCommand = class extends Command {
   constructor(cmd, opts) {
     super(["get", ...cmd], opts);
   }
 };
-var GetBitCommand = class extends Command {
+const GetBitCommand = class extends Command {
   constructor(cmd, opts) {
     super(["getbit", ...cmd], opts);
   }
 };
-var GetDelCommand = class extends Command {
+const GetDelCommand = class extends Command {
   constructor(cmd, opts) {
     super(["getdel", ...cmd], opts);
   }
 };
-var GetExCommand = class extends Command {
+const GetExCommand = class extends Command {
   constructor([key, opts], cmdOpts) {
     const command = ["getex", key];
     if (opts) {
@@ -2967,27 +2967,27 @@ var GetExCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-var GetRangeCommand = class extends Command {
+const GetRangeCommand = class extends Command {
   constructor(cmd, opts) {
     super(["getrange", ...cmd], opts);
   }
 };
-var GetSetCommand = class extends Command {
+const GetSetCommand = class extends Command {
   constructor(cmd, opts) {
     super(["getset", ...cmd], opts);
   }
 };
-var HDelCommand = class extends Command {
+const HDelCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hdel", ...cmd], opts);
   }
 };
-var HExistsCommand = class extends Command {
+const HExistsCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hexists", ...cmd], opts);
   }
 };
-var HExpireCommand = class extends Command {
+const HExpireCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields, seconds, option] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
@@ -3005,7 +3005,7 @@ var HExpireCommand = class extends Command {
     );
   }
 };
-var HExpireAtCommand = class extends Command {
+const HExpireAtCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields, timestamp, option] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
@@ -3023,21 +3023,21 @@ var HExpireAtCommand = class extends Command {
     );
   }
 };
-var HExpireTimeCommand = class extends Command {
+const HExpireTimeCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
     super(["hexpiretime", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
   }
 };
-var HPersistCommand = class extends Command {
+const HPersistCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
     super(["hpersist", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
   }
 };
-var HPExpireCommand = class extends Command {
+const HPExpireCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields, milliseconds, option] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
@@ -3055,7 +3055,7 @@ var HPExpireCommand = class extends Command {
     );
   }
 };
-var HPExpireAtCommand = class extends Command {
+const HPExpireAtCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields, timestamp, option] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
@@ -3073,21 +3073,21 @@ var HPExpireAtCommand = class extends Command {
     );
   }
 };
-var HPExpireTimeCommand = class extends Command {
+const HPExpireTimeCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
     super(["hpexpiretime", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
   }
 };
-var HPTtlCommand = class extends Command {
+const HPTtlCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
     super(["hpttl", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
   }
 };
-var HGetCommand = class extends Command {
+const HGetCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hget", ...cmd], opts);
   }
@@ -3109,7 +3109,7 @@ function deserialize4(result) {
   }
   return obj;
 }
-var HGetAllCommand = class extends Command {
+const HGetAllCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hgetall", ...cmd], {
       deserialize: (result) => deserialize4(result),
@@ -3117,22 +3117,22 @@ var HGetAllCommand = class extends Command {
     });
   }
 };
-var HIncrByCommand = class extends Command {
+const HIncrByCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hincrby", ...cmd], opts);
   }
 };
-var HIncrByFloatCommand = class extends Command {
+const HIncrByFloatCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hincrbyfloat", ...cmd], opts);
   }
 };
-var HKeysCommand = class extends Command {
+const HKeysCommand = class extends Command {
   constructor([key], opts) {
     super(["hkeys", key], opts);
   }
 };
-var HLenCommand = class extends Command {
+const HLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hlen", ...cmd], opts);
   }
@@ -3151,7 +3151,7 @@ function deserialize5(fields, result) {
   }
   return obj;
 }
-var HMGetCommand = class extends Command {
+const HMGetCommand = class extends Command {
   constructor([key, ...fields], opts) {
     super(["hmget", key, ...fields], {
       deserialize: (result) => deserialize5(fields, result),
@@ -3159,12 +3159,12 @@ var HMGetCommand = class extends Command {
     });
   }
 };
-var HMSetCommand = class extends Command {
+const HMSetCommand = class extends Command {
   constructor([key, kv], opts) {
-    super(["hmset", key, ...Object.entries(kv).flatMap(([field, value]) => [field, value])], opts);
+    super(["hmset", key, ...Object.entries(kv).flat()], opts);
   }
 };
-var HScanCommand = class extends Command {
+const HScanCommand = class extends Command {
   constructor([key, cursor, cmdOpts], opts) {
     const command = ["hscan", key, cursor];
     if (cmdOpts?.match) {
@@ -3179,74 +3179,74 @@ var HScanCommand = class extends Command {
     });
   }
 };
-var HSetCommand = class extends Command {
+const HSetCommand = class extends Command {
   constructor([key, kv], opts) {
-    super(["hset", key, ...Object.entries(kv).flatMap(([field, value]) => [field, value])], opts);
+    super(["hset", key, ...Object.entries(kv).flat()], opts);
   }
 };
-var HSetNXCommand = class extends Command {
+const HSetNXCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hsetnx", ...cmd], opts);
   }
 };
-var HStrLenCommand = class extends Command {
+const HStrLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hstrlen", ...cmd], opts);
   }
 };
-var HTtlCommand = class extends Command {
+const HTtlCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
     super(["httl", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
   }
 };
-var HValsCommand = class extends Command {
+const HValsCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hvals", ...cmd], opts);
   }
 };
-var IncrCommand = class extends Command {
+const IncrCommand = class extends Command {
   constructor(cmd, opts) {
     super(["incr", ...cmd], opts);
   }
 };
-var IncrByCommand = class extends Command {
+const IncrByCommand = class extends Command {
   constructor(cmd, opts) {
     super(["incrby", ...cmd], opts);
   }
 };
-var IncrByFloatCommand = class extends Command {
+const IncrByFloatCommand = class extends Command {
   constructor(cmd, opts) {
     super(["incrbyfloat", ...cmd], opts);
   }
 };
-var JsonArrAppendCommand = class extends Command {
+const JsonArrAppendCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.ARRAPPEND", ...cmd], opts);
   }
 };
-var JsonArrIndexCommand = class extends Command {
+const JsonArrIndexCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.ARRINDEX", ...cmd], opts);
   }
 };
-var JsonArrInsertCommand = class extends Command {
+const JsonArrInsertCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.ARRINSERT", ...cmd], opts);
   }
 };
-var JsonArrLenCommand = class extends Command {
+const JsonArrLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.ARRLEN", cmd[0], cmd[1] ?? "$"], opts);
   }
 };
-var JsonArrPopCommand = class extends Command {
+const JsonArrPopCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.ARRPOP", ...cmd], opts);
   }
 };
-var JsonArrTrimCommand = class extends Command {
+const JsonArrTrimCommand = class extends Command {
   constructor(cmd, opts) {
     const path = cmd[1] ?? "$";
     const start = cmd[2] ?? 0;
@@ -3254,22 +3254,22 @@ var JsonArrTrimCommand = class extends Command {
     super(["JSON.ARRTRIM", cmd[0], path, start, stop], opts);
   }
 };
-var JsonClearCommand = class extends Command {
+const JsonClearCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.CLEAR", ...cmd], opts);
   }
 };
-var JsonDelCommand = class extends Command {
+const JsonDelCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.DEL", ...cmd], opts);
   }
 };
-var JsonForgetCommand = class extends Command {
+const JsonForgetCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.FORGET", ...cmd], opts);
   }
 };
-var JsonGetCommand = class extends Command {
+const JsonGetCommand = class extends Command {
   constructor(cmd, opts) {
     const command = ["JSON.GET"];
     if (typeof cmd[1] === "string") {
@@ -3292,18 +3292,18 @@ var JsonGetCommand = class extends Command {
     super(command, opts);
   }
 };
-var JsonMergeCommand = class extends Command {
+const JsonMergeCommand = class extends Command {
   constructor(cmd, opts) {
     const command = ["JSON.MERGE", ...cmd];
     super(command, opts);
   }
 };
-var JsonMGetCommand = class extends Command {
+const JsonMGetCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.MGET", ...cmd[0], cmd[1]], opts);
   }
 };
-var JsonMSetCommand = class extends Command {
+const JsonMSetCommand = class extends Command {
   constructor(cmd, opts) {
     const command = ["JSON.MSET"];
     for (const c of cmd) {
@@ -3312,32 +3312,32 @@ var JsonMSetCommand = class extends Command {
     super(command, opts);
   }
 };
-var JsonNumIncrByCommand = class extends Command {
+const JsonNumIncrByCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.NUMINCRBY", ...cmd], opts);
   }
 };
-var JsonNumMultByCommand = class extends Command {
+const JsonNumMultByCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.NUMMULTBY", ...cmd], opts);
   }
 };
-var JsonObjKeysCommand = class extends Command {
+const JsonObjKeysCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.OBJKEYS", ...cmd], opts);
   }
 };
-var JsonObjLenCommand = class extends Command {
+const JsonObjLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.OBJLEN", ...cmd], opts);
   }
 };
-var JsonRespCommand = class extends Command {
+const JsonRespCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.RESP", ...cmd], opts);
   }
 };
-var JsonSetCommand = class extends Command {
+const JsonSetCommand = class extends Command {
   constructor(cmd, opts) {
     const command = ["JSON.SET", cmd[0], cmd[1], cmd[2]];
     if (cmd[3]) {
@@ -3350,63 +3350,63 @@ var JsonSetCommand = class extends Command {
     super(command, opts);
   }
 };
-var JsonStrAppendCommand = class extends Command {
+const JsonStrAppendCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.STRAPPEND", ...cmd], opts);
   }
 };
-var JsonStrLenCommand = class extends Command {
+const JsonStrLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.STRLEN", ...cmd], opts);
   }
 };
-var JsonToggleCommand = class extends Command {
+const JsonToggleCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.TOGGLE", ...cmd], opts);
   }
 };
-var JsonTypeCommand = class extends Command {
+const JsonTypeCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.TYPE", ...cmd], opts);
   }
 };
-var KeysCommand = class extends Command {
+const KeysCommand = class extends Command {
   constructor(cmd, opts) {
     super(["keys", ...cmd], opts);
   }
 };
-var LIndexCommand = class extends Command {
+const LIndexCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lindex", ...cmd], opts);
   }
 };
-var LInsertCommand = class extends Command {
+const LInsertCommand = class extends Command {
   constructor(cmd, opts) {
     super(["linsert", ...cmd], opts);
   }
 };
-var LLenCommand = class extends Command {
+const LLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["llen", ...cmd], opts);
   }
 };
-var LMoveCommand = class extends Command {
+const LMoveCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lmove", ...cmd], opts);
   }
 };
-var LmPopCommand = class extends Command {
+const LmPopCommand = class extends Command {
   constructor(cmd, opts) {
     const [numkeys, keys, direction, count] = cmd;
     super(["LMPOP", numkeys, ...keys, direction, ...count ? ["COUNT", count] : []], opts);
   }
 };
-var LPopCommand = class extends Command {
+const LPopCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lpop", ...cmd], opts);
   }
 };
-var LPosCommand = class extends Command {
+const LPosCommand = class extends Command {
   constructor(cmd, opts) {
     const args = ["lpos", cmd[0], cmd[1]];
     if (typeof cmd[2]?.rank === "number") {
@@ -3421,83 +3421,83 @@ var LPosCommand = class extends Command {
     super(args, opts);
   }
 };
-var LPushCommand = class extends Command {
+const LPushCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lpush", ...cmd], opts);
   }
 };
-var LPushXCommand = class extends Command {
+const LPushXCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lpushx", ...cmd], opts);
   }
 };
-var LRangeCommand = class extends Command {
+const LRangeCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lrange", ...cmd], opts);
   }
 };
-var LRemCommand = class extends Command {
+const LRemCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lrem", ...cmd], opts);
   }
 };
-var LSetCommand = class extends Command {
+const LSetCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lset", ...cmd], opts);
   }
 };
-var LTrimCommand = class extends Command {
+const LTrimCommand = class extends Command {
   constructor(cmd, opts) {
     super(["ltrim", ...cmd], opts);
   }
 };
-var MGetCommand = class extends Command {
+const MGetCommand = class extends Command {
   constructor(cmd, opts) {
     const keys = Array.isArray(cmd[0]) ? cmd[0] : cmd;
     super(["mget", ...keys], opts);
   }
 };
-var MSetCommand = class extends Command {
+const MSetCommand = class extends Command {
   constructor([kv], opts) {
-    super(["mset", ...Object.entries(kv).flatMap(([key, value]) => [key, value])], opts);
+    super(["mset", ...Object.entries(kv).flat()], opts);
   }
 };
-var MSetNXCommand = class extends Command {
+const MSetNXCommand = class extends Command {
   constructor([kv], opts) {
     super(["msetnx", ...Object.entries(kv).flat()], opts);
   }
 };
-var PersistCommand = class extends Command {
+const PersistCommand = class extends Command {
   constructor(cmd, opts) {
     super(["persist", ...cmd], opts);
   }
 };
-var PExpireCommand = class extends Command {
+const PExpireCommand = class extends Command {
   constructor(cmd, opts) {
     super(["pexpire", ...cmd], opts);
   }
 };
-var PExpireAtCommand = class extends Command {
+const PExpireAtCommand = class extends Command {
   constructor(cmd, opts) {
     super(["pexpireat", ...cmd], opts);
   }
 };
-var PfAddCommand = class extends Command {
+const PfAddCommand = class extends Command {
   constructor(cmd, opts) {
     super(["pfadd", ...cmd], opts);
   }
 };
-var PfCountCommand = class extends Command {
+const PfCountCommand = class extends Command {
   constructor(cmd, opts) {
     super(["pfcount", ...cmd], opts);
   }
 };
-var PfMergeCommand = class extends Command {
+const PfMergeCommand = class extends Command {
   constructor(cmd, opts) {
     super(["pfmerge", ...cmd], opts);
   }
 };
-var PingCommand = class extends Command {
+const PingCommand = class extends Command {
   constructor(cmd, opts) {
     const command = ["ping"];
     if (cmd?.[0] !== void 0) {
@@ -3506,57 +3506,57 @@ var PingCommand = class extends Command {
     super(command, opts);
   }
 };
-var PSetEXCommand = class extends Command {
+const PSetEXCommand = class extends Command {
   constructor(cmd, opts) {
     super(["psetex", ...cmd], opts);
   }
 };
-var PTtlCommand = class extends Command {
+const PTtlCommand = class extends Command {
   constructor(cmd, opts) {
     super(["pttl", ...cmd], opts);
   }
 };
-var PublishCommand = class extends Command {
+const PublishCommand = class extends Command {
   constructor(cmd, opts) {
     super(["publish", ...cmd], opts);
   }
 };
-var RandomKeyCommand = class extends Command {
+const RandomKeyCommand = class extends Command {
   constructor(opts) {
     super(["randomkey"], opts);
   }
 };
-var RenameCommand = class extends Command {
+const RenameCommand = class extends Command {
   constructor(cmd, opts) {
     super(["rename", ...cmd], opts);
   }
 };
-var RenameNXCommand = class extends Command {
+const RenameNXCommand = class extends Command {
   constructor(cmd, opts) {
     super(["renamenx", ...cmd], opts);
   }
 };
-var RPopCommand = class extends Command {
+const RPopCommand = class extends Command {
   constructor(cmd, opts) {
     super(["rpop", ...cmd], opts);
   }
 };
-var RPushCommand = class extends Command {
+const RPushCommand = class extends Command {
   constructor(cmd, opts) {
     super(["rpush", ...cmd], opts);
   }
 };
-var RPushXCommand = class extends Command {
+const RPushXCommand = class extends Command {
   constructor(cmd, opts) {
     super(["rpushx", ...cmd], opts);
   }
 };
-var SAddCommand = class extends Command {
+const SAddCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sadd", ...cmd], opts);
   }
 };
-var ScanCommand = class extends Command {
+const ScanCommand = class extends Command {
   constructor([cursor, opts], cmdOpts) {
     const command = ["scan", cursor];
     if (opts?.match) {
@@ -3577,12 +3577,12 @@ var ScanCommand = class extends Command {
     });
   }
 };
-var SCardCommand = class extends Command {
+const SCardCommand = class extends Command {
   constructor(cmd, opts) {
     super(["scard", ...cmd], opts);
   }
 };
-var ScriptExistsCommand = class extends Command {
+const ScriptExistsCommand = class extends Command {
   constructor(hashes, opts) {
     super(["script", "exists", ...hashes], {
       deserialize: (result) => result,
@@ -3590,7 +3590,7 @@ var ScriptExistsCommand = class extends Command {
     });
   }
 };
-var ScriptFlushCommand = class extends Command {
+const ScriptFlushCommand = class extends Command {
   constructor([opts], cmdOpts) {
     const cmd = ["script", "flush"];
     if (opts?.sync) {
@@ -3601,22 +3601,22 @@ var ScriptFlushCommand = class extends Command {
     super(cmd, cmdOpts);
   }
 };
-var ScriptLoadCommand = class extends Command {
+const ScriptLoadCommand = class extends Command {
   constructor(args, opts) {
     super(["script", "load", ...args], opts);
   }
 };
-var SDiffCommand = class extends Command {
+const SDiffCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sdiff", ...cmd], opts);
   }
 };
-var SDiffStoreCommand = class extends Command {
+const SDiffStoreCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sdiffstore", ...cmd], opts);
   }
 };
-var SetCommand = class extends Command {
+const SetCommand = class extends Command {
   constructor([key, value, opts], cmdOpts) {
     const command = ["set", key, value];
     if (opts) {
@@ -3643,57 +3643,57 @@ var SetCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-var SetBitCommand = class extends Command {
+const SetBitCommand = class extends Command {
   constructor(cmd, opts) {
     super(["setbit", ...cmd], opts);
   }
 };
-var SetExCommand = class extends Command {
+const SetExCommand = class extends Command {
   constructor(cmd, opts) {
     super(["setex", ...cmd], opts);
   }
 };
-var SetNxCommand = class extends Command {
+const SetNxCommand = class extends Command {
   constructor(cmd, opts) {
     super(["setnx", ...cmd], opts);
   }
 };
-var SetRangeCommand = class extends Command {
+const SetRangeCommand = class extends Command {
   constructor(cmd, opts) {
     super(["setrange", ...cmd], opts);
   }
 };
-var SInterCommand = class extends Command {
+const SInterCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sinter", ...cmd], opts);
   }
 };
-var SInterStoreCommand = class extends Command {
+const SInterStoreCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sinterstore", ...cmd], opts);
   }
 };
-var SIsMemberCommand = class extends Command {
+const SIsMemberCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sismember", ...cmd], opts);
   }
 };
-var SMembersCommand = class extends Command {
+const SMembersCommand = class extends Command {
   constructor(cmd, opts) {
     super(["smembers", ...cmd], opts);
   }
 };
-var SMIsMemberCommand = class extends Command {
+const SMIsMemberCommand = class extends Command {
   constructor(cmd, opts) {
     super(["smismember", cmd[0], ...cmd[1]], opts);
   }
 };
-var SMoveCommand = class extends Command {
+const SMoveCommand = class extends Command {
   constructor(cmd, opts) {
     super(["smove", ...cmd], opts);
   }
 };
-var SPopCommand = class extends Command {
+const SPopCommand = class extends Command {
   constructor([key, count], opts) {
     const command = ["spop", key];
     if (typeof count === "number") {
@@ -3702,7 +3702,7 @@ var SPopCommand = class extends Command {
     super(command, opts);
   }
 };
-var SRandMemberCommand = class extends Command {
+const SRandMemberCommand = class extends Command {
   constructor([key, count], opts) {
     const command = ["srandmember", key];
     if (typeof count === "number") {
@@ -3711,12 +3711,12 @@ var SRandMemberCommand = class extends Command {
     super(command, opts);
   }
 };
-var SRemCommand = class extends Command {
+const SRemCommand = class extends Command {
   constructor(cmd, opts) {
     super(["srem", ...cmd], opts);
   }
 };
-var SScanCommand = class extends Command {
+const SScanCommand = class extends Command {
   constructor([key, cursor, opts], cmdOpts) {
     const command = ["sscan", key, cursor];
     if (opts?.match) {
@@ -3731,53 +3731,53 @@ var SScanCommand = class extends Command {
     });
   }
 };
-var StrLenCommand = class extends Command {
+const StrLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["strlen", ...cmd], opts);
   }
 };
-var SUnionCommand = class extends Command {
+const SUnionCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sunion", ...cmd], opts);
   }
 };
-var SUnionStoreCommand = class extends Command {
+const SUnionStoreCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sunionstore", ...cmd], opts);
   }
 };
-var TimeCommand = class extends Command {
+const TimeCommand = class extends Command {
   constructor(opts) {
     super(["time"], opts);
   }
 };
-var TouchCommand = class extends Command {
+const TouchCommand = class extends Command {
   constructor(cmd, opts) {
     super(["touch", ...cmd], opts);
   }
 };
-var TtlCommand = class extends Command {
+const TtlCommand = class extends Command {
   constructor(cmd, opts) {
     super(["ttl", ...cmd], opts);
   }
 };
-var TypeCommand = class extends Command {
+const TypeCommand = class extends Command {
   constructor(cmd, opts) {
     super(["type", ...cmd], opts);
   }
 };
-var UnlinkCommand = class extends Command {
+const UnlinkCommand = class extends Command {
   constructor(cmd, opts) {
     super(["unlink", ...cmd], opts);
   }
 };
-var XAckCommand = class extends Command {
+const XAckCommand = class extends Command {
   constructor([key, group, id], opts) {
     const ids = Array.isArray(id) ? [...id] : [id];
     super(["XACK", key, group, ...ids], opts);
   }
 };
-var XAddCommand = class extends Command {
+const XAddCommand = class extends Command {
   constructor([key, id, entries, opts], commandOptions) {
     const command = ["XADD", key];
     if (opts) {
@@ -3798,7 +3798,7 @@ var XAddCommand = class extends Command {
     super(command, commandOptions);
   }
 };
-var XAutoClaim = class extends Command {
+const XAutoClaim = class extends Command {
   constructor([key, group, consumer, minIdleTime, start, options], opts) {
     const commands = [];
     if (options?.count) {
@@ -3810,7 +3810,7 @@ var XAutoClaim = class extends Command {
     super(["XAUTOCLAIM", key, group, consumer, minIdleTime, start, ...commands], opts);
   }
 };
-var XClaimCommand = class extends Command {
+const XClaimCommand = class extends Command {
   constructor([key, group, consumer, minIdleTime, id, options], opts) {
     const ids = Array.isArray(id) ? [...id] : [id];
     const commands = [];
@@ -3835,13 +3835,13 @@ var XClaimCommand = class extends Command {
     super(["XCLAIM", key, group, consumer, minIdleTime, ...ids, ...commands], opts);
   }
 };
-var XDelCommand = class extends Command {
+const XDelCommand = class extends Command {
   constructor([key, ids], opts) {
     const cmds = Array.isArray(ids) ? [...ids] : [ids];
     super(["XDEL", key, ...cmds], opts);
   }
 };
-var XGroupCommand = class extends Command {
+const XGroupCommand = class extends Command {
   constructor([key, opts], commandOptions) {
     const command = ["XGROUP"];
     switch (opts.type) {
@@ -3883,7 +3883,7 @@ var XGroupCommand = class extends Command {
     super(command, commandOptions);
   }
 };
-var XInfoCommand = class extends Command {
+const XInfoCommand = class extends Command {
   constructor([key, options], opts) {
     const cmds = [];
     if (options.type === "CONSUMERS") {
@@ -3894,12 +3894,12 @@ var XInfoCommand = class extends Command {
     super(["XINFO", ...cmds], opts);
   }
 };
-var XLenCommand = class extends Command {
+const XLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["XLEN", ...cmd], opts);
   }
 };
-var XPendingCommand = class extends Command {
+const XPendingCommand = class extends Command {
   constructor([key, group, start, end, count, options], opts) {
     const consumers = options?.consumer === void 0 ? [] : Array.isArray(options.consumer) ? [...options.consumer] : [options.consumer];
     super(
@@ -3939,7 +3939,7 @@ function deserialize6(result) {
   }
   return obj;
 }
-var XRangeCommand = class extends Command {
+const XRangeCommand = class extends Command {
   constructor([key, start, end, count], opts) {
     const command = ["XRANGE", key, start, end];
     if (typeof count === "number") {
@@ -3951,8 +3951,8 @@ var XRangeCommand = class extends Command {
     });
   }
 };
-var UNBALANCED_XREAD_ERR = "ERR Unbalanced XREAD list of streams: for each stream key an ID or '$' must be specified";
-var XReadCommand = class extends Command {
+const UNBALANCED_XREAD_ERR = "ERR Unbalanced XREAD list of streams: for each stream key an ID or '$' must be specified";
+const XReadCommand = class extends Command {
   constructor([key, id, options], opts) {
     if (Array.isArray(key) && Array.isArray(id) && key.length !== id.length) {
       throw new Error(UNBALANCED_XREAD_ERR);
@@ -3972,8 +3972,8 @@ var XReadCommand = class extends Command {
     super(["XREAD", ...commands], opts);
   }
 };
-var UNBALANCED_XREADGROUP_ERR = "ERR Unbalanced XREADGROUP list of streams: for each stream key an ID or '$' must be specified";
-var XReadGroupCommand = class extends Command {
+const UNBALANCED_XREADGROUP_ERR = "ERR Unbalanced XREADGROUP list of streams: for each stream key an ID or '$' must be specified";
+const XReadGroupCommand = class extends Command {
   constructor([group, consumer, key, id, options], opts) {
     if (Array.isArray(key) && Array.isArray(id) && key.length !== id.length) {
       throw new Error(UNBALANCED_XREADGROUP_ERR);
@@ -3996,7 +3996,7 @@ var XReadGroupCommand = class extends Command {
     super(["XREADGROUP", "GROUP", group, consumer, ...commands], opts);
   }
 };
-var XRevRangeCommand = class extends Command {
+const XRevRangeCommand = class extends Command {
   constructor([key, end, start, count], opts) {
     const command = ["XREVRANGE", key, end, start];
     if (typeof count === "number") {
@@ -4030,13 +4030,13 @@ function deserialize7(result) {
   }
   return obj;
 }
-var XTrimCommand = class extends Command {
+const XTrimCommand = class extends Command {
   constructor([key, options], opts) {
     const { limit, strategy, threshold, exactness = "~" } = options;
     super(["XTRIM", key, strategy, exactness, threshold, ...limit ? ["LIMIT", limit] : []], opts);
   }
 };
-var ZAddCommand = class extends Command {
+const ZAddCommand = class extends Command {
   constructor([key, arg1, ...arg2], opts) {
     const command = ["zadd", key];
     if ("nx" in arg1 && arg1.nx) {
@@ -4062,22 +4062,22 @@ var ZAddCommand = class extends Command {
     super(command, opts);
   }
 };
-var ZCardCommand = class extends Command {
+const ZCardCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zcard", ...cmd], opts);
   }
 };
-var ZCountCommand = class extends Command {
+const ZCountCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zcount", ...cmd], opts);
   }
 };
-var ZIncrByCommand = class extends Command {
+const ZIncrByCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zincrby", ...cmd], opts);
   }
 };
-var ZInterStoreCommand = class extends Command {
+const ZInterStoreCommand = class extends Command {
   constructor([destination, numKeys, keyOrKeys, opts], cmdOpts) {
     const command = ["zinterstore", destination, numKeys];
     if (Array.isArray(keyOrKeys)) {
@@ -4098,12 +4098,12 @@ var ZInterStoreCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-var ZLexCountCommand = class extends Command {
+const ZLexCountCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zlexcount", ...cmd], opts);
   }
 };
-var ZPopMaxCommand = class extends Command {
+const ZPopMaxCommand = class extends Command {
   constructor([key, count], opts) {
     const command = ["zpopmax", key];
     if (typeof count === "number") {
@@ -4112,7 +4112,7 @@ var ZPopMaxCommand = class extends Command {
     super(command, opts);
   }
 };
-var ZPopMinCommand = class extends Command {
+const ZPopMinCommand = class extends Command {
   constructor([key, count], opts) {
     const command = ["zpopmin", key];
     if (typeof count === "number") {
@@ -4121,7 +4121,7 @@ var ZPopMinCommand = class extends Command {
     super(command, opts);
   }
 };
-var ZRangeCommand = class extends Command {
+const ZRangeCommand = class extends Command {
   constructor([key, min, max, opts], cmdOpts) {
     const command = ["zrange", key, min, max];
     if (opts?.byScore) {
@@ -4142,37 +4142,37 @@ var ZRangeCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-var ZRankCommand = class extends Command {
+const ZRankCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zrank", ...cmd], opts);
   }
 };
-var ZRemCommand = class extends Command {
+const ZRemCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zrem", ...cmd], opts);
   }
 };
-var ZRemRangeByLexCommand = class extends Command {
+const ZRemRangeByLexCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zremrangebylex", ...cmd], opts);
   }
 };
-var ZRemRangeByRankCommand = class extends Command {
+const ZRemRangeByRankCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zremrangebyrank", ...cmd], opts);
   }
 };
-var ZRemRangeByScoreCommand = class extends Command {
+const ZRemRangeByScoreCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zremrangebyscore", ...cmd], opts);
   }
 };
-var ZRevRankCommand = class extends Command {
+const ZRevRankCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zrevrank", ...cmd], opts);
   }
 };
-var ZScanCommand = class extends Command {
+const ZScanCommand = class extends Command {
   constructor([key, cursor, opts], cmdOpts) {
     const command = ["zscan", key, cursor];
     if (opts?.match) {
@@ -4187,12 +4187,12 @@ var ZScanCommand = class extends Command {
     });
   }
 };
-var ZScoreCommand = class extends Command {
+const ZScoreCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zscore", ...cmd], opts);
   }
 };
-var ZUnionCommand = class extends Command {
+const ZUnionCommand = class extends Command {
   constructor([numKeys, keyOrKeys, opts], cmdOpts) {
     const command = ["zunion", numKeys];
     if (Array.isArray(keyOrKeys)) {
@@ -4216,7 +4216,7 @@ var ZUnionCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-var ZUnionStoreCommand = class extends Command {
+const ZUnionStoreCommand = class extends Command {
   constructor([destination, numKeys, keyOrKeys, opts], cmdOpts) {
     const command = ["zunionstore", destination, numKeys];
     if (Array.isArray(keyOrKeys)) {
@@ -4237,18 +4237,18 @@ var ZUnionStoreCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-var ZDiffStoreCommand = class extends Command {
+const ZDiffStoreCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zdiffstore", ...cmd], opts);
   }
 };
-var ZMScoreCommand = class extends Command {
+const ZMScoreCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, members] = cmd;
     super(["zmscore", key, ...members], opts);
   }
 };
-var Pipeline = class {
+const Pipeline = class {
   client;
   commands;
   commandOptions;
@@ -5104,7 +5104,7 @@ var Pipeline = class {
     };
   }
 };
-var EXCLUDE_COMMANDS = /* @__PURE__ */ new Set([
+const EXCLUDE_COMMANDS = /* @__PURE__ */ new Set([
   "scan",
   "keys",
   "flushdb",
@@ -5160,7 +5160,7 @@ function createAutoPipelineProxy(_redis, namespace = "root") {
     }
   });
 }
-var AutoPipelineExecutor = class {
+const AutoPipelineExecutor = class {
   pipelinePromises = /* @__PURE__ */ new WeakMap();
   activePipeline = null;
   indexInCurrentPipeline = 0;
@@ -5202,7 +5202,7 @@ var AutoPipelineExecutor = class {
     await Promise.resolve();
   }
 };
-var PSubscribeCommand = class extends Command {
+const PSubscribeCommand = class extends Command {
   constructor(cmd, opts) {
     const sseHeaders = {
       Accept: "text/event-stream",
@@ -5221,12 +5221,12 @@ var PSubscribeCommand = class extends Command {
     });
   }
 };
-var Subscriber = class extends EventTarget {
+const Subscriber = class extends EventTarget {
   subscriptions;
   client;
   listeners;
   opts;
-  constructor(client, channels, isPattern = false, opts) {
+  constructor(client, channels, isPattern, opts) {
     super();
     this.client = client;
     this.subscriptions = /* @__PURE__ */ new Map();
@@ -5301,7 +5301,7 @@ var Subscriber = class extends EventTarget {
         const messageStr = messageData.slice(secondCommaIndex + 1);
         try {
           if (type === "subscribe" || type === "psubscribe" || type === "unsubscribe" || type === "punsubscribe") {
-            const count = Number.parseInt(messageStr);
+            const count = Number.parseInt(messageStr, 10);
             this.dispatchToListeners(type, count);
           } else {
             const message = this.opts?.automaticDeserialization === false ? messageStr : parseWithTryCatch(messageStr);
@@ -5358,7 +5358,7 @@ var Subscriber = class extends EventTarget {
     return [...this.subscriptions.keys()];
   }
 };
-var SubscribeCommand = class extends Command {
+const SubscribeCommand = class extends Command {
   constructor(cmd, opts) {
     const sseHeaders = {
       Accept: "text/event-stream",
@@ -5377,14 +5377,14 @@ var SubscribeCommand = class extends Command {
     });
   }
 };
-var parseWithTryCatch = (str) => {
+const parseWithTryCatch = (str) => {
   try {
     return JSON.parse(str);
   } catch {
     return str;
   }
 };
-var Script = class {
+const Script = class {
   script;
   /**
    * @deprecated This property is initialized to an empty string and will be set in the init method
@@ -5448,7 +5448,7 @@ var Script = class {
     return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 };
-var ScriptRO = class {
+const ScriptRO = class {
   script;
   /**
    * @deprecated This property is initialized to an empty string and will be set in the init method
@@ -5509,7 +5509,7 @@ var ScriptRO = class {
     return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 };
-var Redis = class {
+const Redis = class {
   client;
   opts;
   enableTelemetry;
@@ -6425,11 +6425,11 @@ var Redis = class {
    */
   zunionstore = (...args) => new ZUnionStoreCommand(args, this.opts).exec(this.client);
 };
-var VERSION = "v1.36.1";
+const VERSION = "v1.36.1";
 if (typeof atob === "undefined") {
   global.atob = (b64) => Buffer.from(b64, "base64").toString("utf8");
 }
-var Redis2 = class _Redis extends Redis {
+const Redis2 = class _Redis extends Redis {
   /**
    * Create a new redis client by providing a custom `Requester` implementation
    *
@@ -6560,7 +6560,7 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-var ratelimit = null;
+let ratelimit = null;
 function getRatelimit() {
   if (ratelimit) return ratelimit;
   const url = process.env.UPSTASH_REDIS_REST_URL;
@@ -6694,8 +6694,8 @@ function createRelayHandler(cfg) {
     }
   };
 }
-var config = { runtime: "edge" };
-var polymarket_default = createRelayHandler({
+const config = { runtime: "edge" };
+const polymarket_default = createRelayHandler({
   relayPath: "/polymarket",
   timeout: 15e3,
   requireApiKey: true,

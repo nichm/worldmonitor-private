@@ -1,4 +1,4 @@
-// api/_cors.js
+// api/ontario-spills.js
 function getPublicCorsHeaders(methods = "GET, OPTIONS") {
   return {
     "Access-Control-Allow-Origin": "*",
@@ -7,8 +7,6 @@ function getPublicCorsHeaders(methods = "GET, OPTIONS") {
     "Access-Control-Max-Age": "86400"
   };
 }
-
-// api/_json-response.js
 function sanitizeJsonValue(value, depth = 0) {
   if (depth > 20) return "[truncated]";
   if (value instanceof Error) {
@@ -36,13 +34,11 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-
-// api/ontario-spills.js
-var config = { runtime: "edge" };
-var CKAN_BASE = "https://data.ontario.ca/api/3/action";
-var PACKAGE_ID = "spills-to-the-natural-environment";
-var CACHE_TTL = 21600;
-var GTA_MUNICIPALITIES = [
+const config = { runtime: "edge" };
+const CKAN_BASE = "https://data.ontario.ca/api/3/action";
+const PACKAGE_ID = "spills-to-the-natural-environment";
+const CACHE_TTL = 21600;
+const GTA_MUNICIPALITIES = [
   "Toronto",
   "Mississauga",
   "Brampton",
@@ -54,13 +50,13 @@ var GTA_MUNICIPALITIES = [
   "Ajax",
   "Pickering"
 ];
-var FLASH_CLASSES = [
+const FLASH_CLASSES = [
   "Class 1 - Flammable Gases",
   "Class 1 - Flammable Liquids",
   "Class 6 - Toxic",
   "Class 6 - Toxic and Infectious Substances"
 ];
-var PRIORITY_CLASSES = [
+const PRIORITY_CLASSES = [
   "Class 2 - Compressed Gases",
   "Class 8 - Corrosive"
 ];
