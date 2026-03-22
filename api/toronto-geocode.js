@@ -26,11 +26,11 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-const config = { runtime: "edge" };
-const NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
-const USER_AGENT = "WorldMonitor/1.0 (geocoding service)";
-const CACHE_TTL = 7 * 24 * 60 * 60;
-const geocodeCache = /* @__PURE__ */ new Map();
+var config = { runtime: "edge" };
+var NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
+var USER_AGENT = "WorldMonitor/1.0 (geocoding service)";
+var CACHE_TTL = 7 * 24 * 60 * 60;
+var geocodeCache = /* @__PURE__ */ new Map();
 async function handler(req) {
   try {
     const url = new URL(req.url);

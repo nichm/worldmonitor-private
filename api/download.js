@@ -1,5 +1,5 @@
 // api/download.js
-const RELEASES_URL = "https://api.github.com/repos/koala73/worldmonitor/releases/latest";
+var RELEASES_URL = "https://api.github.com/repos/koala73/worldmonitor/releases/latest";
 async function fetchLatestRelease(userAgent) {
   const res = await fetch(RELEASES_URL, {
     headers: {
@@ -10,9 +10,9 @@ async function fetchLatestRelease(userAgent) {
   if (!res.ok) return null;
   return res.json();
 }
-const config = { runtime: "edge" };
-const RELEASES_PAGE = "https://github.com/koala73/worldmonitor/releases/latest";
-const PLATFORM_PATTERNS = {
+var config = { runtime: "edge" };
+var RELEASES_PAGE = "https://github.com/koala73/worldmonitor/releases/latest";
+var PLATFORM_PATTERNS = {
   "windows-exe": (name) => name.endsWith("_x64-setup.exe"),
   "windows-msi": (name) => name.endsWith("_x64_en-US.msi"),
   "macos-arm64": (name) => name.endsWith("_aarch64.dmg"),
@@ -20,7 +20,7 @@ const PLATFORM_PATTERNS = {
   "linux-appimage": (name) => name.endsWith("_amd64.AppImage"),
   "linux-appimage-arm64": (name) => name.endsWith("_aarch64.AppImage")
 };
-const VARIANT_IDENTIFIERS = {
+var VARIANT_IDENTIFIERS = {
   full: ["worldmonitor"],
   world: ["worldmonitor"],
   tech: ["techmonitor"],

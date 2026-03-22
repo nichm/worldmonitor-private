@@ -34,20 +34,20 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-const config = { runtime: "edge" };
-const OPENSKY_TOKEN_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token";
-const OPENSKY_STATES_URL = "https://opensky-network.org/api/states/all";
-const GTA_BBOX = {
+var config = { runtime: "edge" };
+var OPENSKY_TOKEN_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token";
+var OPENSKY_STATES_URL = "https://opensky-network.org/api/states/all";
+var GTA_BBOX = {
   lamin: 43.4,
   lamax: 44,
   lomin: -79.8,
   lomax: -78.9
 };
-const EMERGENCY_SQUAWKS = ["7500", "7600", "7700"];
-let cachedToken = null;
-let tokenExpiry = 0;
-const TOKEN_CACHE_MS = 29 * 60 * 1e3;
-const CACHE_TTL = 90;
+var EMERGENCY_SQUAWKS = ["7500", "7600", "7700"];
+var cachedToken = null;
+var tokenExpiry = 0;
+var TOKEN_CACHE_MS = 29 * 60 * 1e3;
+var CACHE_TTL = 90;
 async function fetchOpenSkyToken() {
   const now = Date.now();
   if (cachedToken && now < tokenExpiry) {

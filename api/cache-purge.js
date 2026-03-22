@@ -1,5 +1,5 @@
 // api/cache-purge.js
-const ALLOWED_ORIGIN_PATTERNS = [
+var ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -50,13 +50,13 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-const config = { runtime: "edge" };
-const MAX_EXPLICIT_KEYS = 20;
-const MAX_PATTERNS = 3;
-const MAX_DELETIONS = 200;
-const MAX_SCAN_ITERATIONS = 5;
-const BLOCKLIST_PREFIXES = ["rl:", "__"];
-const DURABLE_DATA_PREFIXES = ["military:bases:", "conflict:iran-events:", "conflict:ucdp-events:"];
+var config = { runtime: "edge" };
+var MAX_EXPLICIT_KEYS = 20;
+var MAX_PATTERNS = 3;
+var MAX_DELETIONS = 200;
+var MAX_SCAN_ITERATIONS = 5;
+var BLOCKLIST_PREFIXES = ["rl:", "__"];
+var DURABLE_DATA_PREFIXES = ["military:bases:", "conflict:iran-events:", "conflict:ucdp-events:"];
 function getKeyPrefix() {
   const env = process.env.VERCEL_ENV;
   if (!env || env === "production") return "";

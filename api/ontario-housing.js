@@ -26,10 +26,10 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-const ONTARIO_OPEN_DATA_URL = "https://data.ontario.ca/api/3/action/package_show?id=ontario-s-housing-supply-progress";
-const RESOURCE_NAME = "ontario_housing_supply_progress.csv";
-const config = { runtime: "edge" };
-const GTA_MUNICIPALITIES = [
+var ONTARIO_OPEN_DATA_URL = "https://data.ontario.ca/api/3/action/package_show?id=ontario-s-housing-supply-progress";
+var RESOURCE_NAME = "ontario_housing_supply_progress.csv";
+var config = { runtime: "edge" };
+var GTA_MUNICIPALITIES = [
   "Toronto",
   "Mississauga",
   "Brampton",
@@ -37,6 +37,64 @@ const GTA_MUNICIPALITIES = [
   "Vaughan",
   "Oakville",
   "Burlington"
+];
+var SEED_DATA = [
+  {
+    _id: 1,
+    Municipality: "Toronto",
+    Year: 2025,
+    Target: 53e3,
+    Housing_Units: 31245,
+    Progress_Percentage: 58.9
+  },
+  {
+    _id: 2,
+    Municipality: "Mississauga",
+    Year: 2025,
+    Target: 36e3,
+    Housing_Units: 21890,
+    Progress_Percentage: 60.8
+  },
+  {
+    _id: 3,
+    Municipality: "Brampton",
+    Year: 2025,
+    Target: 29e3,
+    Housing_Units: 16780,
+    Progress_Percentage: 57.9
+  },
+  {
+    _id: 4,
+    Municipality: "Markham",
+    Year: 2025,
+    Target: 24e3,
+    Housing_Units: 14230,
+    Progress_Percentage: 59.3
+  },
+  {
+    _id: 5,
+    Municipality: "Vaughan",
+    Year: 2025,
+    Target: 22e3,
+    Housing_Units: 12890,
+    Progress_Percentage: 58.6
+  },
+  {
+    _id: 6,
+    Municipality: "Oakville",
+    Year: 2025,
+    Target: 11e3,
+    Housing_Units: 6540,
+    Progress_Percentage: 59.5
+  },
+  {
+    _id: 7,
+    Municipality: "Burlington",
+    Year: 2025,
+    Target: 9e3,
+    Housing_Units: 5230,
+    Progress_Percentage: 58.1
+  }
 ];
 async function handler(_req) {
   try {
@@ -58,8 +116,23 @@ async function handler(_req) {
     if (!csvResource) {
       throw new Error("CSV resource not found in Ontario Housing package");
     }
-    const csvResponse = await fetch(csvResource.url);
+    const csvResponse = await fetch(csvResource.url, {
+      headers: {
+        "User-Agent": "worldmonitor.app"
+      }
+    });
     if (!csvResponse.ok) {
+      if (csvResponse.status === 429) {
+        console.warn("[Ontario Housing] Rate limited, using seed data");
+        return jsonResponse({
+          using_seed_data: true,
+          data: SEED_DATA,
+          message: "Using seed data - API rate limited"
+        }, 200, {
+          "Cache-Control": "public, max-age=300, s-maxage=600, stale-if-error=1200",
+          "Access-Control-Allow-Origin": "*"
+        });
+      }
       throw new Error(`Failed to fetch CSV: ${csvResponse.status}`);
     }
     const csvText = await csvResponse.text();
@@ -86,13 +159,20 @@ async function handler(_req) {
       }
     }
     data.sort((a, b) => b.Progress_Percentage - a.Progress_Percentage);
-    return jsonResponse(data, 200, {
+    return jsonResponse({
+      using_seed_data: false,
+      data
+    }, 200, {
       "Cache-Control": "public, max-age=3600, s-maxage=3600, stale-if-error=7200",
       "Access-Control-Allow-Origin": "*"
     });
   } catch (error) {
     console.error("Ontario Housing API error:", error);
-    return jsonResponse({ error: "Failed to fetch Ontario Housing data", message: error.message }, 500, {
+    return jsonResponse({
+      using_seed_data: true,
+      data: SEED_DATA,
+      message: "Using seed data - API unavailable"
+    }, 200, {
       "Cache-Control": "public, max-age=300, s-maxage=600, stale-if-error=1200",
       "Access-Control-Allow-Origin": "*"
     });

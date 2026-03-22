@@ -275,7 +275,12 @@
     "panelCatMining": "Mining & Supply Chain",
     "panelCatCommodityEcon": "Economy & Trade",
     "panelCatHappyNews": "Good News",
-    "panelCatHappyPlanet": "Planet & Giving"
+    "panelCatHappyPlanet": "Planet & Giving",
+    "panelCatTorontoCore": "Toronto Core",
+    "panelCatTorontoEmergency": "Emergency & Safety",
+    "panelCatTorontoInfrastructure": "Infrastructure",
+    "panelCatTorontoEconomic": "Economic & Civic",
+    "panelCatTorontoRegional": "Regional Services"
   },
   "panels": {
     "liveNews": "Live News",
@@ -361,7 +366,23 @@
     "gulfCurrencies": "Gulf Currencies",
     "gulfOil": "Gulf Oil",
     "airlineIntel": "✈️ Airline Intelligence",
-    "consumerPrices": "Consumer Prices"
+    "consumerPrices": "Consumer Prices",
+    "torontoFire": "Toronto Fire CAD",
+    "ontarioRoads": "Ontario 511 Highway Incidents",
+    "ecccAlerts": "ECCC Weather Alerts",
+    "shelterGauge": "Shelter System Occupancy",
+    "bocTicker": "Bank of Canada Rates",
+    "buildingPermits": "Building Permits",
+    "dinesafe": "DineSafe Closures",
+    "trcaFloods": "TRCA Flood Status",
+    "housingTargets": "Housing Supply Targets",
+    "statcanToronto": "Statistics Canada",
+    "toronto311": "311 Service Requests",
+    "ttcHealth": "TTC Service Status",
+    "torontoCrime": "Crime Delta",
+    "torontoDevelopment": "Development Pipeline",
+    "ontarioElectricity": "Electricity Price",
+    "torontoWaterLevel": "Lake Ontario Water Level"
   },
   "commands": {
     "prefixes": {

@@ -30,8 +30,9 @@ export async function fetchTorontoDineSafe(): Promise<DineSafeClosure[]> {
       if (!res.ok) {
         throw new Error(`DineSafe API error: ${res.status}`);
       }
-      const data = await res.json();
-      return data as DineSafeClosure[];
+      const json = await res.json();
+      // API returns { closures: [...], total: N, ... }
+      return (json.closures || json) as DineSafeClosure[];
     }, emptyFallback);
 
     return response;

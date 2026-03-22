@@ -1,5 +1,5 @@
 // api/fwdstart.js
-const ALLOWED_ORIGIN_PATTERNS = [
+var ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -55,7 +55,7 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-const config = { runtime: "edge" };
+var config = { runtime: "edge" };
 async function handler(req) {
   const cors = getCorsHeaders(req);
   if (isDisallowedOrigin(req)) {

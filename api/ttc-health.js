@@ -1,4 +1,4 @@
-// api/_json-response.js
+// api/ttc-health.js
 function sanitizeJsonValue(value, depth = 0) {
   if (depth > 20) return "[truncated]";
   if (value instanceof Error) {
@@ -26,18 +26,16 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-
-// api/ttc-health.js
-const CKAN_BASE_URL = "https://ckan0.cf.opendata.inter.prod-toronto.ca";
-const TTC_DATASETS = {
-  bus: "ttc-bus-delay-data",
-  streetcar: "ttc-streetcar-delay-data",
-  subway: "ttc-subway-delay-data"
+var CKAN_BASE_URL = "https://ckan0.cf.opendata.inter.prod-toronto.ca";
+var TTC_DATASETS = {
+  bus: "b5725365-9252-4bfe-b6f4-cda7ddf74341",
+  streetcar: "cf2fdd12-6f0e-4644-aae7-0bbfc31df031",
+  subway: "0b6e5c52-e993-46d6-8d74-8602ee224457"
 };
-const DAYS_TO_QUERY = 30;
-const TODAY = /* @__PURE__ */ new Date();
-const THIRTY_DAYS_AGO = new Date(TODAY.getTime() - DAYS_TO_QUERY * 24 * 60 * 60 * 1e3);
-const config = { runtime: "edge" };
+var DAYS_TO_QUERY = 30;
+var TODAY = /* @__PURE__ */ new Date();
+var THIRTY_DAYS_AGO = new Date(TODAY.getTime() - DAYS_TO_QUERY * 24 * 60 * 60 * 1e3);
+var config = { runtime: "edge" };
 async function handler(_req) {
   try {
     const [busData, streetcarData, subwayData] = await Promise.all([

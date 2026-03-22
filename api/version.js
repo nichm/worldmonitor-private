@@ -1,5 +1,5 @@
 // api/version.js
-const RELEASES_URL = "https://api.github.com/repos/koala73/worldmonitor/releases/latest";
+var RELEASES_URL = "https://api.github.com/repos/koala73/worldmonitor/releases/latest";
 async function fetchLatestRelease(userAgent) {
   const res = await fetch(RELEASES_URL, {
     headers: {
@@ -37,7 +37,7 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-const config = { runtime: "edge" };
+var config = { runtime: "edge" };
 async function handler() {
   try {
     const release = await fetchLatestRelease("WorldMonitor-Version-Check");

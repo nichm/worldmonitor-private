@@ -1,15 +1,15 @@
 // api/oref-alerts.js
 import nodeCrypto from "node:crypto";
-const __create = Object.create;
-const __defProp = Object.defineProperty;
-const __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-const __getOwnPropNames = Object.getOwnPropertyNames;
-const __getProtoOf = Object.getPrototypeOf;
-const __hasOwnProp = Object.prototype.hasOwnProperty;
-const __commonJS = (cb, mod) => function __require() {
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
-const __copyProps = (to, from, except, desc) => {
+var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (const key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
@@ -17,7 +17,7 @@ const __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-const __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
@@ -25,9 +25,8 @@ const __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-const require_dist = __commonJS({
+var require_dist = __commonJS({
   "node_modules/@upstash/core-analytics/dist/index.js"(_exports, module) {
-    
     const g = Object.defineProperty;
     const k = Object.getOwnPropertyDescriptor;
     const _ = Object.getOwnPropertyNames;
@@ -234,9 +233,8 @@ return result
     };
   }
 });
-const require_dist2 = __commonJS({
+var require_dist2 = __commonJS({
   "node_modules/@upstash/ratelimit/dist/index.js"(_exports, module) {
-    
     const __defProp3 = Object.defineProperty;
     const __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
     const __getOwnPropNames2 = Object.getOwnPropertyNames;
@@ -2054,7 +2052,7 @@ const require_dist2 = __commonJS({
     };
   }
 });
-const ALLOWED_ORIGIN_PATTERNS = [
+var ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -2083,13 +2081,13 @@ function isDisallowedOrigin(req) {
   if (!origin) return false;
   return !isAllowedOrigin(origin);
 }
-const DESKTOP_ORIGIN_PATTERNS = [
+var DESKTOP_ORIGIN_PATTERNS = [
   /^https?:\/\/tauri\.localhost(:\d+)?$/,
   /^https?:\/\/[a-z0-9-]+\.tauri\.localhost(:\d+)?$/i,
   /^tauri:\/\/localhost$/,
   /^asset:\/\/localhost$/
 ];
-const BROWSER_ORIGIN_PATTERNS = [
+var BROWSER_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   ...process.env.NODE_ENV === "production" ? [] : [
@@ -2138,26 +2136,26 @@ function validateApiKey(req, options = {}) {
   }
   return { valid: false, required: true, error: "API key required" };
 }
-const import_ratelimit = __toESM(require_dist2(), 1);
-const subtle = nodeCrypto.webcrypto?.subtle || {};
-const __defProp2 = Object.defineProperty;
-const __export = (target, all) => {
+var import_ratelimit = __toESM(require_dist2(), 1);
+var subtle = nodeCrypto.webcrypto?.subtle || {};
+var __defProp2 = Object.defineProperty;
+var __export = (target, all) => {
   for (const name in all)
     __defProp2(target, name, { get: all[name], enumerable: true });
 };
-const error_exports = {};
+var error_exports = {};
 __export(error_exports, {
   UpstashError: () => UpstashError,
   UpstashJSONParseError: () => UpstashJSONParseError,
   UrlError: () => UrlError
 });
-const UpstashError = class extends Error {
+var UpstashError = class extends Error {
   constructor(message, options) {
     super(message, options);
     this.name = "UpstashError";
   }
 };
-const UrlError = class extends Error {
+var UrlError = class extends Error {
   constructor(url) {
     super(
       `Upstash Redis client was passed an invalid URL. You should pass a URL starting with https. Received: "${url}". `
@@ -2165,7 +2163,7 @@ const UrlError = class extends Error {
     this.name = "UrlError";
   }
 };
-const UpstashJSONParseError = class extends UpstashError {
+var UpstashJSONParseError = class extends UpstashError {
   constructor(body, options) {
     const truncatedBody = body.length > 200 ? body.slice(0, 200) + "..." : body;
     super(`Unable to parse response body: ${truncatedBody}`, options);
@@ -2224,8 +2222,8 @@ function kvArrayToObject(v) {
   }
   return obj;
 }
-const MAX_BUFFER_SIZE = 1024 * 1024;
-const HttpClient = class {
+var MAX_BUFFER_SIZE = 1024 * 1024;
+var HttpClient = class {
   baseUrl;
   headers;
   options;
@@ -2455,7 +2453,7 @@ function merge(obj, key, value) {
   obj[key] = obj[key] ? [obj[key], value].join(",") : value;
   return obj;
 }
-const defaultSerializer = (c) => {
+var defaultSerializer = (c) => {
   switch (typeof c) {
     case "string":
     case "number":
@@ -2467,7 +2465,7 @@ const defaultSerializer = (c) => {
     }
   }
 };
-const Command = class {
+var Command = class {
   command;
   serialize;
   deserialize;
@@ -2542,7 +2540,7 @@ function deserialize(result) {
   }
   return obj;
 }
-const HRandFieldCommand = class extends Command {
+var HRandFieldCommand = class extends Command {
   constructor(cmd, opts) {
     const command = ["hrandfield", cmd[0]];
     if (typeof cmd[1] === "number") {
@@ -2558,12 +2556,12 @@ const HRandFieldCommand = class extends Command {
     });
   }
 };
-const AppendCommand = class extends Command {
+var AppendCommand = class extends Command {
   constructor(cmd, opts) {
     super(["append", ...cmd], opts);
   }
 };
-const BitCountCommand = class extends Command {
+var BitCountCommand = class extends Command {
   constructor([key, start, end], opts) {
     const command = ["bitcount", key];
     if (typeof start === "number") {
@@ -2575,7 +2573,7 @@ const BitCountCommand = class extends Command {
     super(command, opts);
   }
 };
-const BitFieldCommand = class {
+var BitFieldCommand = class {
   constructor(args, client, opts, execOperation = (command) => command.exec(this.client)) {
     this.client = client;
     this.opts = opts;
@@ -2604,17 +2602,17 @@ const BitFieldCommand = class {
     return this.execOperation(command);
   }
 };
-const BitOpCommand = class extends Command {
+var BitOpCommand = class extends Command {
   constructor(cmd, opts) {
     super(["bitop", ...cmd], opts);
   }
 };
-const BitPosCommand = class extends Command {
+var BitPosCommand = class extends Command {
   constructor(cmd, opts) {
     super(["bitpos", ...cmd], opts);
   }
 };
-const CopyCommand = class extends Command {
+var CopyCommand = class extends Command {
   constructor([key, destinationKey, opts], commandOptions) {
     super(["COPY", key, destinationKey, ...opts?.replace ? ["REPLACE"] : []], {
       ...commandOptions,
@@ -2627,78 +2625,78 @@ const CopyCommand = class extends Command {
     });
   }
 };
-const DBSizeCommand = class extends Command {
+var DBSizeCommand = class extends Command {
   constructor(opts) {
     super(["dbsize"], opts);
   }
 };
-const DecrCommand = class extends Command {
+var DecrCommand = class extends Command {
   constructor(cmd, opts) {
     super(["decr", ...cmd], opts);
   }
 };
-const DecrByCommand = class extends Command {
+var DecrByCommand = class extends Command {
   constructor(cmd, opts) {
     super(["decrby", ...cmd], opts);
   }
 };
-const DelCommand = class extends Command {
+var DelCommand = class extends Command {
   constructor(cmd, opts) {
     super(["del", ...cmd], opts);
   }
 };
-const EchoCommand = class extends Command {
+var EchoCommand = class extends Command {
   constructor(cmd, opts) {
     super(["echo", ...cmd], opts);
   }
 };
-const EvalROCommand = class extends Command {
+var EvalROCommand = class extends Command {
   constructor([script, keys, args], opts) {
     super(["eval_ro", script, keys.length, ...keys, ...args ?? []], opts);
   }
 };
-const EvalCommand = class extends Command {
+var EvalCommand = class extends Command {
   constructor([script, keys, args], opts) {
     super(["eval", script, keys.length, ...keys, ...args ?? []], opts);
   }
 };
-const EvalshaROCommand = class extends Command {
+var EvalshaROCommand = class extends Command {
   constructor([sha, keys, args], opts) {
     super(["evalsha_ro", sha, keys.length, ...keys, ...args ?? []], opts);
   }
 };
-const EvalshaCommand = class extends Command {
+var EvalshaCommand = class extends Command {
   constructor([sha, keys, args], opts) {
     super(["evalsha", sha, keys.length, ...keys, ...args ?? []], opts);
   }
 };
-const ExecCommand = class extends Command {
+var ExecCommand = class extends Command {
   constructor(cmd, opts) {
     const normalizedCmd = cmd.map((arg) => typeof arg === "string" ? arg : String(arg));
     super(normalizedCmd, opts);
   }
 };
-const ExistsCommand = class extends Command {
+var ExistsCommand = class extends Command {
   constructor(cmd, opts) {
     super(["exists", ...cmd], opts);
   }
 };
-const ExpireCommand = class extends Command {
+var ExpireCommand = class extends Command {
   constructor(cmd, opts) {
     super(["expire", ...cmd.filter(Boolean)], opts);
   }
 };
-const ExpireAtCommand = class extends Command {
+var ExpireAtCommand = class extends Command {
   constructor(cmd, opts) {
     super(["expireat", ...cmd], opts);
   }
 };
-const FCallCommand = class extends Command {
+var FCallCommand = class extends Command {
   constructor([functionName, keys, args], opts) {
     super(["fcall", functionName, ...keys ? [keys.length, ...keys] : [0], ...args ?? []], opts);
   }
 };
-const FCallRoCommand = class extends Command {
+var FCallRoCommand = class extends Command {
   constructor([functionName, keys, args], opts) {
     super(
       ["fcall_ro", functionName, ...keys ? [keys.length, ...keys] : [0], ...args ?? []],
@@ -2706,7 +2704,7 @@ const FCallRoCommand = class extends Command {
     );
   }
 };
-const FlushAllCommand = class extends Command {
+var FlushAllCommand = class extends Command {
   constructor(args, opts) {
     const command = ["flushall"];
     if (args && args.length > 0 && args[0].async) {
@@ -2715,7 +2713,7 @@ const FlushAllCommand = class extends Command {
     super(command, opts);
   }
 };
-const FlushDBCommand = class extends Command {
+var FlushDBCommand = class extends Command {
   constructor([opts], cmdOpts) {
     const command = ["flushdb"];
     if (opts?.async) {
@@ -2724,17 +2722,17 @@ const FlushDBCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-const FunctionDeleteCommand = class extends Command {
+var FunctionDeleteCommand = class extends Command {
   constructor([libraryName], opts) {
     super(["function", "delete", libraryName], opts);
   }
 };
-const FunctionFlushCommand = class extends Command {
+var FunctionFlushCommand = class extends Command {
   constructor(opts) {
     super(["function", "flush"], opts);
   }
 };
-const FunctionListCommand = class extends Command {
+var FunctionListCommand = class extends Command {
   constructor([args], opts) {
     const command = ["function", "list"];
     if (args?.libraryName) {
@@ -2765,12 +2763,12 @@ function deserialize2(result) {
     };
   });
 }
-const FunctionLoadCommand = class extends Command {
+var FunctionLoadCommand = class extends Command {
   constructor([args], opts) {
     super(["function", "load", ...args.replace ? ["replace"] : [], args.code], opts);
   }
 };
-const FunctionStatsCommand = class extends Command {
+var FunctionStatsCommand = class extends Command {
   constructor(opts) {
     super(["function", "stats"], { deserialize: deserialize3, ...opts });
   }
@@ -2793,7 +2791,7 @@ function deserialize3(result) {
   };
   return final;
 }
-const GeoAddCommand = class extends Command {
+var GeoAddCommand = class extends Command {
   constructor([key, arg1, ...arg2], opts) {
     const command = ["geoadd", key];
     if ("nx" in arg1 && arg1.nx) {
@@ -2813,19 +2811,19 @@ const GeoAddCommand = class extends Command {
     super(command, opts);
   }
 };
-const GeoDistCommand = class extends Command {
+var GeoDistCommand = class extends Command {
   constructor([key, member1, member2, unit = "M"], opts) {
     super(["GEODIST", key, member1, member2, unit], opts);
   }
 };
-const GeoHashCommand = class extends Command {
+var GeoHashCommand = class extends Command {
   constructor(cmd, opts) {
     const [key] = cmd;
     const members = Array.isArray(cmd[1]) ? cmd[1] : cmd.slice(1);
     super(["GEOHASH", key, ...members], opts);
   }
 };
-const GeoPosCommand = class extends Command {
+var GeoPosCommand = class extends Command {
   constructor(cmd, opts) {
     const [key] = cmd;
     const members = Array.isArray(cmd[1]) ? cmd[1] : cmd.slice(1);
@@ -2845,7 +2843,7 @@ function transform(result) {
   }
   return final;
 }
-const GeoSearchCommand = class extends Command {
+var GeoSearchCommand = class extends Command {
   constructor([key, centerPoint, shape, order, opts], commandOptions) {
     const command = ["GEOSEARCH", key];
     if (centerPoint.type === "FROMMEMBER" || centerPoint.type === "frommember") {
@@ -2911,7 +2909,7 @@ const GeoSearchCommand = class extends Command {
     );
   }
 };
-const GeoSearchStoreCommand = class extends Command {
+var GeoSearchStoreCommand = class extends Command {
   constructor([destination, key, centerPoint, shape, order, opts], commandOptions) {
     const command = ["GEOSEARCHSTORE", destination, key];
     if (centerPoint.type === "FROMMEMBER" || centerPoint.type === "frommember") {
@@ -2933,22 +2931,22 @@ const GeoSearchStoreCommand = class extends Command {
     super([...command, ...opts?.storeDist ? ["STOREDIST"] : []], commandOptions);
   }
 };
-const GetCommand = class extends Command {
+var GetCommand = class extends Command {
   constructor(cmd, opts) {
     super(["get", ...cmd], opts);
   }
 };
-const GetBitCommand = class extends Command {
+var GetBitCommand = class extends Command {
   constructor(cmd, opts) {
     super(["getbit", ...cmd], opts);
   }
 };
-const GetDelCommand = class extends Command {
+var GetDelCommand = class extends Command {
   constructor(cmd, opts) {
     super(["getdel", ...cmd], opts);
   }
 };
-const GetExCommand = class extends Command {
+var GetExCommand = class extends Command {
   constructor([key, opts], cmdOpts) {
     const command = ["getex", key];
     if (opts) {
@@ -2967,27 +2965,27 @@ const GetExCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-const GetRangeCommand = class extends Command {
+var GetRangeCommand = class extends Command {
   constructor(cmd, opts) {
     super(["getrange", ...cmd], opts);
   }
 };
-const GetSetCommand = class extends Command {
+var GetSetCommand = class extends Command {
   constructor(cmd, opts) {
     super(["getset", ...cmd], opts);
   }
 };
-const HDelCommand = class extends Command {
+var HDelCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hdel", ...cmd], opts);
   }
 };
-const HExistsCommand = class extends Command {
+var HExistsCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hexists", ...cmd], opts);
   }
 };
-const HExpireCommand = class extends Command {
+var HExpireCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields, seconds, option] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
@@ -3005,7 +3003,7 @@ const HExpireCommand = class extends Command {
     );
   }
 };
-const HExpireAtCommand = class extends Command {
+var HExpireAtCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields, timestamp, option] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
@@ -3023,21 +3021,21 @@ const HExpireAtCommand = class extends Command {
     );
   }
 };
-const HExpireTimeCommand = class extends Command {
+var HExpireTimeCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
     super(["hexpiretime", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
   }
 };
-const HPersistCommand = class extends Command {
+var HPersistCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
     super(["hpersist", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
   }
 };
-const HPExpireCommand = class extends Command {
+var HPExpireCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields, milliseconds, option] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
@@ -3055,7 +3053,7 @@ const HPExpireCommand = class extends Command {
     );
   }
 };
-const HPExpireAtCommand = class extends Command {
+var HPExpireAtCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields, timestamp, option] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
@@ -3073,21 +3071,21 @@ const HPExpireAtCommand = class extends Command {
     );
   }
 };
-const HPExpireTimeCommand = class extends Command {
+var HPExpireTimeCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
     super(["hpexpiretime", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
   }
 };
-const HPTtlCommand = class extends Command {
+var HPTtlCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
     super(["hpttl", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
   }
 };
-const HGetCommand = class extends Command {
+var HGetCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hget", ...cmd], opts);
   }
@@ -3109,7 +3107,7 @@ function deserialize4(result) {
   }
   return obj;
 }
-const HGetAllCommand = class extends Command {
+var HGetAllCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hgetall", ...cmd], {
       deserialize: (result) => deserialize4(result),
@@ -3117,22 +3115,22 @@ const HGetAllCommand = class extends Command {
     });
   }
 };
-const HIncrByCommand = class extends Command {
+var HIncrByCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hincrby", ...cmd], opts);
   }
 };
-const HIncrByFloatCommand = class extends Command {
+var HIncrByFloatCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hincrbyfloat", ...cmd], opts);
   }
 };
-const HKeysCommand = class extends Command {
+var HKeysCommand = class extends Command {
   constructor([key], opts) {
     super(["hkeys", key], opts);
   }
 };
-const HLenCommand = class extends Command {
+var HLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hlen", ...cmd], opts);
   }
@@ -3151,7 +3149,7 @@ function deserialize5(fields, result) {
   }
   return obj;
 }
-const HMGetCommand = class extends Command {
+var HMGetCommand = class extends Command {
   constructor([key, ...fields], opts) {
     super(["hmget", key, ...fields], {
       deserialize: (result) => deserialize5(fields, result),
@@ -3159,12 +3157,12 @@ const HMGetCommand = class extends Command {
     });
   }
 };
-const HMSetCommand = class extends Command {
+var HMSetCommand = class extends Command {
   constructor([key, kv], opts) {
     super(["hmset", key, ...Object.entries(kv).flat()], opts);
   }
 };
-const HScanCommand = class extends Command {
+var HScanCommand = class extends Command {
   constructor([key, cursor, cmdOpts], opts) {
     const command = ["hscan", key, cursor];
     if (cmdOpts?.match) {
@@ -3179,74 +3177,74 @@ const HScanCommand = class extends Command {
     });
   }
 };
-const HSetCommand = class extends Command {
+var HSetCommand = class extends Command {
   constructor([key, kv], opts) {
     super(["hset", key, ...Object.entries(kv).flat()], opts);
   }
 };
-const HSetNXCommand = class extends Command {
+var HSetNXCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hsetnx", ...cmd], opts);
   }
 };
-const HStrLenCommand = class extends Command {
+var HStrLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hstrlen", ...cmd], opts);
   }
 };
-const HTtlCommand = class extends Command {
+var HTtlCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, fields] = cmd;
     const fieldArray = Array.isArray(fields) ? fields : [fields];
     super(["httl", key, "FIELDS", fieldArray.length, ...fieldArray], opts);
   }
 };
-const HValsCommand = class extends Command {
+var HValsCommand = class extends Command {
   constructor(cmd, opts) {
     super(["hvals", ...cmd], opts);
   }
 };
-const IncrCommand = class extends Command {
+var IncrCommand = class extends Command {
   constructor(cmd, opts) {
     super(["incr", ...cmd], opts);
   }
 };
-const IncrByCommand = class extends Command {
+var IncrByCommand = class extends Command {
   constructor(cmd, opts) {
     super(["incrby", ...cmd], opts);
   }
 };
-const IncrByFloatCommand = class extends Command {
+var IncrByFloatCommand = class extends Command {
   constructor(cmd, opts) {
     super(["incrbyfloat", ...cmd], opts);
   }
 };
-const JsonArrAppendCommand = class extends Command {
+var JsonArrAppendCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.ARRAPPEND", ...cmd], opts);
   }
 };
-const JsonArrIndexCommand = class extends Command {
+var JsonArrIndexCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.ARRINDEX", ...cmd], opts);
   }
 };
-const JsonArrInsertCommand = class extends Command {
+var JsonArrInsertCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.ARRINSERT", ...cmd], opts);
   }
 };
-const JsonArrLenCommand = class extends Command {
+var JsonArrLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.ARRLEN", cmd[0], cmd[1] ?? "$"], opts);
   }
 };
-const JsonArrPopCommand = class extends Command {
+var JsonArrPopCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.ARRPOP", ...cmd], opts);
   }
 };
-const JsonArrTrimCommand = class extends Command {
+var JsonArrTrimCommand = class extends Command {
   constructor(cmd, opts) {
     const path = cmd[1] ?? "$";
     const start = cmd[2] ?? 0;
@@ -3254,22 +3252,22 @@ const JsonArrTrimCommand = class extends Command {
     super(["JSON.ARRTRIM", cmd[0], path, start, stop], opts);
   }
 };
-const JsonClearCommand = class extends Command {
+var JsonClearCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.CLEAR", ...cmd], opts);
   }
 };
-const JsonDelCommand = class extends Command {
+var JsonDelCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.DEL", ...cmd], opts);
   }
 };
-const JsonForgetCommand = class extends Command {
+var JsonForgetCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.FORGET", ...cmd], opts);
   }
 };
-const JsonGetCommand = class extends Command {
+var JsonGetCommand = class extends Command {
   constructor(cmd, opts) {
     const command = ["JSON.GET"];
     if (typeof cmd[1] === "string") {
@@ -3292,18 +3290,18 @@ const JsonGetCommand = class extends Command {
     super(command, opts);
   }
 };
-const JsonMergeCommand = class extends Command {
+var JsonMergeCommand = class extends Command {
   constructor(cmd, opts) {
     const command = ["JSON.MERGE", ...cmd];
     super(command, opts);
   }
 };
-const JsonMGetCommand = class extends Command {
+var JsonMGetCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.MGET", ...cmd[0], cmd[1]], opts);
   }
 };
-const JsonMSetCommand = class extends Command {
+var JsonMSetCommand = class extends Command {
   constructor(cmd, opts) {
     const command = ["JSON.MSET"];
     for (const c of cmd) {
@@ -3312,32 +3310,32 @@ const JsonMSetCommand = class extends Command {
     super(command, opts);
   }
 };
-const JsonNumIncrByCommand = class extends Command {
+var JsonNumIncrByCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.NUMINCRBY", ...cmd], opts);
   }
 };
-const JsonNumMultByCommand = class extends Command {
+var JsonNumMultByCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.NUMMULTBY", ...cmd], opts);
   }
 };
-const JsonObjKeysCommand = class extends Command {
+var JsonObjKeysCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.OBJKEYS", ...cmd], opts);
   }
 };
-const JsonObjLenCommand = class extends Command {
+var JsonObjLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.OBJLEN", ...cmd], opts);
   }
 };
-const JsonRespCommand = class extends Command {
+var JsonRespCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.RESP", ...cmd], opts);
   }
 };
-const JsonSetCommand = class extends Command {
+var JsonSetCommand = class extends Command {
   constructor(cmd, opts) {
     const command = ["JSON.SET", cmd[0], cmd[1], cmd[2]];
     if (cmd[3]) {
@@ -3350,63 +3348,63 @@ const JsonSetCommand = class extends Command {
     super(command, opts);
   }
 };
-const JsonStrAppendCommand = class extends Command {
+var JsonStrAppendCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.STRAPPEND", ...cmd], opts);
   }
 };
-const JsonStrLenCommand = class extends Command {
+var JsonStrLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.STRLEN", ...cmd], opts);
   }
 };
-const JsonToggleCommand = class extends Command {
+var JsonToggleCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.TOGGLE", ...cmd], opts);
   }
 };
-const JsonTypeCommand = class extends Command {
+var JsonTypeCommand = class extends Command {
   constructor(cmd, opts) {
     super(["JSON.TYPE", ...cmd], opts);
   }
 };
-const KeysCommand = class extends Command {
+var KeysCommand = class extends Command {
   constructor(cmd, opts) {
     super(["keys", ...cmd], opts);
   }
 };
-const LIndexCommand = class extends Command {
+var LIndexCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lindex", ...cmd], opts);
   }
 };
-const LInsertCommand = class extends Command {
+var LInsertCommand = class extends Command {
   constructor(cmd, opts) {
     super(["linsert", ...cmd], opts);
   }
 };
-const LLenCommand = class extends Command {
+var LLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["llen", ...cmd], opts);
   }
 };
-const LMoveCommand = class extends Command {
+var LMoveCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lmove", ...cmd], opts);
   }
 };
-const LmPopCommand = class extends Command {
+var LmPopCommand = class extends Command {
   constructor(cmd, opts) {
     const [numkeys, keys, direction, count] = cmd;
     super(["LMPOP", numkeys, ...keys, direction, ...count ? ["COUNT", count] : []], opts);
   }
 };
-const LPopCommand = class extends Command {
+var LPopCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lpop", ...cmd], opts);
   }
 };
-const LPosCommand = class extends Command {
+var LPosCommand = class extends Command {
   constructor(cmd, opts) {
     const args = ["lpos", cmd[0], cmd[1]];
     if (typeof cmd[2]?.rank === "number") {
@@ -3421,83 +3419,83 @@ const LPosCommand = class extends Command {
     super(args, opts);
   }
 };
-const LPushCommand = class extends Command {
+var LPushCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lpush", ...cmd], opts);
   }
 };
-const LPushXCommand = class extends Command {
+var LPushXCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lpushx", ...cmd], opts);
   }
 };
-const LRangeCommand = class extends Command {
+var LRangeCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lrange", ...cmd], opts);
   }
 };
-const LRemCommand = class extends Command {
+var LRemCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lrem", ...cmd], opts);
   }
 };
-const LSetCommand = class extends Command {
+var LSetCommand = class extends Command {
   constructor(cmd, opts) {
     super(["lset", ...cmd], opts);
   }
 };
-const LTrimCommand = class extends Command {
+var LTrimCommand = class extends Command {
   constructor(cmd, opts) {
     super(["ltrim", ...cmd], opts);
   }
 };
-const MGetCommand = class extends Command {
+var MGetCommand = class extends Command {
   constructor(cmd, opts) {
     const keys = Array.isArray(cmd[0]) ? cmd[0] : cmd;
     super(["mget", ...keys], opts);
   }
 };
-const MSetCommand = class extends Command {
+var MSetCommand = class extends Command {
   constructor([kv], opts) {
     super(["mset", ...Object.entries(kv).flat()], opts);
   }
 };
-const MSetNXCommand = class extends Command {
+var MSetNXCommand = class extends Command {
   constructor([kv], opts) {
     super(["msetnx", ...Object.entries(kv).flat()], opts);
   }
 };
-const PersistCommand = class extends Command {
+var PersistCommand = class extends Command {
   constructor(cmd, opts) {
     super(["persist", ...cmd], opts);
   }
 };
-const PExpireCommand = class extends Command {
+var PExpireCommand = class extends Command {
   constructor(cmd, opts) {
     super(["pexpire", ...cmd], opts);
   }
 };
-const PExpireAtCommand = class extends Command {
+var PExpireAtCommand = class extends Command {
   constructor(cmd, opts) {
     super(["pexpireat", ...cmd], opts);
   }
 };
-const PfAddCommand = class extends Command {
+var PfAddCommand = class extends Command {
   constructor(cmd, opts) {
     super(["pfadd", ...cmd], opts);
   }
 };
-const PfCountCommand = class extends Command {
+var PfCountCommand = class extends Command {
   constructor(cmd, opts) {
     super(["pfcount", ...cmd], opts);
   }
 };
-const PfMergeCommand = class extends Command {
+var PfMergeCommand = class extends Command {
   constructor(cmd, opts) {
     super(["pfmerge", ...cmd], opts);
   }
 };
-const PingCommand = class extends Command {
+var PingCommand = class extends Command {
   constructor(cmd, opts) {
     const command = ["ping"];
     if (cmd?.[0] !== void 0) {
@@ -3506,57 +3504,57 @@ const PingCommand = class extends Command {
     super(command, opts);
   }
 };
-const PSetEXCommand = class extends Command {
+var PSetEXCommand = class extends Command {
   constructor(cmd, opts) {
     super(["psetex", ...cmd], opts);
   }
 };
-const PTtlCommand = class extends Command {
+var PTtlCommand = class extends Command {
   constructor(cmd, opts) {
     super(["pttl", ...cmd], opts);
   }
 };
-const PublishCommand = class extends Command {
+var PublishCommand = class extends Command {
   constructor(cmd, opts) {
     super(["publish", ...cmd], opts);
   }
 };
-const RandomKeyCommand = class extends Command {
+var RandomKeyCommand = class extends Command {
   constructor(opts) {
     super(["randomkey"], opts);
   }
 };
-const RenameCommand = class extends Command {
+var RenameCommand = class extends Command {
   constructor(cmd, opts) {
     super(["rename", ...cmd], opts);
   }
 };
-const RenameNXCommand = class extends Command {
+var RenameNXCommand = class extends Command {
   constructor(cmd, opts) {
     super(["renamenx", ...cmd], opts);
   }
 };
-const RPopCommand = class extends Command {
+var RPopCommand = class extends Command {
   constructor(cmd, opts) {
     super(["rpop", ...cmd], opts);
   }
 };
-const RPushCommand = class extends Command {
+var RPushCommand = class extends Command {
   constructor(cmd, opts) {
     super(["rpush", ...cmd], opts);
   }
 };
-const RPushXCommand = class extends Command {
+var RPushXCommand = class extends Command {
   constructor(cmd, opts) {
     super(["rpushx", ...cmd], opts);
   }
 };
-const SAddCommand = class extends Command {
+var SAddCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sadd", ...cmd], opts);
   }
 };
-const ScanCommand = class extends Command {
+var ScanCommand = class extends Command {
   constructor([cursor, opts], cmdOpts) {
     const command = ["scan", cursor];
     if (opts?.match) {
@@ -3577,12 +3575,12 @@ const ScanCommand = class extends Command {
     });
   }
 };
-const SCardCommand = class extends Command {
+var SCardCommand = class extends Command {
   constructor(cmd, opts) {
     super(["scard", ...cmd], opts);
   }
 };
-const ScriptExistsCommand = class extends Command {
+var ScriptExistsCommand = class extends Command {
   constructor(hashes, opts) {
     super(["script", "exists", ...hashes], {
       deserialize: (result) => result,
@@ -3590,7 +3588,7 @@ const ScriptExistsCommand = class extends Command {
     });
   }
 };
-const ScriptFlushCommand = class extends Command {
+var ScriptFlushCommand = class extends Command {
   constructor([opts], cmdOpts) {
     const cmd = ["script", "flush"];
     if (opts?.sync) {
@@ -3601,22 +3599,22 @@ const ScriptFlushCommand = class extends Command {
     super(cmd, cmdOpts);
   }
 };
-const ScriptLoadCommand = class extends Command {
+var ScriptLoadCommand = class extends Command {
   constructor(args, opts) {
     super(["script", "load", ...args], opts);
   }
 };
-const SDiffCommand = class extends Command {
+var SDiffCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sdiff", ...cmd], opts);
   }
 };
-const SDiffStoreCommand = class extends Command {
+var SDiffStoreCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sdiffstore", ...cmd], opts);
   }
 };
-const SetCommand = class extends Command {
+var SetCommand = class extends Command {
   constructor([key, value, opts], cmdOpts) {
     const command = ["set", key, value];
     if (opts) {
@@ -3643,57 +3641,57 @@ const SetCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-const SetBitCommand = class extends Command {
+var SetBitCommand = class extends Command {
   constructor(cmd, opts) {
     super(["setbit", ...cmd], opts);
   }
 };
-const SetExCommand = class extends Command {
+var SetExCommand = class extends Command {
   constructor(cmd, opts) {
     super(["setex", ...cmd], opts);
   }
 };
-const SetNxCommand = class extends Command {
+var SetNxCommand = class extends Command {
   constructor(cmd, opts) {
     super(["setnx", ...cmd], opts);
   }
 };
-const SetRangeCommand = class extends Command {
+var SetRangeCommand = class extends Command {
   constructor(cmd, opts) {
     super(["setrange", ...cmd], opts);
   }
 };
-const SInterCommand = class extends Command {
+var SInterCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sinter", ...cmd], opts);
   }
 };
-const SInterStoreCommand = class extends Command {
+var SInterStoreCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sinterstore", ...cmd], opts);
   }
 };
-const SIsMemberCommand = class extends Command {
+var SIsMemberCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sismember", ...cmd], opts);
   }
 };
-const SMembersCommand = class extends Command {
+var SMembersCommand = class extends Command {
   constructor(cmd, opts) {
     super(["smembers", ...cmd], opts);
   }
 };
-const SMIsMemberCommand = class extends Command {
+var SMIsMemberCommand = class extends Command {
   constructor(cmd, opts) {
     super(["smismember", cmd[0], ...cmd[1]], opts);
   }
 };
-const SMoveCommand = class extends Command {
+var SMoveCommand = class extends Command {
   constructor(cmd, opts) {
     super(["smove", ...cmd], opts);
   }
 };
-const SPopCommand = class extends Command {
+var SPopCommand = class extends Command {
   constructor([key, count], opts) {
     const command = ["spop", key];
     if (typeof count === "number") {
@@ -3702,7 +3700,7 @@ const SPopCommand = class extends Command {
     super(command, opts);
   }
 };
-const SRandMemberCommand = class extends Command {
+var SRandMemberCommand = class extends Command {
   constructor([key, count], opts) {
     const command = ["srandmember", key];
     if (typeof count === "number") {
@@ -3711,12 +3709,12 @@ const SRandMemberCommand = class extends Command {
     super(command, opts);
   }
 };
-const SRemCommand = class extends Command {
+var SRemCommand = class extends Command {
   constructor(cmd, opts) {
     super(["srem", ...cmd], opts);
   }
 };
-const SScanCommand = class extends Command {
+var SScanCommand = class extends Command {
   constructor([key, cursor, opts], cmdOpts) {
     const command = ["sscan", key, cursor];
     if (opts?.match) {
@@ -3731,53 +3729,53 @@ const SScanCommand = class extends Command {
     });
   }
 };
-const StrLenCommand = class extends Command {
+var StrLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["strlen", ...cmd], opts);
   }
 };
-const SUnionCommand = class extends Command {
+var SUnionCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sunion", ...cmd], opts);
   }
 };
-const SUnionStoreCommand = class extends Command {
+var SUnionStoreCommand = class extends Command {
   constructor(cmd, opts) {
     super(["sunionstore", ...cmd], opts);
   }
 };
-const TimeCommand = class extends Command {
+var TimeCommand = class extends Command {
   constructor(opts) {
     super(["time"], opts);
   }
 };
-const TouchCommand = class extends Command {
+var TouchCommand = class extends Command {
   constructor(cmd, opts) {
     super(["touch", ...cmd], opts);
   }
 };
-const TtlCommand = class extends Command {
+var TtlCommand = class extends Command {
   constructor(cmd, opts) {
     super(["ttl", ...cmd], opts);
   }
 };
-const TypeCommand = class extends Command {
+var TypeCommand = class extends Command {
   constructor(cmd, opts) {
     super(["type", ...cmd], opts);
   }
 };
-const UnlinkCommand = class extends Command {
+var UnlinkCommand = class extends Command {
   constructor(cmd, opts) {
     super(["unlink", ...cmd], opts);
   }
 };
-const XAckCommand = class extends Command {
+var XAckCommand = class extends Command {
   constructor([key, group, id], opts) {
     const ids = Array.isArray(id) ? [...id] : [id];
     super(["XACK", key, group, ...ids], opts);
   }
 };
-const XAddCommand = class extends Command {
+var XAddCommand = class extends Command {
   constructor([key, id, entries, opts], commandOptions) {
     const command = ["XADD", key];
     if (opts) {
@@ -3798,7 +3796,7 @@ const XAddCommand = class extends Command {
     super(command, commandOptions);
   }
 };
-const XAutoClaim = class extends Command {
+var XAutoClaim = class extends Command {
   constructor([key, group, consumer, minIdleTime, start, options], opts) {
     const commands = [];
     if (options?.count) {
@@ -3810,7 +3808,7 @@ const XAutoClaim = class extends Command {
     super(["XAUTOCLAIM", key, group, consumer, minIdleTime, start, ...commands], opts);
   }
 };
-const XClaimCommand = class extends Command {
+var XClaimCommand = class extends Command {
   constructor([key, group, consumer, minIdleTime, id, options], opts) {
     const ids = Array.isArray(id) ? [...id] : [id];
     const commands = [];
@@ -3835,13 +3833,13 @@ const XClaimCommand = class extends Command {
     super(["XCLAIM", key, group, consumer, minIdleTime, ...ids, ...commands], opts);
   }
 };
-const XDelCommand = class extends Command {
+var XDelCommand = class extends Command {
   constructor([key, ids], opts) {
     const cmds = Array.isArray(ids) ? [...ids] : [ids];
     super(["XDEL", key, ...cmds], opts);
   }
 };
-const XGroupCommand = class extends Command {
+var XGroupCommand = class extends Command {
   constructor([key, opts], commandOptions) {
     const command = ["XGROUP"];
     switch (opts.type) {
@@ -3883,7 +3881,7 @@ const XGroupCommand = class extends Command {
     super(command, commandOptions);
   }
 };
-const XInfoCommand = class extends Command {
+var XInfoCommand = class extends Command {
   constructor([key, options], opts) {
     const cmds = [];
     if (options.type === "CONSUMERS") {
@@ -3894,12 +3892,12 @@ const XInfoCommand = class extends Command {
     super(["XINFO", ...cmds], opts);
   }
 };
-const XLenCommand = class extends Command {
+var XLenCommand = class extends Command {
   constructor(cmd, opts) {
     super(["XLEN", ...cmd], opts);
   }
 };
-const XPendingCommand = class extends Command {
+var XPendingCommand = class extends Command {
   constructor([key, group, start, end, count, options], opts) {
     const consumers = options?.consumer === void 0 ? [] : Array.isArray(options.consumer) ? [...options.consumer] : [options.consumer];
     super(
@@ -3939,7 +3937,7 @@ function deserialize6(result) {
   }
   return obj;
 }
-const XRangeCommand = class extends Command {
+var XRangeCommand = class extends Command {
   constructor([key, start, end, count], opts) {
     const command = ["XRANGE", key, start, end];
     if (typeof count === "number") {
@@ -3951,8 +3949,8 @@ const XRangeCommand = class extends Command {
     });
   }
 };
-const UNBALANCED_XREAD_ERR = "ERR Unbalanced XREAD list of streams: for each stream key an ID or '$' must be specified";
-const XReadCommand = class extends Command {
+var UNBALANCED_XREAD_ERR = "ERR Unbalanced XREAD list of streams: for each stream key an ID or '$' must be specified";
+var XReadCommand = class extends Command {
   constructor([key, id, options], opts) {
     if (Array.isArray(key) && Array.isArray(id) && key.length !== id.length) {
       throw new Error(UNBALANCED_XREAD_ERR);
@@ -3972,8 +3970,8 @@ const XReadCommand = class extends Command {
     super(["XREAD", ...commands], opts);
   }
 };
-const UNBALANCED_XREADGROUP_ERR = "ERR Unbalanced XREADGROUP list of streams: for each stream key an ID or '$' must be specified";
-const XReadGroupCommand = class extends Command {
+var UNBALANCED_XREADGROUP_ERR = "ERR Unbalanced XREADGROUP list of streams: for each stream key an ID or '$' must be specified";
+var XReadGroupCommand = class extends Command {
   constructor([group, consumer, key, id, options], opts) {
     if (Array.isArray(key) && Array.isArray(id) && key.length !== id.length) {
       throw new Error(UNBALANCED_XREADGROUP_ERR);
@@ -3996,7 +3994,7 @@ const XReadGroupCommand = class extends Command {
     super(["XREADGROUP", "GROUP", group, consumer, ...commands], opts);
   }
 };
-const XRevRangeCommand = class extends Command {
+var XRevRangeCommand = class extends Command {
   constructor([key, end, start, count], opts) {
     const command = ["XREVRANGE", key, end, start];
     if (typeof count === "number") {
@@ -4030,13 +4028,13 @@ function deserialize7(result) {
   }
   return obj;
 }
-const XTrimCommand = class extends Command {
+var XTrimCommand = class extends Command {
   constructor([key, options], opts) {
     const { limit, strategy, threshold, exactness = "~" } = options;
     super(["XTRIM", key, strategy, exactness, threshold, ...limit ? ["LIMIT", limit] : []], opts);
   }
 };
-const ZAddCommand = class extends Command {
+var ZAddCommand = class extends Command {
   constructor([key, arg1, ...arg2], opts) {
     const command = ["zadd", key];
     if ("nx" in arg1 && arg1.nx) {
@@ -4062,22 +4060,22 @@ const ZAddCommand = class extends Command {
     super(command, opts);
   }
 };
-const ZCardCommand = class extends Command {
+var ZCardCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zcard", ...cmd], opts);
   }
 };
-const ZCountCommand = class extends Command {
+var ZCountCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zcount", ...cmd], opts);
   }
 };
-const ZIncrByCommand = class extends Command {
+var ZIncrByCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zincrby", ...cmd], opts);
   }
 };
-const ZInterStoreCommand = class extends Command {
+var ZInterStoreCommand = class extends Command {
   constructor([destination, numKeys, keyOrKeys, opts], cmdOpts) {
     const command = ["zinterstore", destination, numKeys];
     if (Array.isArray(keyOrKeys)) {
@@ -4098,12 +4096,12 @@ const ZInterStoreCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-const ZLexCountCommand = class extends Command {
+var ZLexCountCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zlexcount", ...cmd], opts);
   }
 };
-const ZPopMaxCommand = class extends Command {
+var ZPopMaxCommand = class extends Command {
   constructor([key, count], opts) {
     const command = ["zpopmax", key];
     if (typeof count === "number") {
@@ -4112,7 +4110,7 @@ const ZPopMaxCommand = class extends Command {
     super(command, opts);
   }
 };
-const ZPopMinCommand = class extends Command {
+var ZPopMinCommand = class extends Command {
   constructor([key, count], opts) {
     const command = ["zpopmin", key];
     if (typeof count === "number") {
@@ -4121,7 +4119,7 @@ const ZPopMinCommand = class extends Command {
     super(command, opts);
   }
 };
-const ZRangeCommand = class extends Command {
+var ZRangeCommand = class extends Command {
   constructor([key, min, max, opts], cmdOpts) {
     const command = ["zrange", key, min, max];
     if (opts?.byScore) {
@@ -4142,37 +4140,37 @@ const ZRangeCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-const ZRankCommand = class extends Command {
+var ZRankCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zrank", ...cmd], opts);
   }
 };
-const ZRemCommand = class extends Command {
+var ZRemCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zrem", ...cmd], opts);
   }
 };
-const ZRemRangeByLexCommand = class extends Command {
+var ZRemRangeByLexCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zremrangebylex", ...cmd], opts);
   }
 };
-const ZRemRangeByRankCommand = class extends Command {
+var ZRemRangeByRankCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zremrangebyrank", ...cmd], opts);
   }
 };
-const ZRemRangeByScoreCommand = class extends Command {
+var ZRemRangeByScoreCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zremrangebyscore", ...cmd], opts);
   }
 };
-const ZRevRankCommand = class extends Command {
+var ZRevRankCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zrevrank", ...cmd], opts);
   }
 };
-const ZScanCommand = class extends Command {
+var ZScanCommand = class extends Command {
   constructor([key, cursor, opts], cmdOpts) {
     const command = ["zscan", key, cursor];
     if (opts?.match) {
@@ -4187,12 +4185,12 @@ const ZScanCommand = class extends Command {
     });
   }
 };
-const ZScoreCommand = class extends Command {
+var ZScoreCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zscore", ...cmd], opts);
   }
 };
-const ZUnionCommand = class extends Command {
+var ZUnionCommand = class extends Command {
   constructor([numKeys, keyOrKeys, opts], cmdOpts) {
     const command = ["zunion", numKeys];
     if (Array.isArray(keyOrKeys)) {
@@ -4216,7 +4214,7 @@ const ZUnionCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-const ZUnionStoreCommand = class extends Command {
+var ZUnionStoreCommand = class extends Command {
   constructor([destination, numKeys, keyOrKeys, opts], cmdOpts) {
     const command = ["zunionstore", destination, numKeys];
     if (Array.isArray(keyOrKeys)) {
@@ -4237,18 +4235,18 @@ const ZUnionStoreCommand = class extends Command {
     super(command, cmdOpts);
   }
 };
-const ZDiffStoreCommand = class extends Command {
+var ZDiffStoreCommand = class extends Command {
   constructor(cmd, opts) {
     super(["zdiffstore", ...cmd], opts);
   }
 };
-const ZMScoreCommand = class extends Command {
+var ZMScoreCommand = class extends Command {
   constructor(cmd, opts) {
     const [key, members] = cmd;
     super(["zmscore", key, ...members], opts);
   }
 };
-const Pipeline = class {
+var Pipeline = class {
   client;
   commands;
   commandOptions;
@@ -5104,7 +5102,7 @@ const Pipeline = class {
     };
   }
 };
-const EXCLUDE_COMMANDS = /* @__PURE__ */ new Set([
+var EXCLUDE_COMMANDS = /* @__PURE__ */ new Set([
   "scan",
   "keys",
   "flushdb",
@@ -5160,7 +5158,7 @@ function createAutoPipelineProxy(_redis, namespace = "root") {
     }
   });
 }
-const AutoPipelineExecutor = class {
+var AutoPipelineExecutor = class {
   pipelinePromises = /* @__PURE__ */ new WeakMap();
   activePipeline = null;
   indexInCurrentPipeline = 0;
@@ -5202,7 +5200,7 @@ const AutoPipelineExecutor = class {
     await Promise.resolve();
   }
 };
-const PSubscribeCommand = class extends Command {
+var PSubscribeCommand = class extends Command {
   constructor(cmd, opts) {
     const sseHeaders = {
       Accept: "text/event-stream",
@@ -5221,7 +5219,7 @@ const PSubscribeCommand = class extends Command {
     });
   }
 };
-const Subscriber = class extends EventTarget {
+var Subscriber = class extends EventTarget {
   subscriptions;
   client;
   listeners;
@@ -5358,7 +5356,7 @@ const Subscriber = class extends EventTarget {
     return [...this.subscriptions.keys()];
   }
 };
-const SubscribeCommand = class extends Command {
+var SubscribeCommand = class extends Command {
   constructor(cmd, opts) {
     const sseHeaders = {
       Accept: "text/event-stream",
@@ -5377,14 +5375,14 @@ const SubscribeCommand = class extends Command {
     });
   }
 };
-const parseWithTryCatch = (str) => {
+var parseWithTryCatch = (str) => {
   try {
     return JSON.parse(str);
   } catch {
     return str;
   }
 };
-const Script = class {
+var Script = class {
   script;
   /**
    * @deprecated This property is initialized to an empty string and will be set in the init method
@@ -5448,7 +5446,7 @@ const Script = class {
     return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 };
-const ScriptRO = class {
+var ScriptRO = class {
   script;
   /**
    * @deprecated This property is initialized to an empty string and will be set in the init method
@@ -5509,7 +5507,7 @@ const ScriptRO = class {
     return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 };
-const Redis = class {
+var Redis = class {
   client;
   opts;
   enableTelemetry;
@@ -6425,11 +6423,11 @@ const Redis = class {
    */
   zunionstore = (...args) => new ZUnionStoreCommand(args, this.opts).exec(this.client);
 };
-const VERSION = "v1.36.1";
+var VERSION = "v1.36.1";
 if (typeof atob === "undefined") {
   global.atob = (b64) => Buffer.from(b64, "base64").toString("utf8");
 }
-const Redis2 = class _Redis extends Redis {
+var Redis2 = class _Redis extends Redis {
   /**
    * Create a new redis client by providing a custom `Requester` implementation
    *
@@ -6560,7 +6558,7 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-let ratelimit = null;
+var ratelimit = null;
 function getRatelimit() {
   if (ratelimit) return ratelimit;
   const url = process.env.UPSTASH_REDIS_REST_URL;
@@ -6694,8 +6692,8 @@ function createRelayHandler(cfg) {
     }
   };
 }
-const config = { runtime: "edge" };
-const oref_alerts_default = createRelayHandler({
+var config = { runtime: "edge" };
+var oref_alerts_default = createRelayHandler({
   buildRelayPath: (_req, url) => {
     const endpoint = url.searchParams.get("endpoint");
     return endpoint === "history" ? "/oref/history" : "/oref/alerts";

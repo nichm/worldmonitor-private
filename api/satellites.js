@@ -1,5 +1,5 @@
 // api/satellites.js
-const ALLOWED_ORIGIN_PATTERNS = [
+var ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -72,13 +72,13 @@ async function readJsonFromUpstash(key, timeoutMs = 3e3) {
     return null;
   }
 }
-const config = { runtime: "edge" };
-const REDIS_KEY = "intelligence:satellites:tle:v1";
-let cached = null;
-let cachedAt = 0;
-const CACHE_TTL = 6e5;
-let negUntil = 0;
-const NEG_TTL = 6e4;
+var config = { runtime: "edge" };
+var REDIS_KEY = "intelligence:satellites:tle:v1";
+var cached = null;
+var cachedAt = 0;
+var CACHE_TTL = 6e5;
+var negUntil = 0;
+var NEG_TTL = 6e4;
 async function fetchSatelliteData() {
   const now = Date.now();
   if (cached && now - cachedAt < CACHE_TTL) return cached;

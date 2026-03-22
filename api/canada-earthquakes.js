@@ -34,16 +34,16 @@ function jsonResponse(body, status, headers = {}) {
     }
   });
 }
-const config = { runtime: "edge" };
-const NRCAN_API_URL = "https://www.earthquakescanada.nrcan.gc.ca/api/v2/locations/30d.json";
-const CACHE_TTL = 1800;
-const GTA_BOUNDS = {
+var config = { runtime: "edge" };
+var NRCAN_API_URL = "https://www.earthquakescanada.nrcan.gc.ca/api/v2/locations/30d.json";
+var CACHE_TTL = 1800;
+var GTA_BOUNDS = {
   latMin: 43.3,
   latMax: 44.2,
   lonMin: -80,
   lonMax: -78.7
 };
-const TORONTO_CENTER = {
+var TORONTO_CENTER = {
   lat: 43.6532,
   lon: -79.3832
 };

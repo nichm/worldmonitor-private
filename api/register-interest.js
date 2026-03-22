@@ -1,17 +1,17 @@
 // api/register-interest.js
 import { createRequire } from "module";
 import { resolve as nodePathResolve } from "path";
-const version = "1.32.0";
-const lookup = [];
-const revLookup = [];
-const Arr = Uint8Array;
-const code = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+var version = "1.32.0";
+var lookup = [];
+var revLookup = [];
+var Arr = Uint8Array;
+var code = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 for (i = 0, len = code.length; i < len; ++i) {
   lookup[i] = code[i];
   revLookup[code.charCodeAt(i)] = i;
 }
-let i;
-let len;
+var i;
+var len;
 revLookup["-".charCodeAt(0)] = 62;
 revLookup["_".charCodeAt(0)] = 63;
 function getLens(b64) {
@@ -139,12 +139,12 @@ function isSimpleObject(value) {
   prototype?.constructor?.name === "Object";
   return isObject && isSimple;
 }
-const LITTLE_ENDIAN = true;
-const MIN_INT64 = BigInt("-9223372036854775808");
-const MAX_INT64 = BigInt("9223372036854775807");
-const ZERO = BigInt("0");
-const EIGHT = BigInt("8");
-const TWOFIFTYSIX = BigInt("256");
+var LITTLE_ENDIAN = true;
+var MIN_INT64 = BigInt("-9223372036854775808");
+var MAX_INT64 = BigInt("9223372036854775807");
+var ZERO = BigInt("0");
+var EIGHT = BigInt("8");
+var TWOFIFTYSIX = BigInt("256");
 function isSpecial(n) {
   return Number.isNaN(n) || !Number.isFinite(n) || Object.is(n, -0);
 }
@@ -200,9 +200,9 @@ function modernBase64ToBigInt(encoded) {
   const intBytesView = new DataView(integerBytes.buffer);
   return intBytesView.getBigInt64(0, true);
 }
-const bigIntToBase64 = DataView.prototype.setBigInt64 ? modernBigIntToBase64 : slowBigIntToBase64;
-const base64ToBigInt = DataView.prototype.getBigInt64 ? modernBase64ToBigInt : slowBase64ToBigInt;
-const MAX_IDENTIFIER_LEN = 1024;
+var bigIntToBase64 = DataView.prototype.setBigInt64 ? modernBigIntToBase64 : slowBigIntToBase64;
+var base64ToBigInt = DataView.prototype.getBigInt64 ? modernBase64ToBigInt : slowBase64ToBigInt;
+var MAX_IDENTIFIER_LEN = 1024;
 function validateObjectField(k) {
   if (k.length > MAX_IDENTIFIER_LEN) {
     throw new Error(
@@ -290,7 +290,7 @@ function jsonToConvex(value) {
   }
   return out;
 }
-const MAX_VALUE_FOR_ERROR_LEN = 16384;
+var MAX_VALUE_FOR_ERROR_LEN = 16384;
 function stringifyValueForError(value) {
   const str = JSON.stringify(value, (_key, value2) => {
     if (value2 === void 0) {
@@ -420,13 +420,13 @@ function convexOrUndefinedToJsonInternal(value, originalValue, context) {
 function convexToJson(value) {
   return convexToJsonInternal(value, value, "", false);
 }
-const __defProp = Object.defineProperty;
-const __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-const __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-let _a;
-let _b;
-const IDENTIFYING_FIELD = /* @__PURE__ */ Symbol.for("ConvexError");
-const ConvexError = class extends (_b = Error, _a = IDENTIFYING_FIELD, _b) {
+var __defProp = Object.defineProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+var _a;
+var _b;
+var IDENTIFYING_FIELD = /* @__PURE__ */ Symbol.for("ConvexError");
+var ConvexError = class extends (_b = Error, _a = IDENTIFYING_FIELD, _b) {
   constructor(data) {
     super(typeof data === "string" ? data : stringifyValueForError(data));
     __publicField(this, "name", "ConvexError");
@@ -435,13 +435,13 @@ const ConvexError = class extends (_b = Error, _a = IDENTIFYING_FIELD, _b) {
     this.data = data;
   }
 };
-const arr = () => Array.from({ length: 4 }, () => 0);
-const aBytes = arr();
-const bBytes = arr();
-const __defProp2 = Object.defineProperty;
-const __defNormalProp2 = (obj, key, value) => key in obj ? __defProp2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-const __publicField2 = (obj, key, value) => __defNormalProp2(obj, typeof key !== "symbol" ? key + "" : key, value);
-const INFO_COLOR = "color:rgb(0, 145, 255)";
+var arr = () => Array.from({ length: 4 }, () => 0);
+var aBytes = arr();
+var bBytes = arr();
+var __defProp2 = Object.defineProperty;
+var __defNormalProp2 = (obj, key, value) => key in obj ? __defProp2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField2 = (obj, key, value) => __defNormalProp2(obj, typeof key !== "symbol" ? key + "" : key, value);
+var INFO_COLOR = "color:rgb(0, 145, 255)";
 function prefix_for_source(source) {
   switch (source) {
     case "query":
@@ -454,7 +454,7 @@ function prefix_for_source(source) {
       return "?";
   }
 }
-const DefaultLogger = class {
+var DefaultLogger = class {
   constructor(options) {
     __publicField2(this, "_onLogLineFuncs");
     __publicField2(this, "_verbose");
@@ -544,8 +544,8 @@ function logForFunction(logger, type, source, udfPath, message) {
     logger.error(`[CONVEX ${prefix}(${udfPath})] ${message}`);
   }
 }
-const functionName = /* @__PURE__ */ Symbol.for("functionName");
-const toReferencePath = /* @__PURE__ */ Symbol.for("toReferencePath");
+var functionName = /* @__PURE__ */ Symbol.for("functionName");
+var toReferencePath = /* @__PURE__ */ Symbol.for("toReferencePath");
 function extractReferencePath(reference) {
   return reference[toReferencePath] ?? null;
 }
@@ -623,11 +623,11 @@ function createApi(pathParts = []) {
   };
   return new Proxy({}, handler2);
 }
-const anyApi = createApi();
-const __defProp3 = Object.defineProperty;
-const __defNormalProp3 = (obj, key, value) => key in obj ? __defProp3(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-const __publicField3 = (obj, key, value) => __defNormalProp3(obj, typeof key !== "symbol" ? key + "" : key, value);
-const Long = class _Long {
+var anyApi = createApi();
+var __defProp3 = Object.defineProperty;
+var __defNormalProp3 = (obj, key, value) => key in obj ? __defProp3(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField3 = (obj, key, value) => __defNormalProp3(obj, typeof key !== "symbol" ? key + "" : key, value);
+var Long = class _Long {
   constructor(low, high) {
     __publicField3(this, "low");
     __publicField3(this, "high");
@@ -637,7 +637,7 @@ const Long = class _Long {
     this.__isUnsignedLong__ = true;
   }
   static isLong(obj) {
-    return (obj?.__isUnsignedLong__) === true;
+    return obj?.__isUnsignedLong__ === true;
   }
   // prettier-ignore
   static fromBytesLE(bytes) {
@@ -694,21 +694,21 @@ const Long = class _Long {
     return new _Long(val.low, val.high);
   }
 };
-const UZERO = new Long(0, 0);
-const TWO_PWR_16_DBL = 1 << 16;
-const TWO_PWR_32_DBL = TWO_PWR_16_DBL * TWO_PWR_16_DBL;
-const TWO_PWR_64_DBL = TWO_PWR_32_DBL * TWO_PWR_32_DBL;
-const MAX_UNSIGNED_VALUE = new Long(4294967295 | 0, 4294967295 | 0);
-const InvalidTokenError = class extends Error {
+var UZERO = new Long(0, 0);
+var TWO_PWR_16_DBL = 1 << 16;
+var TWO_PWR_32_DBL = TWO_PWR_16_DBL * TWO_PWR_16_DBL;
+var TWO_PWR_64_DBL = TWO_PWR_32_DBL * TWO_PWR_32_DBL;
+var MAX_UNSIGNED_VALUE = new Long(4294967295 | 0, 4294967295 | 0);
+var InvalidTokenError = class extends Error {
 };
 InvalidTokenError.prototype.name = "InvalidTokenError";
-const MAXIMUM_REFRESH_DELAY = 20 * 24 * 60 * 60 * 1e3;
-const __defProp4 = Object.defineProperty;
-const __defNormalProp4 = (obj, key, value) => key in obj ? __defProp4(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-const __publicField4 = (obj, key, value) => __defNormalProp4(obj, typeof key !== "symbol" ? key + "" : key, value);
-const STATUS_CODE_UDF_FAILED = 560;
-const specifiedFetch = void 0;
-const ConvexHttpClient = class {
+var MAXIMUM_REFRESH_DELAY = 20 * 24 * 60 * 60 * 1e3;
+var __defProp4 = Object.defineProperty;
+var __defNormalProp4 = (obj, key, value) => key in obj ? __defProp4(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField4 = (obj, key, value) => __defNormalProp4(obj, typeof key !== "symbol" ? key + "" : key, value);
+var STATUS_CODE_UDF_FAILED = 560;
+var specifiedFetch = void 0;
+var ConvexHttpClient = class {
   /**
    * Create a new {@link ConvexHttpClient}.
    *
@@ -1144,27 +1144,27 @@ function forwardErrorData(errorData, error) {
   error.data = jsonToConvex(errorData);
   return error;
 }
-let defaultWebSocketConstructor;
+var defaultWebSocketConstructor;
 function setDefaultWebSocketConstructor(ws) {
   defaultWebSocketConstructor = ws;
 }
-const require2 = createRequire(nodePathResolve("."));
-const __create = Object.create;
-const __defProp5 = Object.defineProperty;
-const __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-const __getOwnPropNames = Object.getOwnPropertyNames;
-const __getProtoOf = Object.getPrototypeOf;
-const __hasOwnProp = Object.prototype.hasOwnProperty;
-const __require = /* @__PURE__ */ ((x) => typeof require2 !== "undefined" ? require2 : typeof Proxy !== "undefined" ? new Proxy(x, {
+var require2 = createRequire(nodePathResolve("."));
+var __create = Object.create;
+var __defProp5 = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __require = /* @__PURE__ */ ((x) => typeof require2 !== "undefined" ? require2 : typeof Proxy !== "undefined" ? new Proxy(x, {
   get: (a, b) => (typeof require2 !== "undefined" ? require2 : a)[b]
 }) : x)(function(x) {
   if (typeof require2 !== "undefined") return require2.apply(this, arguments);
   throw Error('Dynamic require of "' + x + '" is not supported');
 });
-const __commonJS = (cb, mod) => function __require2() {
+var __commonJS = (cb, mod) => function __require2() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
-const __copyProps = (to, from, except, desc) => {
+var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (const key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
@@ -1172,7 +1172,7 @@ const __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-const __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
@@ -1180,9 +1180,8 @@ const __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__
   isNodeMode || !mod || !mod.__esModule ? __defProp5(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-const require_stream = __commonJS({
+var require_stream = __commonJS({
   "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/stream.js"(_exports, module) {
-    
     const { Duplex } = __require("stream");
     function emitClose(stream) {
       stream.emit("close");
@@ -1275,9 +1274,8 @@ const require_stream = __commonJS({
     module.exports = createWebSocketStream2;
   }
 });
-const require_constants = __commonJS({
+var require_constants = __commonJS({
   "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/constants.js"(_exports, module) {
-    
     const BINARY_TYPES = ["nodebuffer", "arraybuffer", "fragments"];
     const hasBlob = typeof Blob !== "undefined";
     if (hasBlob) BINARY_TYPES.push("blob");
@@ -1295,7 +1293,7 @@ const require_constants = __commonJS({
     };
   }
 });
-const require_node_gyp_build = __commonJS({
+var require_node_gyp_build = __commonJS({
   "../common/temp/node_modules/.pnpm/node-gyp-build@4.8.4/node_modules/node-gyp-build/node-gyp-build.js"(_exports, module) {
     const fs = __require("fs");
     const path = __require("path");
@@ -1444,7 +1442,7 @@ const require_node_gyp_build = __commonJS({
       };
     }
     function isNwjs() {
-      return !!(process.versions?.nw);
+      return !!process.versions?.nw;
     }
     function isElectron() {
       if (process.versions?.electron) return true;
@@ -1462,7 +1460,7 @@ const require_node_gyp_build = __commonJS({
     load.compareTuples = compareTuples;
   }
 });
-const require_node_gyp_build2 = __commonJS({
+var require_node_gyp_build2 = __commonJS({
   "../common/temp/node_modules/.pnpm/node-gyp-build@4.8.4/node_modules/node-gyp-build/index.js"(_exports, module) {
     const runtimeRequire = typeof __webpack_require__ === "function" ? __non_webpack_require__ : __require;
     if (typeof runtimeRequire.addon === "function") {
@@ -1472,9 +1470,8 @@ const require_node_gyp_build2 = __commonJS({
     }
   }
 });
-const require_fallback = __commonJS({
+var require_fallback = __commonJS({
   "../common/temp/node_modules/.pnpm/bufferutil@4.0.9/node_modules/bufferutil/fallback.js"(_exports, module) {
-    
     const mask = (source, mask2, output, offset, length) => {
       for (let i2 = 0; i2 < length; i2++) {
         output[offset + i2] = source[i2] ^ mask2[i2 & 3];
@@ -1489,9 +1486,8 @@ const require_fallback = __commonJS({
     module.exports = { mask, unmask };
   }
 });
-const require_bufferutil = __commonJS({
+var require_bufferutil = __commonJS({
   "../common/temp/node_modules/.pnpm/bufferutil@4.0.9/node_modules/bufferutil/index.js"(_exports, module) {
-    
     try {
       module.exports = require_node_gyp_build2()(__dirname);
     } catch (e) {
@@ -1499,9 +1495,8 @@ const require_bufferutil = __commonJS({
     }
   }
 });
-const require_buffer_util = __commonJS({
+var require_buffer_util = __commonJS({
   "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/buffer-util.js"(_exports, module) {
-    
     const { EMPTY_BUFFER } = require_constants();
     const FastBuffer = Buffer[Symbol.species];
     function concat(list, totalLength) {
@@ -1572,9 +1567,8 @@ const require_buffer_util = __commonJS({
     }
   }
 });
-const require_limiter = __commonJS({
+var require_limiter = __commonJS({
   "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/limiter.js"(_exports, module) {
-    
     const kDone = /* @__PURE__ */ Symbol("kDone");
     const kRun = /* @__PURE__ */ Symbol("kRun");
     const Limiter = class {
@@ -1620,9 +1614,8 @@ const require_limiter = __commonJS({
     module.exports = Limiter;
   }
 });
-const require_permessage_deflate = __commonJS({
+var require_permessage_deflate = __commonJS({
   "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/permessage-deflate.js"(_exports, module) {
-    
     const zlib = __require("zlib");
     const bufferUtil = require_buffer_util();
     const Limiter = require_limiter();
@@ -1997,9 +1990,8 @@ const require_permessage_deflate = __commonJS({
     }
   }
 });
-const require_validation = __commonJS({
+var require_validation = __commonJS({
   "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/validation.js"(_exports, module) {
-    
     const { isUtf8 } = __require("buffer");
     const { hasBlob } = require_constants();
     const tokenChars = [
@@ -2192,9 +2184,8 @@ const require_validation = __commonJS({
     }
   }
 });
-const require_receiver = __commonJS({
+var require_receiver = __commonJS({
   "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/receiver.js"(_exports, module) {
-    
     const { Writable } = __require("stream");
     const PerMessageDeflate = require_permessage_deflate();
     const {
@@ -2782,9 +2773,8 @@ const require_receiver = __commonJS({
     module.exports = Receiver2;
   }
 });
-const require_sender = __commonJS({
+var require_sender = __commonJS({
   "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/sender.js"(_exports, module) {
-    
     const { Duplex } = __require("stream");
     const { randomFillSync } = __require("crypto");
     const PerMessageDeflate = require_permessage_deflate();
@@ -3268,9 +3258,8 @@ const require_sender = __commonJS({
     }
   }
 });
-const require_event_target = __commonJS({
+var require_event_target = __commonJS({
   "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/event-target.js"(_exports, module) {
-    
     const { kForOnEventAttribute, kListener } = require_constants();
     const kCode = /* @__PURE__ */ Symbol("kCode");
     const kData = /* @__PURE__ */ Symbol("kData");
@@ -3495,9 +3484,8 @@ const require_event_target = __commonJS({
     }
   }
 });
-const require_extension = __commonJS({
+var require_extension = __commonJS({
   "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/extension.js"(_exports, module) {
-    
     const { tokenChars } = require_validation();
     function push(dest, name, elem) {
       if (dest[name] === void 0) dest[name] = [elem];
@@ -3646,9 +3634,8 @@ const require_extension = __commonJS({
     module.exports = { format, parse };
   }
 });
-const require_websocket = __commonJS({
+var require_websocket = __commonJS({
   "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/websocket.js"(_exports, module) {
-    
     const EventEmitter = __require("events");
     const https = __require("https");
     const http = __require("http");
@@ -4527,9 +4514,8 @@ const require_websocket = __commonJS({
     }
   }
 });
-const require_subprotocol = __commonJS({
+var require_subprotocol = __commonJS({
   "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/subprotocol.js"(_exports, module) {
-    
     const { tokenChars } = require_validation();
     function parse(header) {
       const protocols = /* @__PURE__ */ new Set();
@@ -4570,9 +4556,8 @@ const require_subprotocol = __commonJS({
     module.exports = { parse };
   }
 });
-const require_websocket_server = __commonJS({
+var require_websocket_server = __commonJS({
   "../common/temp/node_modules/.pnpm/ws@8.18.0_bufferutil@4.0.9/node_modules/ws/lib/websocket-server.js"(_exports, module) {
-    
     const EventEmitter = __require("events");
     const http = __require("http");
     const { Duplex } = __require("stream");
@@ -4955,15 +4940,15 @@ const require_websocket_server = __commonJS({
     }
   }
 });
-const import_stream = __toESM(require_stream(), 1);
-const import_receiver = __toESM(require_receiver(), 1);
-const import_sender = __toESM(require_sender(), 1);
-const import_websocket = __toESM(require_websocket(), 1);
-const import_websocket_server = __toESM(require_websocket_server(), 1);
-const wrapper_default = import_websocket.default;
-const nodeWebSocket = wrapper_default;
+var import_stream = __toESM(require_stream(), 1);
+var import_receiver = __toESM(require_receiver(), 1);
+var import_sender = __toESM(require_sender(), 1);
+var import_websocket = __toESM(require_websocket(), 1);
+var import_websocket_server = __toESM(require_websocket_server(), 1);
+var wrapper_default = import_websocket.default;
+var nodeWebSocket = wrapper_default;
 setDefaultWebSocketConstructor(nodeWebSocket);
-const ALLOWED_ORIGIN_PATTERNS = [
+var ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -4992,7 +4977,7 @@ function isDisallowedOrigin(req) {
   if (!origin) return false;
   return !isAllowedOrigin(origin);
 }
-const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+var TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 function getClientIp(request) {
   return request.headers.get("x-real-ip") || request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 }
@@ -5066,13 +5051,13 @@ function createIpRateLimiter({ limit, windowMs }) {
   }
   return { isRateLimited, getEntry };
 }
-const config = { runtime: "edge" };
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MAX_EMAIL_LENGTH = 320;
-const MAX_META_LENGTH = 100;
-const RATE_LIMIT = 5;
-const RATE_WINDOW_MS = 60 * 60 * 1e3;
-const rateLimiter = createIpRateLimiter({ limit: RATE_LIMIT, windowMs: RATE_WINDOW_MS });
+var config = { runtime: "edge" };
+var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+var MAX_EMAIL_LENGTH = 320;
+var MAX_META_LENGTH = 100;
+var RATE_LIMIT = 5;
+var RATE_WINDOW_MS = 60 * 60 * 1e3;
+var rateLimiter = createIpRateLimiter({ limit: RATE_LIMIT, windowMs: RATE_WINDOW_MS });
 async function sendConfirmationEmail(email, referralCode) {
   const referralLink = `https://worldmonitor.app/pro?ref=${referralCode}`;
   const shareText = encodeURIComponent("I just joined the World Monitor Pro waitlist \u2014 real-time global intelligence powered by AI. Join me:");

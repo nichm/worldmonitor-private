@@ -1,14 +1,14 @@
 // api/telegram-feed.js
-const __create = Object.create;
-const __defProp = Object.defineProperty;
-const __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-const __getOwnPropNames = Object.getOwnPropertyNames;
-const __getProtoOf = Object.getPrototypeOf;
-const __hasOwnProp = Object.prototype.hasOwnProperty;
-const __commonJS = (cb, mod) => function __require() {
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
-const __copyProps = (to, from, except, desc) => {
+var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (const key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
@@ -16,7 +16,7 @@ const __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-const __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
   // If the importer is in node compatibility mode or this is not an ESM
   // file that has been converted to a CommonJS file using a Babel-
   // compatible transform (i.e. "__esModule" has not been set), then set
@@ -24,9 +24,8 @@ const __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-const require_dist = __commonJS({
+var require_dist = __commonJS({
   "node_modules/@upstash/core-analytics/dist/index.js"(_exports, module) {
-    
     const g = Object.defineProperty;
     const k = Object.getOwnPropertyDescriptor;
     const _ = Object.getOwnPropertyNames;
@@ -233,9 +232,8 @@ return result
     };
   }
 });
-const require_dist2 = __commonJS({
+var require_dist2 = __commonJS({
   "node_modules/@upstash/ratelimit/dist/index.js"(_exports, module) {
-    
     const __defProp3 = Object.defineProperty;
     const __getOwnPropDesc2 = Object.getOwnPropertyDescriptor;
     const __getOwnPropNames2 = Object.getOwnPropertyNames;
@@ -2053,7 +2051,7 @@ const require_dist2 = __commonJS({
     };
   }
 });
-const ALLOWED_ORIGIN_PATTERNS = [
+var ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   /^https?:\/\/localhost(:\d+)?$/,
@@ -2082,7 +2080,7 @@ function isDisallowedOrigin(req) {
   if (!origin) return false;
   return !isAllowedOrigin(origin);
 }
-const BROWSER_ORIGIN_PATTERNS = [
+var BROWSER_ORIGIN_PATTERNS = [
   /^https:\/\/(.*\.)?worldmonitor\.app$/,
   /^https:\/\/worldmonitor-[a-z0-9-]+-elie-[a-z0-9]+\.vercel\.app$/,
   ...process.env.NODE_ENV === "production" ? [] : [
@@ -2090,25 +2088,25 @@ const BROWSER_ORIGIN_PATTERNS = [
     /^https?:\/\/127\.0\.0\.1(:\d+)?$/
   ]
 ];
-const import_ratelimit = __toESM(require_dist2(), 1);
-const __defProp2 = Object.defineProperty;
-const __export = (target, all) => {
+var import_ratelimit = __toESM(require_dist2(), 1);
+var __defProp2 = Object.defineProperty;
+var __export = (target, all) => {
   for (const name in all)
     __defProp2(target, name, { get: all[name], enumerable: true });
 };
-const error_exports = {};
+var error_exports = {};
 __export(error_exports, {
   UpstashError: () => UpstashError,
   UpstashJSONParseError: () => UpstashJSONParseError,
   UrlError: () => UrlError
 });
-const UpstashError = class extends Error {
+var UpstashError = class extends Error {
   constructor(message, options) {
     super(message, options);
     this.name = "UpstashError";
   }
 };
-const UrlError = class extends Error {
+var UrlError = class extends Error {
   constructor(url) {
     super(
       `Upstash Redis client was passed an invalid URL. You should pass a URL starting with https. Received: "${url}". `
@@ -2116,14 +2114,14 @@ const UrlError = class extends Error {
     this.name = "UrlError";
   }
 };
-const UpstashJSONParseError = class extends UpstashError {
+var UpstashJSONParseError = class extends UpstashError {
   constructor(body, options) {
     const truncatedBody = body.length > 200 ? body.slice(0, 200) + "..." : body;
     super(`Unable to parse response body: ${truncatedBody}`, options);
     this.name = "UpstashJSONParseError";
   }
 };
-const MAX_BUFFER_SIZE = 1024 * 1024;
+var MAX_BUFFER_SIZE = 1024 * 1024;
 if (typeof atob === "undefined") {
   global.atob = (b64) => Buffer.from(b64, "base64").toString("utf8");
 }
@@ -2197,7 +2195,7 @@ function buildRelayResponse(response, body, headers) {
     }
   );
 }
-const config = { runtime: "edge" };
+var config = { runtime: "edge" };
 async function handler(req) {
   const corsHeaders = getCorsHeaders(req, "GET, OPTIONS");
   if (isDisallowedOrigin(req)) {

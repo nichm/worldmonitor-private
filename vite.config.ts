@@ -597,6 +597,39 @@ function gpsjamDevPlugin(): Plugin {
   };
 }
 
+function trcaFloodsPlugin(): Plugin {
+  return {
+    name: 'trca-floods-dev',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (req.url !== '/api/trca-floods' && !req.url?.startsWith('/api/trca-floods?')) {
+          return next();
+        }
+
+        try {
+          // Dynamically import the handler
+          const { default: handler } = await import('./api/trca-floods.js');
+          const request = new Request(new URL(req.url || '/', 'http://localhost'), {
+            method: req.method,
+            headers: req.headers as any,
+          });
+          const response = await handler(request);
+          res.statusCode = response.status;
+          for (const [key, value] of response.headers.entries()) {
+            res.setHeader(key, value);
+          }
+          res.end(await response.text());
+        } catch (error: any) {
+          console.error('[TRCA Floods] Error:', error);
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Failed to load TRCA flood data', message: error.message }));
+        }
+      });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   // Inject environment variables from .env files into process.env.
@@ -619,6 +652,7 @@ export default defineConfig(({ mode }) => {
       rssProxyPlugin(),
       youtubeLivePlugin(),
       gpsjamDevPlugin(),
+      trcaFloodsPlugin(),
       sebufApiPlugin(),
       brotliPrecompressPlugin(),
       VitePWA({
