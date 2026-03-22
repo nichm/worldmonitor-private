@@ -61,8 +61,8 @@ const CACHE_TTL = 36e5;
 let cached = null;
 let cachedAt = 0;
 
-// Updated to 2025 dataset resource ID
-const SHELTER_RESOURCE_ID = "5dc4fbfc-0951-45e8-ae30-962af9dcaf7c";
+// Updated to daily-updated 2020 dataset (actually contains 2026 data, last updated 2026-02-20)
+const SHELTER_RESOURCE_ID = "9e076fe4-2f86-48d7-a6e4-93710ca715ae";
 async function fetchShelterData() {
   const now = Date.now();
   if (cached && now - cachedAt < CACHE_TTL) return cached;
