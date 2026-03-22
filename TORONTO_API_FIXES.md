@@ -73,46 +73,38 @@ For now, seed data provides a functional demonstration that won't break the appl
 
 ---
 
-# Data Lag & Real-Time Access Fixes
+# Data Lag & Real-Time Access Investigation
 
 ## Date: March 21, 2026
 
-## ✅ Shelter API Fix - Now Using Current 2026 Data
+## Current Implementation Status
 
-### Issue
-Using outdated resource ID (`5dc4fbfc...` - 2025 specific dataset)
+### Shelter API - Working (2025 Data)
 
-### Fix Applied
-Updated to `9e076fe4-2f86-48d7-a6e4-93710ca715ae`
+**Resource ID:** `5dc4fbfc-0951-45e8-ae30-962af9dcaf7c`
+**DataStore Resource:** "daily-shelter-overnight-service-occupancy-capacity-2025"
+**Records:** 51,543 shelter occupancy records
+**Date Range:** 2025-01-01 (all records from this single date)
+**Data Lag:** ~14 months (current date: 2026-03-21)
 
-### Why This Works
-Despite being named "Daily shelter occupancy 2020.csv", this file is updated DAILY by the City of Toronto with current year data.
+**Important Note:**
+More recent shelter data IS available on Toronto Open Data (files updated 2026-02-20 and 2026-03-21), but these are **file downloads only** (CSV/JSON/XML) and NOT accessible via the DataStore API. The DataStore API only provides the 2025 dataset.
 
-### Data Freshness
-- **Last Updated:** 2026-02-20
-- **Current Date:** 2026-03-21
-- **Lag:** ~1 month ✅ Acceptable
+**Data Source Options:**
+1. **Current:** DataStore API resource `5dc4fbfc...` (2025-01-01 data) ✅ Works
+2. **Alternative:** Direct CSV download from `https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/0f8e2d18-1da6-4354-85ed-7c1f8d283b1e/resource/ffd20867-6e3c-4074-8427-d63810edf231/download/daily-shelter-overnight-occupancy.csv` (2026-03-21 data) ⚠️ Requires CSV parsing
 
-### Resource Details
-- **Dataset:** "Daily shelter overnight service occupancy and capacity 2020"
-- **File:** `daily-shelter-occupancy-2020.csv`
-- **Resource ID:** `9e076fe4-2f86-48d7-a6e4-93710ca715ae`
-- **Metadata Modified:** 2026-02-20T20:44:49.528217
-- **Organization:** City of Toronto (Shelter, Support & Housing Administration)
+### Fire API - Historical Data Only (2011-2018)
 
-## ⚠️ Fire API - 8 Year Data Lag
+**Resource ID:** `fa5c7de5-10f8-41cf-883a-9b30a67c7b56`
+**Dataset:** "Fire Incidents Data"
+**Records:** 36,564 fire incidents
+**Date Range:** 2011-02-02 to 2018-02-25
+**Data Lag:** 8 years (dataset discontinued)
+**Last Update:** 2018-02-25
 
-### Current Status
-Using CKAN Fire Incidents dataset (2011-2018) because live CAD page is blocked by 403 Forbidden.
-
-### Data Freshness
-- **Last Updated:** 2018-02-25
-- **Current Date:** 2026-03-21
-- **Lag:** 8 years ⚠️ Dataset discontinued
-
-### Why Can't We Access Live Data?
-
-**Protection:** Toronto Fire CAD live page uses Akamai Web Application Firewall (WAF)
+**Why No Real-Time Data:**
+The Toronto Fire CAD live page (`https://www.toronto.ca/fire/cadinfo/livecad.htm`) is protected by Akamai Web Application Firewall (WAF).
 
 **Blocking Mechanisms:**
 - IP reputation filtering
@@ -201,7 +193,7 @@ Add a "Data Sources" panel showing data age to users:
 interface DataSourceStatus {
   source: string;
   lastUpdate: string;
-  lag: string; // e.g., "1 month", "8 years"
+  lag: string; // e.g., "14 months", "8 years"
   status: 'current' | 'stale' | 'discontinued';
   note?: string;
 }
@@ -209,20 +201,79 @@ interface DataSourceStatus {
 const dataSourceStatus: DataSourceStatus[] = [
   {
     source: 'Toronto Shelter Occupancy',
-    lastUpdate: '2026-02-20',
-    lag: '1 month',
-    status: 'current'
+    lastUpdate: '2025-01-01',
+    lag: '14 months',
+    status: 'stale',
+    note: '2026 data available as file downloads, not via DataStore API'
   },
   {
     source: 'Toronto Fire Incidents',
     lastUpdate: '2018-02-25',
     lag: '8 years',
     status: 'discontinued',
-    note: 'Dataset discontinued. See real-time alternatives.'
+    note: 'Dataset discontinued. Live CAD blocked by Akamai WAF.'
   },
   // ... other sources
 ];
 ```
+
+---
+
+## Implementation Options for Improvement
+
+### Option 1: Fetch Latest Shelter CSV (Medium Effort)
+
+Implement CSV parsing to get current 2026 shelter data:
+
+```javascript
+// api/toronto-shelter.js
+async function fetchShelterData() {
+  const CSV_URL = "https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/0f8e2d18-1da6-4354-85ed-7c1f8d283b1e/resource/ffd20867-6e3c-4074-8427-d63810edf231/download/daily-shelter-overnight-occupancy.csv";
+
+  const resp = await fetch(CSV_URL);
+  const csv = await resp.text();
+
+  // Parse CSV (use papaparse library)
+  const records = parseCSV(csv);
+
+  // Filter to latest date
+  const latestDate = records[0].OCCUPANCY_DATE;
+  const latestRecords = records.filter(r => r.OCCUPANCY_DATE === latestDate);
+
+  // Aggregate by sector (same as current implementation)
+  // ...
+}
+```
+
+**Advantages:**
+- ✅ Current 2026 data (updated daily)
+- ✅ No API key required
+
+**Disadvantages:**
+- ⚠️ Large file (~50K+ records) impacts performance
+- ⚠️ Requires CSV parsing library (papaparse)
+- ⚠️ Increased latency (file download + parsing)
+
+### Option 2: Toronto 311 Fire Calls (Low Effort)
+
+Use 311 service requests for fire-related incidents:
+
+```javascript
+// Filter 311 data for fire-related calls
+const sql = `
+  SELECT * FROM "f3db05ab-2588-4159-89f7-56c74d1d8201"
+  WHERE "REQ_TYPE" ILIKE '%fire%'
+    AND "CREATED_DATE" >= CURRENT_DATE - INTERVAL '1 day'
+  ORDER BY "CREATED_DATE" DESC
+  LIMIT 100
+`;
+```
+
+**Note:** 311 datasets appear to only support CSV download, not DataStore SQL queries.
+
+### Option 3: Twitter/X Monitoring (Low Effort)
+
+Monitor `@TorontoFire` and `@TFSPublicInfo` for real-time updates.
 
 ## Implementation Checklist
 
@@ -240,7 +291,13 @@ const dataSourceStatus: DataSourceStatus[] = [
 
 | Issue | Status | Lag | Solution |
 |-------|--------|-----|----------|
-| **Shelter data** | ✅ Fixed | 1 month | Using correct resource ID (`9e076fe4...`) |
-| **Fire data (8 years)** | ⚠️ Needs work | 8 years | Implement 311/Twitter monitoring OR email city |
+| **Shelter data** | ✅ Working | 14 months | Using DataStore API `5dc4fbfc...` (2025-01-01). 2026 data available via CSV download (requires parsing) |
+| **Fire data (8 years)** | ⚠️ Needs work | 8 years | Using CKAN historical data. Live CAD blocked by Akamai WAF. Consider Twitter or 311 data |
 
-The shelter API is now using current 2026 data. Fire data requires implementation of real-time alternatives (311, Twitter) or official API access.
+### Key Findings
+
+1. **Shelter Data:** The current implementation uses the most current data available via the DataStore API. More recent 2026 data exists but only as file downloads, not via API. Implementing CSV parsing would provide current data but adds complexity.
+
+2. **Fire Data:** The CKAN dataset is discontinued (last updated 2018). The live CAD page is blocked by Akamai WAF. Real-time alternatives include monitoring @TorontoFire Twitter or using 311 service request data (though 311 also appears to be CSV-only).
+
+3. **DataStore vs. File Downloads:** Many Toronto Open Data datasets have been updated to 2026 but are only available as file downloads. The DataStore API contains older but still functional data.
