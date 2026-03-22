@@ -60,6 +60,9 @@ const CKAN_BASE = "https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/
 const CACHE_TTL = 36e5;
 let cached = null;
 let cachedAt = 0;
+
+// Updated to 2025 dataset resource ID
+const SHELTER_RESOURCE_ID = "5dc4fbfc-0951-45e8-ae30-962af9dcaf7c";
 async function fetchShelterData() {
   const now = Date.now();
   if (cached && now - cachedAt < CACHE_TTL) return cached;
@@ -68,7 +71,7 @@ async function fetchShelterData() {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayDate = yesterday.toISOString().split("T")[0];
     const url = new URL(CKAN_BASE);
-    url.searchParams.set("resource_id", "c0dc1f57-733f-4a3d-a822-a8f08a4f6345");
+    url.searchParams.set("resource_id", SHELTER_RESOURCE_ID);
     url.searchParams.set("limit", "1000");
     const resp = await fetch(url.toString(), {
       signal: AbortSignal.timeout(3e4),

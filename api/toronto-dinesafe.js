@@ -137,33 +137,18 @@ async function handler(_req) {
     })).sort((a, b) => new Date(b.inspection_date).getTime() - new Date(a.inspection_date).getTime());
     if (closures.length === 0) {
       console.log("DineSafe API: No recent closures found, returning seed data");
-      return jsonResponse({
-        closures: [...SEED_DINESAFE_DATA],
-        total: SEED_DINESAFE_DATA.length,
-        fetched_at: TODAY.toISOString(),
-        using_seed_data: true
-      }, 200, {
+      return jsonResponse([...SEED_DINESAFE_DATA], 200, {
         "Cache-Control": "public, max-age=3600, s-maxage=3600, stale-if-error=7200",
         "Access-Control-Allow-Origin": "*"
       });
     }
-    return jsonResponse({
-      closures,
-      total: closures.length,
-      fetched_at: TODAY.toISOString()
-    }, 200, {
+    return jsonResponse(closures, 200, {
       "Cache-Control": "public, max-age=3600, s-maxage=3600, stale-if-error=7200",
       "Access-Control-Allow-Origin": "*"
     });
   } catch (error) {
     console.error("DineSafe API error:", error);
-    return jsonResponse({
-      closures: [...SEED_DINESAFE_DATA],
-      total: SEED_DINESAFE_DATA.length,
-      error: error.message,
-      fetched_at: TODAY.toISOString(),
-      using_seed_data: true
-    }, 200, {
+    return jsonResponse([...SEED_DINESAFE_DATA], 200, {
       "Cache-Control": "public, max-age=300, s-maxage=600, stale-if-error=1200",
       "Access-Control-Allow-Origin": "*"
     });

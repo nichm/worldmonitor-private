@@ -124,11 +124,7 @@ async function handler(_req) {
     if (!csvResponse.ok) {
       if (csvResponse.status === 429) {
         console.warn("[Ontario Housing] Rate limited, using seed data");
-        return jsonResponse({
-          using_seed_data: true,
-          data: SEED_DATA,
-          message: "Using seed data - API rate limited"
-        }, 200, {
+        return jsonResponse([...SEED_DATA], 200, {
           "Cache-Control": "public, max-age=300, s-maxage=600, stale-if-error=1200",
           "Access-Control-Allow-Origin": "*"
         });
@@ -159,20 +155,13 @@ async function handler(_req) {
       }
     }
     data.sort((a, b) => b.Progress_Percentage - a.Progress_Percentage);
-    return jsonResponse({
-      using_seed_data: false,
-      data
-    }, 200, {
+    return jsonResponse(data, 200, {
       "Cache-Control": "public, max-age=3600, s-maxage=3600, stale-if-error=7200",
       "Access-Control-Allow-Origin": "*"
     });
   } catch (error) {
     console.error("Ontario Housing API error:", error);
-    return jsonResponse({
-      using_seed_data: true,
-      data: SEED_DATA,
-      message: "Using seed data - API unavailable"
-    }, 200, {
+    return jsonResponse(SEED_DATA, 200, {
       "Cache-Control": "public, max-age=300, s-maxage=600, stale-if-error=1200",
       "Access-Control-Allow-Origin": "*"
     });
