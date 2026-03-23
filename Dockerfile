@@ -12,11 +12,16 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Install root dependencies (layer-cached until package.json changes)
+# RUN npm ci --ignore-scripts
+# Using node packages for Node.js compatibility, but build scripts use bun
 COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts
+RUN npm install --ignore-scripts --force-npm
 
 # Copy full source
 COPY . .
+
+# Install system dependencies for data fetching scripts
+RUN apk add --no-cache sqlite unzip
 
 # Compile TypeScript API handlers → self-contained ESM bundles
 # Output is api/**/*.js alongside the source .ts files
@@ -25,6 +30,12 @@ RUN node docker/build-handlers.mjs
 # Build Vite frontend (outputs to dist/)
 # Skip blog build — blog-site has its own deps not installed here
 RUN npx tsc && npx vite build
+
+# Fetch real-time data from various sources
+# Note: DineSafe removed - no real-time API available, official CKAN dataset is "Retired"
+RUN node scripts/build-ontario-housing.mjs && \
+    node scripts/build-ttc-health-fixed.mjs && \
+    node scripts/build-toronto-fire-live-xml.mjs
 
 # ── Stage 2: Runtime ─────────────────────────────────────────────────────────
 FROM node:22-alpine AS final
