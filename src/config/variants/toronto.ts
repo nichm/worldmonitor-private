@@ -93,6 +93,7 @@ export const DEFAULT_PANELS: Record<string, PanelConfig> = {
   "ttc-health": { name: "TTC Health", enabled: true, priority: 1 },
   // New Widgets 11-20
   "toronto-crime": { name: "Crime Delta", enabled: true, priority: 1 },
+  "parks-recreation": { name: "Parks & Recreation", enabled: true, priority: 1 },
   "toronto-development": {
     name: "Development Pipeline",
     enabled: true,
@@ -104,6 +105,38 @@ export const DEFAULT_PANELS: Record<string, PanelConfig> = {
     priority: 1,
   },
   "toronto-water-level": { name: "Water Level", enabled: false, priority: 2 },
+  "community-housing": { name: "Community Housing", enabled: true, priority: 1 },
+  schools: { name: "Toronto Schools", enabled: true, priority: 1 },
+  "ev-charging": { name: "EV Charging", enabled: true, priority: 1 },
+  "cycling-network": { name: "Cycling Network", enabled: true, priority: 1 },
+  "ravine-protection": { name: "Ravine Protection", enabled: false, priority: 2 },
+  "crime-incidents": { name: "Crime Incidents", enabled: true, priority: 1 },
+  "eccc-aqhi": { name: "Air Quality (AQHI)", enabled: true, priority: 1 },
+  "tree-canopy": { name: "Tree Canopy", enabled: false, priority: 2 },
+  "lake-ontario-level": { name: "Lake Ontario Level", enabled: false, priority: 2 },
+  "bike-share": { name: "Bike Share", enabled: true, priority: 1 },
+  // N20: Urban Heat Island - OFF by default (P3)
+  "urban-heat": { name: "Urban Heat Island", enabled: false, priority: 3 },
+  // N4: Court Facilities - OFF by default (P4)
+  "court-facilities": { name: "Court Facilities", enabled: false, priority: 2 },
+  // N6: TTC Real-Time - ON by default (P1)
+  "ttc-realtime": { name: "TTC Real-Time", enabled: true, priority: 1 },
+  // N11: Road Construction - ON by default (P2)
+  "road-construction": { name: "Road Construction", enabled: true, priority: 1 },
+  // N15: Ontario Wildfires - ON by default (P2)
+  "ontario-wildfires": { name: "Ontario Wildfires", enabled: true, priority: 1 },
+  // N16: Flooding Composite - OFF by default (P2)
+  "flooding-composite": { name: "Flooding Composite", enabled: false, priority: 2 },
+  "childcare": { name: "Childcare Centres", enabled: false, priority: 2 },
+  "flu-clinics": { name: "Flu Clinics", enabled: false, priority: 3 },
+  "agco-licences": { name: "Liquor Licences", enabled: false, priority: 3 },
+  "green-roof-permits": { name: "Green Roof Permits", enabled: false, priority: 3 },
+  "library-branches": { name: "Library Branches", enabled: true, priority: 1 },
+  "election-data": { name: "Election Data", enabled: false, priority: 2 },
+  "ttc-vehicles": { name: "TTC Vehicles", enabled: true, priority: 1 },
+  "protest-events": { name: "Protest Events", enabled: false, priority: 2 },
+  "green-p-parking": { name: "Green P Parking", enabled: false, priority: 2 },
+  "police-divisions": { name: "Police Divisions", enabled: false, priority: 2 },
 };
 
 // Map layers for Toronto city view
@@ -179,18 +212,55 @@ export const DEFAULT_MAP_LAYERS: MapLayers = {
   weatherRadar: false,
 
   // Toronto-specific layers
-  toronto_fire_incidents: true,
-  toronto_dinesafe: true,
-  toronto_neighbourhoods: true,
-  toronto_311_stress: true,
-  toronto_development: true,
+  // Desktop defaults: High-value general interest + real-time + reference layers ON
+  toronto_fire_incidents: true, // Real-time: Toronto Fire
+  toronto_dinesafe: true, // High-value: DineSafe
+  toronto_neighbourhoods: false, // OFF: Urban planning (niche)
+  toronto_311_stress: false, // OFF: Niche
+  toronto_development: false, // OFF: Urban planning (niche)
   toronto_water_level: false,
   toronto_earthquakes: false,
   ontario_spills: false,
   toronto_air_traffic: false,
-  ontario_roads: true,
-  ontario_weather_alerts: true,
-  ontario_floods: true,
+  ontario_roads: false, // Not in requirements, keep OFF
+  ontario_weather_alerts: false, // Not in requirements, keep OFF
+  ontario_floods: false, // Not in requirements, keep OFF
+  schools: true, // High-value: Schools
+  communityHousing: true, // High-value: Community Housing
+  greenPParking: true, // High-value: Green P Parking
+  parksRecreation: true, // High-value: Parks
+  evCharging: true, // High-value: EV Charging
+  cyclingNetwork: true, // Reference: Cycling Network
+  ravineProtection: false, // OFF: Niche (polygon layer, heavy)
+  crimeIncidents: true, // High-value: Crime Incidents
+  policeDivisions: false,
+  ecccAqhi: true, // Real-time: AQHI
+  treeCanopy: false, // OFF: Niche
+  lakeOntarioLevel: false,
+  bikeShare: true, // High-value: Bike Share
+  protestEvents: false, // OFF: Seed-only
+  federalRidings: false, // OFF: Specialized
+  mlsInvestigations: false, // OFF: Specialized
+  torontoHydroOutages: false, // OFF: Seed-only
+  trafficSignals: false, // OFF: Specialized
+  // N4: Court Facilities - OFF by default
+  courtFacilities: false,
+  // N6: TTC Real-Time - ON by default (Real-time)
+  ttcRealtime: true,
+  // N11: Road Construction - ON by default (High-value)
+  roadConstruction: true,
+  // N15: Ontario Wildfires - OFF by default (not in requirements)
+  ontarioWildfires: false,
+  // N16: Flooding Composite - OFF by default
+  floodingComposite: false,
+  childcare: false,
+  fluClinics: false, // OFF: Seed-only
+  agcoLicences: false,
+  greenRoofPermits: false, // OFF: Seed-only
+  libraryBranches: true, // Reference: Libraries
+  electionData: false,
+  urbanHeatIsland: false, // OFF: Niche
+  ttcVehicles: true, // Real-time: TTC Vehicles
 };
 
 // Mobile defaults for Toronto variant
@@ -266,8 +336,9 @@ export const MOBILE_DEFAULT_MAP_LAYERS: MapLayers = {
   weatherRadar: false,
 
   // Toronto-specific layers (limited on mobile)
-  toronto_fire_incidents: true,
-  toronto_dinesafe: false,
+  // Mobile defaults: Smaller subset focused on essential real-time data
+  toronto_fire_incidents: false, // OFF: Not in mobile requirements
+  toronto_dinesafe: true, // ON: High-value
   toronto_neighbourhoods: false,
   toronto_311_stress: false,
   toronto_development: false,
@@ -278,6 +349,41 @@ export const MOBILE_DEFAULT_MAP_LAYERS: MapLayers = {
   ontario_roads: false,
   ontario_weather_alerts: false,
   ontario_floods: false,
+  schools: false,
+  communityHousing: false,
+  parksRecreation: false,
+  evCharging: false,
+  cyclingNetwork: false,
+  ravineProtection: false,
+  crimeIncidents: true, // ON: High-value
+  policeDivisions: false,
+  ecccAqhi: false,
+  treeCanopy: false,
+  lakeOntarioLevel: false,
+  bikeShare: true, // ON: High-value
+  protestEvents: false, // OFF: Seed-only
+  electionData: false,
+  federalRidings: false,
+  mlsInvestigations: false,
+  torontoHydroOutages: false, // OFF: Seed-only
+  trafficSignals: false,
+  // N4: Court Facilities - OFF by default
+  courtFacilities: false,
+  // N6: TTC Real-Time - ON by default (Real-time)
+  ttcRealtime: true,
+  // N11: Road Construction - ON by default (High-value)
+  roadConstruction: true,
+  // N15: Ontario Wildfires - OFF by default (not in mobile requirements)
+  ontarioWildfires: false,
+  // N16: Flooding Composite - OFF by default
+  floodingComposite: false,
+  childcare: false,
+  fluClinics: false,
+  agcoLicences: false,
+  greenRoofPermits: false,
+  libraryBranches: false,
+  ttcVehicles: true, // ON: Real-time
+  greenPParking: true, // ON: High-value (added for mobile)
 };
 
 export const VARIANT_CONFIG: VariantConfig = {

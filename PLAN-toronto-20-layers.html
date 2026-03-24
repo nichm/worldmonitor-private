@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0e14; color: #c8d8e8; padding: 40px; max-width: 900px; margin: auto; line-height: 1.7; font-size: 14px; }
+h1 { color: #fff; border-bottom: 2px solid #00d4ff; padding-bottom: 8px; }
+h2 { color: #00d4ff; margin-top: 32px; }
+h3 { color: #ff6b35; }
+code { background: #161d28; padding: 2px 6px; border-radius: 3px; font-size: 13px; color: #00d4ff; }
+pre { background: #10161f; border: 1px solid #1e2a38; border-radius: 6px; padding: 16px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+th { background: #161d28; color: #00d4ff; padding: 10px 14px; text-align: left; border: 1px solid #1e2a38; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+td { padding: 8px 14px; border: 1px solid #1e2a38; font-size: 13px; }
+tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+a { color: #00d4ff; }
+strong { color: #fff; }
+ul { padding-left: 20px; }
+li { margin: 4px 0; }
+hr { border: none; border-top: 1px solid #1e2a38; margin: 32px 0; }
+blockquote { border-left: 3px solid #00d4ff; padding-left: 16px; color: #5a7a9a; }
+</style></head><body><h1>Build Plan: 20 Free Toronto Data Layers for WorldMonitor Toronto Variant</h1>
+<p><strong>Variant:</strong> <code>toronto</code> (toronto.worldmonitor.app)
+<strong>Date:</strong> 2026-03-24
+<strong>Stack:</strong> Vanilla TypeScript + Vite, deck.gl (desktop) + D3 SVG (mobile), Vercel Edge Functions</p>
+<hr>
+<h2>Existing Coverage</h2>
+<p>The Toronto variant already implements <strong>13 layers</strong> with full service + Edge Function + dual-map rendering:</p>
+<table>
+<thead>
+<tr>
+<th>Existing Layer</th>
+<th>Service</th>
+<th>Edge Function</th>
+<th>Map Key</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Fire Incidents</td>
+<td><code>toronto-fire.ts</code></td>
+<td><code>toronto-fire.js</code></td>
+<td><code>toronto_fire_incidents</code></td>
+</tr>
+<tr>
+<td>DineSafe</td>
+<td><code>toronto-dinesafe.ts</code></td>
+<td><code>toronto-dinesafe.js</code></td>
+<td><code>toronto_dinesafe</code></td>
+</tr>
+<tr>
+<td>311 Service Stress</td>
+<td><code>toronto-311.ts</code></td>
+<td><code>toronto-311.js</code></td>
+<td><code>toronto_311_stress</code></td>
+</tr>
+<tr>
+<td>Development Pipeline</td>
+<td><code>toronto-development.ts</code></td>
+<td><code>toronto-development.js</code></td>
+<td><code>toronto_development</code></td>
+</tr>
+<tr>
+<td>Water Level</td>
+<td><code>toronto-water-level.ts</code></td>
+<td><code>toronto-water-level.js</code></td>
+<td><code>toronto_water_level</code></td>
+</tr>
+<tr>
+<td>Earthquakes</td>
+<td><code>canada-earthquakes.ts</code></td>
+<td><code>canada-earthquakes.js</code></td>
+<td><code>toronto_earthquakes</code></td>
+</tr>
+<tr>
+<td>Air Traffic</td>
+<td><code>toronto-airtraffic.ts</code></td>
+<td><code>toronto-airtraffic.js</code></td>
+<td><code>toronto_air_traffic</code></td>
+</tr>
+<tr>
+<td>Ontario Roads</td>
+<td><code>ontario-roads.ts</code></td>
+<td><code>ontario-511.js</code></td>
+<td><code>ontario_roads</code></td>
+</tr>
+<tr>
+<td>Ontario Floods (TRCA)</td>
+<td><code>trca-floods.ts</code></td>
+<td><code>trca-floods.js</code></td>
+<td><code>ontario_floods</code></td>
+</tr>
+<tr>
+<td>Ontario Weather Alerts</td>
+<td><code>eccc-alerts.ts</code></td>
+<td><code>eccc-ontario-alerts.js</code></td>
+<td><code>ontario_weather_alerts</code></td>
+</tr>
+<tr>
+<td>Crime Delta</td>
+<td><code>toronto-crime.ts</code></td>
+<td><code>toronto-crime.js</code></td>
+<td>(panel only)</td>
+</tr>
+<tr>
+<td>Building Permits</td>
+<td><code>toronto-permits.ts</code></td>
+<td><code>toronto-permits.js</code></td>
+<td>(panel only)</td>
+</tr>
+<tr>
+<td>TTC Health</td>
+<td><code>ttc-health.ts</code></td>
+<td><code>ttc-health.js</code></td>
+<td>(panel only)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Gap Analysis: 12 New Layers to Build</h2>
+<p>Of the 20 layers in the research doc, <strong>8 overlap with existing implementations</strong> (DineSafe, Building Permits, Earthquakes, TRCA Floods, Ontario Weather Alerts, etc.). The following <strong>12 are new</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Layer</th>
+<th>Type</th>
+<th>Difficulty</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Toronto Public Library Branches</td>
+<td>Static</td>
+<td>Low</td>
+<td>TPL KML</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Toronto Community Housing</td>
+<td>Static</td>
+<td>Low</td>
+<td>CKAN GeoJSON</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Parks &amp; Recreation Facilities</td>
+<td>Static + Live Status</td>
+<td>Low</td>
+<td>CKAN GeoJSON + City JSON</td>
+</tr>
+<tr>
+<td>4</td>
+<td>AGCO Liquor Licences</td>
+<td>Static</td>
+<td>Medium</td>
+<td>AGCO CSV (geocode)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Licensed Childcare Centres</td>
+<td>Static</td>
+<td>Medium</td>
+<td>Ontario XLSX (geocode)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Vaccination / Flu Clinics</td>
+<td>Dynamic (seasonal)</td>
+<td>Medium</td>
+<td>Ontario JSON (HTTP, geocode)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>School Locations (All Boards)</td>
+<td>Static</td>
+<td>Low</td>
+<td>CKAN GeoJSON</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Green P Parking Lots</td>
+<td>Static (stale)</td>
+<td>Low</td>
+<td>CKAN JSON (2019 frozen)</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Cycling Network (Bikeways)</td>
+<td>Geographic</td>
+<td>Medium</td>
+<td>ArcGIS FeatureServer</td>
+</tr>
+<tr>
+<td>10</td>
+<td>EV Charging Stations</td>
+<td>Dynamic</td>
+<td>Low</td>
+<td>NREL API</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Ravine Protection Areas</td>
+<td>Geographic</td>
+<td>Low</td>
+<td>ArcGIS FeatureServer</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Green Roof Permits</td>
+<td>Semi-static</td>
+<td>Medium</td>
+<td>CKAN JSON (geocode)</td>
+</tr>
+</tbody></table>
+<h3>Retired / Skipped (no viable API)</h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Development Applications</td>
+<td>Open data retired; AIC web-only with no API</td>
+</tr>
+<tr>
+<td>Watermain Breaks</td>
+<td>Data frozen at 2016; no current source</td>
+</tr>
+<tr>
+<td>Solid Waste Schedule</td>
+<td>Tabular only, no geospatial component</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Implementation Tiers</h2>
+<h3>Tier 1 — Plug &amp; Play (native GeoJSON, CORS, geocoded)</h3>
+<p><strong>Effort: ~2–3 days</strong> | 4 layers</p>
+<p>These are pure GeoJSON/JSON with CORS support and coordinates included. Follow existing static-layer patterns directly.</p>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>T1-1</strong> — Toronto Community Housing buildings</li>
+<li><input disabled="" type="checkbox"> <strong>T1-2</strong> — Parks &amp; Recreation Facilities (GeoJSON)</li>
+<li><input disabled="" type="checkbox"> <strong>T1-3</strong> — School Locations (All Boards)</li>
+<li><input disabled="" type="checkbox"> <strong>T1-4</strong> — Green P Parking Lots (2019 snapshot)</li>
+</ul>
+<h3>Tier 2 — API Key or Format Conversion</h3>
+<p><strong>Effort: ~3–4 days</strong> | 4 layers</p>
+<p>Require a free API key or minor format handling. Follow existing dynamic-layer patterns.</p>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>T2-1</strong> — EV Charging Stations (NREL API key)</li>
+<li><input disabled="" type="checkbox"> <strong>T2-2</strong> — Cycling Network (ArcGIS FeatureServer polyline GeoJSON)</li>
+<li><input disabled="" type="checkbox"> <strong>T2-3</strong> — Ravine Protection Areas (ArcGIS FeatureServer polygon GeoJSON)</li>
+<li><input disabled="" type="checkbox"> <strong>T2-4</strong> — Parks Live Operational Status (merge centres.json with static layer)</li>
+</ul>
+<h3>Tier 3 — Geocoding or Significant Preprocessing</h3>
+<p><strong>Effort: ~4–5 days</strong> | 4 layers</p>
+<p>Require geocoding, format conversion (KML/XLSX), or proxy for CORS-blocked endpoints.</p>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>T3-1</strong> — Toronto Public Library Branches (KML → GeoJSON, proxy, HTML description parsing)</li>
+<li><input disabled="" type="checkbox"> <strong>T3-2</strong> — Licensed Childcare Centres (XLSX → GeoJSON, geocode addresses)</li>
+<li><input disabled="" type="checkbox"> <strong>T3-3</strong> — Vaccination / Flu Clinics (HTTP-only JSON, geocode, seasonal)</li>
+<li><input disabled="" type="checkbox"> <strong>T3-4</strong> — AGCO Liquour Licences (limited CSV, geocode, filter Toronto)</li>
+<li><input disabled="" type="checkbox"> <strong>T3-5</strong> — Green Roof Permits (CKAN JSON, geocode)</li>
+</ul>
+<hr>
+<h2>Ticket Breakdown</h2>
+<h3>T1-1: Toronto Community Housing Buildings</h3>
+<p><strong>Type:</strong> Static Asset Layer | <strong>Priority:</strong> P2
+<strong>Source:</strong> <code>https://ckan0.cf.opendata.inter.prod-toronto.ca/.../community-housing-data-4326.geojson</code>
+<strong>Format:</strong> GeoJSON (EPSG:4326) | <strong>CORS:</strong> Supported | <strong>Refresh:</strong> Semi-annual</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>src/config/community-housing.ts</code> — typed interface + data array (or fetch-on-init)</li>
+<li><input disabled="" type="checkbox"> Add <code>communityHousing: boolean</code> to <code>MapLayers</code> interface in <code>src/types/index.ts:630</code></li>
+<li><input disabled="" type="checkbox"> Add default <code>false</code> to all variant layer objects in <code>panels.ts</code> (FULL, TECH, FINANCE, HAPPY, COMMODITY, TORONTO + mobile variants)</li>
+<li><input disabled="" type="checkbox"> Add rendering in <code>DeckGLMap.ts &gt; buildLayers()</code> — <code>ScatterplotLayer</code> or <code>IconLayer</code></li>
+<li><input disabled="" type="checkbox"> Add rendering in <code>Map.ts &gt; render()</code> — SVG circles</li>
+<li><input disabled="" type="checkbox"> Add help text in <code>Map.ts &gt; buildHelpContent()</code></li>
+<li><input disabled="" type="checkbox"> Add to <code>map-layer-definitions.ts</code> with icon + label + source</li>
+<li><input disabled="" type="checkbox"> Register in <code>RefreshScheduler</code> with monthly refresh (semi-annual data, monthly poll is fine)</li>
+<li><input disabled="" type="checkbox"> Optionally: create panel showing building type distribution</li>
+</ul>
+<p><strong>Rollback:</strong> Remove layer key from MapLayers, delete config file, remove map rendering blocks.</p>
+<hr>
+<h3>T1-2: Parks &amp; Recreation Facilities</h3>
+<p><strong>Type:</strong> Static Asset Layer | <strong>Priority:</strong> P2
+<strong>Source (GeoJSON):</strong> CKAN package <code>cbea3a67-...</code>, GeoJSON resource <code>f6cdcd50-...</code>
+<strong>Source (Live Status):</strong> <code>https://www.toronto.ca/data/parks/live/centres.json</code>
+<strong>Format:</strong> GeoJSON + JSON | <strong>CORS:</strong> Supported | <strong>Refresh:</strong> Monthly (static) + real-time (status)</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>src/config/parks-recreation.ts</code> — typed interface for facilities + amenity flags</li>
+<li><input disabled="" type="checkbox"> Add <code>parksRecreation: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults to all variant layer objects</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>IconLayer</code> with amenity-based icon mapping</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG with amenity-based styling</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/parks-recreation.ts</code> — fetches GeoJSON + merges live centres.json status</li>
+<li><input disabled="" type="checkbox"> Create <code>api/parks-recreation.js</code> — Edge Function with Redis cache (monthly TTL)</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 30-day static refresh + 15-min live status check</li>
+<li><input disabled="" type="checkbox"> Add help text with amenity filter legend</li>
+<li><input disabled="" type="checkbox"> Optionally: panel showing facility count by amenity type, live open/closed status</li>
+</ul>
+<p><strong>Rollback:</strong> Same pattern as T1-1.</p>
+<hr>
+<h3>T1-3: School Locations (All Boards)</h3>
+<p><strong>Type:</strong> Static Asset Layer | <strong>Priority:</strong> P3
+<strong>Source:</strong> CKAN GeoJSON, datastore <code>02ef7447-...</code>
+<strong>Format:</strong> GeoJSON (EPSG:4326) | <strong>CORS:</strong> Supported | <strong>Refresh:</strong> Infrequent</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>src/config/schools.ts</code> — interface with BOARD_NAME, SCHOOL_LEVEL, SCHOOL_TYPE fields</li>
+<li><input disabled="" type="checkbox"> Add <code>schools: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto variant: <code>true</code>, others: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — color by school board, size by school level</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG circles with board coloring</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/schools.ts</code> + <code>api/schools.js</code> with Redis cache</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — monthly refresh</li>
+<li><input disabled="" type="checkbox"> Add help text with board color legend</li>
+<li><input disabled="" type="checkbox"> Optionally: panel filtering by board, level, type</li>
+</ul>
+<p><strong>Gotcha:</strong> Portal shows &quot;Retired&quot; but CKAN backend is active — this is a known Toronto Open Data portal bug.</p>
+<hr>
+<h3>T1-4: Green P Parking Lots (2019 Snapshot)</h3>
+<p><strong>Type:</strong> Static Asset Layer | <strong>Priority:</strong> P4 (stale data)
+<strong>Source:</strong> CKAN JSON <code>8549d588-...</code> (frozen 2019)
+<strong>Format:</strong> JSON with lat/lng | <strong>CORS:</strong> May need proxy | <strong>Refresh:</strong> Never (frozen)</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>src/config/green-p-parking.ts</code> — typed interface from 2019 JSON fields</li>
+<li><input disabled="" type="checkbox"> Add <code>greenPParking: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (<code>false</code> everywhere)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>IconLayer</code> with P icon</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG markers</li>
+<li><input disabled="" type="checkbox"> Create <code>api/green-p-parking.js</code> — Edge Function to proxy + cache (CORS may block direct fetch)</li>
+<li><input disabled="" type="checkbox"> Add help text noting &quot;data frozen at 2019 — locations approximate&quot;</li>
+<li><input disabled="" type="checkbox"> Add link to live Green P map for current availability</li>
+<li><input disabled="" type="checkbox"> UI: add &quot;⚠️ Data from 2019&quot; badge to layer label</li>
+</ul>
+<p><strong>Rollback:</strong> Remove layer + proxy. Low risk — optional layer.</p>
+<hr>
+<h3>T2-1: EV Charging Stations</h3>
+<p><strong>Type:</strong> Dynamic Data Layer | <strong>Priority:</strong> P2
+<strong>Source:</strong> NREL API <code>https://developer.nrel.gov/api/alt-fuel-stations/v1.json</code>
+<strong>Format:</strong> JSON / GeoJSON (<code>&amp;output=geojson</code>) | <strong>CORS:</strong> Supported | <strong>Refresh:</strong> 12 hours
+<strong>Auth:</strong> Free API key required (<code>DEMO_KEY</code> for testing, register at developer.nrel.gov)</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Register NREL API key, add <code>NREL_API_KEY</code> to Vercel env + sidecar allowlist</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/ev-charging.ts</code> — typed interface, LocalStorage caching, fetch with <code>&amp;output=geojson</code></li>
+<li><input disabled="" type="checkbox"> Create <code>api/ev-charging.js</code> — Edge Function with Redis cache (12h TTL)</li>
+<li><input disabled="" type="checkbox"> Add <code>evCharging: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto variant: <code>true</code>, full: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Add state + setter in <code>DeckGLMap.ts</code> — <code>ScatterplotLayer</code> sized by connector count</li>
+<li><input disabled="" type="checkbox"> Add state + setter in <code>Map.ts</code> — SVG circles</li>
+<li><input disabled="" type="checkbox"> Wire lazy-load in <code>App.ts &gt; handleLayerChange()</code></li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 12-hour interval</li>
+<li><input disabled="" type="checkbox"> Add help text with connector type legend (Level 2, DC Fast)</li>
+<li><input disabled="" type="checkbox"> Optionally: panel with charger count, network breakdown, pricing info</li>
+</ul>
+<hr>
+<h3>T2-2: Cycling Network (Bikeways)</h3>
+<p><strong>Type:</strong> Geographic Feature Layer | <strong>Priority:</strong> P2
+<strong>Source:</strong> ArcGIS FeatureServer <code>cot_geospatial2/FeatureServer/49</code>
+<strong>Format:</strong> GeoJSON (<code>?f=geojson&amp;outSR=4326</code>) | <strong>CORS:</strong> Supported | <strong>Refresh:</strong> Semi-annual</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>src/services/cycling-network.ts</code> — fetch from ArcGIS, type streets by INFRA_HIGH</li>
+<li><input disabled="" type="checkbox"> Create <code>api/cycling-network.js</code> — Edge Function with Redis cache (7-day TTL)</li>
+<li><input disabled="" type="checkbox"> Add <code>cyclingNetwork: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>true</code>, others: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>PathLayer</code> with color by infrastructure type (Cycle Track = green, Buffered Lane = blue, Bike Lane = orange)</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — D3 SVG paths with type coloring</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 7-day interval</li>
+<li><input disabled="" type="checkbox"> Add help text with comfort level legend</li>
+<li><input disabled="" type="checkbox"> Add zoom threshold (show at zoom &gt;= 12 for readability)</li>
+</ul>
+<hr>
+<h3>T2-3: Ravine &amp; Natural Feature Protection Areas</h3>
+<p><strong>Type:</strong> Geographic Feature Layer | <strong>Priority:</strong> P3
+<strong>Source:</strong> ArcGIS FeatureServer <code>cot_geospatial13/FeatureServer/70</code>
+<strong>Format:</strong> GeoJSON (<code>?f=geojson&amp;outSR=4326</code>) | <strong>CORS:</strong> Supported | <strong>Refresh:</strong> Static (bylaw amendments only)</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>src/services/ravine-protection.ts</code> — fetch from ArcGIS</li>
+<li><input disabled="" type="checkbox"> Create <code>api/ravine-protection.js</code> — Edge Function with Redis cache (30-day TTL)</li>
+<li><input disabled="" type="checkbox"> Add <code>ravineProtection: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>true</code>, others: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>GeoJsonLayer</code> with green fill, low opacity</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — D3 SVG polygons</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 30-day interval</li>
+<li><input disabled="" type="checkbox"> Add help text with bylaw reference</li>
+</ul>
+<hr>
+<h3>T2-4: Parks Live Operational Status</h3>
+<p><strong>Type:</strong> Dynamic Enhancement (extends T1-2) | <strong>Priority:</strong> P2
+<strong>Source:</strong> <code>https://www.toronto.ca/data/parks/live/centres.json</code>
+<strong>Format:</strong> JSON | <strong>CORS:</strong> Verify | <strong>Refresh:</strong> 15 minutes</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Extend <code>src/services/parks-recreation.ts</code> to fetch <code>centres.json</code> and merge with static GeoJSON</li>
+<li><input disabled="" type="checkbox"> Add live status rendering — green dot (open) vs red dot (closed) overlay on static markers</li>
+<li><input disabled="" type="checkbox"> Add status to tooltip/popup: &quot;Pool: Open 6am-9pm&quot;, &quot;Arena: Closed for maintenance&quot;</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 15-minute live status check (separate from 30-day static refresh)</li>
+<li><input disabled="" type="checkbox"> Add loading indicator for live status fetch</li>
+</ul>
+<hr>
+<h3>T3-1: Toronto Public Library Branches</h3>
+<p><strong>Type:</strong> Static Asset Layer | <strong>Priority:</strong> P3
+<strong>Source:</strong> <code>https://www.torontopubliclibrary.ca/data/library-data.kml</code>
+<strong>Format:</strong> KML | <strong>CORS:</strong> Blocked (proxy required) | <strong>Refresh:</strong> On branch changes</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>api/tpl-libraries.js</code> — Edge Function to fetch KML, convert to GeoJSON server-side (or client-side with <code>toGeoJSON</code> library)</li>
+<li><input disabled="" type="checkbox"> Parse HTML <code>&lt;description&gt;</code> tags for structured address fields (regex or DOMParser)</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/tpl-libraries.ts</code> — typed interface, LocalStorage cache</li>
+<li><input disabled="" type="checkbox"> Add <code>libraries: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>true</code>, others: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>IconLayer</code> with library/book icon</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG markers</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 7-day refresh</li>
+<li><input disabled="" type="checkbox"> Add help text noting &quot;branch locations only, no hours/services in current source&quot;</li>
+<li><input disabled="" type="checkbox"> Optionally: add <code>toGeoJSON</code> as a dependency for client-side KML parsing</li>
+</ul>
+<hr>
+<h3>T3-2: Licensed Childcare Centres</h3>
+<p><strong>Type:</strong> Static Asset Layer | <strong>Priority:</strong> P3
+<strong>Source:</strong> Ontario Ministry of Education XLSX at <code>data.ontario.ca</code>
+<strong>Format:</strong> XLSX | <strong>CORS:</strong> N/A (file download) | <strong>Refresh:</strong> Monthly
+<strong>Requires:</strong> Geocoding (no lat/lon in source)</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>api/childcare.js</code> — Edge Function: download XLSX, parse with SheetJS, filter by Toronto (CMSM = &quot;Toronto&quot;), geocode addresses via <code>toronto-geocode.js</code> helper, cache result</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/childcare.ts</code> — typed interface, LocalStorage cache</li>
+<li><input disabled="" type="checkbox"> Add <code>childcare: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code> — geocoding dependency)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>ScatterplotLayer</code></li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG circles</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 30-day refresh</li>
+<li><input disabled="" type="checkbox"> Add help text noting &quot;geocoded from addresses — accuracy may vary&quot;</li>
+<li><input disabled="" type="checkbox"> Add <code>sheetjs</code> / <code>xlsx</code> dependency if not already present</li>
+</ul>
+<p><strong>Risk:</strong> Geocoding ~500+ Toronto addresses. Use existing <code>toronto-geocode.js</code> helper. Batch geocode with rate limiting.</p>
+<hr>
+<h3>T3-3: Vaccination / Flu Clinics</h3>
+<p><strong>Type:</strong> Dynamic Layer (Seasonal) | <strong>Priority:</strong> P4
+<strong>Source:</strong> <code>http://files.ontario.ca/flu/data.json</code> (HTTP, not HTTPS)
+<strong>Format:</strong> JSON | <strong>CORS:</strong> Blocked + mixed content | <strong>Refresh:</strong> Daily (Oct–Mar only)
+<strong>Requires:</strong> Geocoding, HTTPS proxy</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>api/flu-clinics.js</code> — Edge Function: fetch via HTTP (server-side), geocode, filter Toronto, cache 24h</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/flu-clinics.ts</code> — typed interface, LocalStorage cache, seasonal gate (only fetch Oct–Mar)</li>
+<li><input disabled="" type="checkbox"> Add <code>fluClinics: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code>, seasonal)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>IconLayer</code> with medical cross icon</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG markers</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 24-hour interval, conditional on season</li>
+<li><input disabled="" type="checkbox"> Add help text noting &quot;seasonal: Oct–Mar flu season only&quot;</li>
+<li><input disabled="" type="checkbox"> Auto-hide layer toggle outside flu season</li>
+</ul>
+<hr>
+<h3>T3-4: AGCO Liquor Licences (Convenience/Grocery)</h3>
+<p><strong>Type:</strong> Static Asset Layer | <strong>Priority:</strong> P4
+<strong>Source:</strong> <code>https://www.agco.ca/en/alcohol/list-convenience-and-grocery-store-retail-licences</code> (CSV)
+<strong>Format:</strong> CSV | <strong>CORS:</strong> N/A (file download) | <strong>Refresh:</strong> Quarterly
+<strong>Requires:</strong> Geocoding, Toronto filtering</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>api/agco-licences.js</code> — Edge Function: download CSV, parse, filter municipality = Toronto, geocode via <code>toronto-geocode.js</code>, cache 7-day</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/agco-licences.ts</code> — typed interface, LocalStorage cache</li>
+<li><input disabled="" type="checkbox"> Add <code>liquorLicences: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>IconLayer</code></li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG markers</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 7-day refresh</li>
+<li><input disabled="" type="checkbox"> Add help text noting &quot;convenience/grocery licences only — bars/restaurants not included&quot;</li>
+</ul>
+<p><strong>Limitation:</strong> This is the weakest dataset in the set (limited scope, no comprehensive coverage). Low priority.</p>
+<hr>
+<h3>T3-5: Green Roof Permits</h3>
+<p><strong>Type:</strong> Semi-Static Layer | <strong>Priority:</strong> P3
+<strong>Source:</strong> CKAN datastore <code>936ea65d-...</code>
+<strong>Format:</strong> JSON / CSV | <strong>CORS:</strong> Supported | <strong>Refresh:</strong> Weekly
+<strong>Requires:</strong> Geocoding (address-based, no lat/lon)</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>api/green-roof-permits.js</code> — Edge Function: fetch from CKAN, geocode addresses, cache 7-day</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/green-roof-permits.ts</code> — typed interface with permit area, type (bylaw vs voluntary), status</li>
+<li><input disabled="" type="checkbox"> Add <code>greenRoofPermits: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>ScatterplotLayer</code> with size by green roof area</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG circles</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 7-day refresh</li>
+<li><input disabled="" type="checkbox"> Add help text noting &quot;Green Roof Bylaw revoked Nov 2025 — voluntary applications only&quot;</li>
+<li><input disabled="" type="checkbox"> Optionally: panel showing total green roof area trend over time</li>
+</ul>
+<hr>
+<h2>Enhancement Tickets (Existing Layers)</h2>
+<p>These improve already-implemented layers based on research findings:</p>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>E-1</strong> — DineSafe: Add SQL endpoint support for filtered queries (severity, date range) — reduce 130K row payload</li>
+<li><input disabled="" type="checkbox"> <strong>E-2</strong> — Building Permits: Add GEO_ID join with Toronto Address Points for geocoding (currently address-based)</li>
+<li><input disabled="" type="checkbox"> <strong>E-3</strong> — TRCA Floods: Add TRCA water quality monitoring from DataStream API (station-level parameter readings)</li>
+<li><input disabled="" type="checkbox"> <strong>E-4</strong> — MSC GeoMet Weather Radar: Add as WMS tile overlay on Toronto map (6-min radar refresh) — currently <code>weatherRadar</code> exists but may need enhancement</li>
+</ul>
+<hr>
+<h2>Polling Interval Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Interval</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Parks Live Status</td>
+<td>15 min</td>
+<td><code>centres.json</code></td>
+</tr>
+<tr>
+<td>MSC GeoMet Radar</td>
+<td>6 min</td>
+<td>WMS tiles</td>
+</tr>
+<tr>
+<td>USGS Earthquakes (existing)</td>
+<td>5 min</td>
+<td>GeoJSON feed</td>
+</tr>
+<tr>
+<td>DineSafe (existing)</td>
+<td>24 hours</td>
+<td>CKAN datastore</td>
+</tr>
+<tr>
+<td>Building Permits (existing)</td>
+<td>24 hours</td>
+<td>CKAN datastore</td>
+</tr>
+<tr>
+<td>EV Charging Stations</td>
+<td>12 hours</td>
+<td>NREL API</td>
+</tr>
+<tr>
+<td>Green Roof Permits</td>
+<td>7 days</td>
+<td>CKAN datastore</td>
+</tr>
+<tr>
+<td>AGCO Licences</td>
+<td>7 days</td>
+<td>AGCO CSV</td>
+</tr>
+<tr>
+<td>Parks &amp; Rec (static)</td>
+<td>30 days</td>
+<td>CKAN GeoJSON</td>
+</tr>
+<tr>
+<td>Schools</td>
+<td>30 days</td>
+<td>CKAN GeoJSON</td>
+</tr>
+<tr>
+<td>Community Housing</td>
+<td>30 days</td>
+<td>CKAN GeoJSON</td>
+</tr>
+<tr>
+<td>Cycling Network</td>
+<td>7 days</td>
+<td>ArcGIS FeatureServer</td>
+</tr>
+<tr>
+<td>Ravine Protection</td>
+<td>30 days</td>
+<td>ArcGIS FeatureServer</td>
+</tr>
+<tr>
+<td>Green P Parking</td>
+<td>Never</td>
+<td>Frozen 2019</td>
+</tr>
+<tr>
+<td>Flu Clinics</td>
+<td>24 hours (Oct–Mar)</td>
+<td>Ontario JSON</td>
+</tr>
+<tr>
+<td>Childcare</td>
+<td>30 days</td>
+<td>Ontario XLSX</td>
+</tr>
+<tr>
+<td>Library Branches</td>
+<td>7 days</td>
+<td>TPL KML</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Dependencies</h2>
+<ul>
+<li><code>toGeoJSON</code> — client-side KML parsing (T3-1: Library Branches)</li>
+<li><code>SheetJS</code> (<code>xlsx</code>) — XLSX parsing (T3-2: Childcare)</li>
+<li><code>NREL_API_KEY</code> — free API key registration (T2-1: EV Charging)</li>
+<li>Existing <code>api/toronto-geocode.js</code> — batch geocoding helper (T3-2, T3-3, T3-4, T3-5)</li>
+<li>Upstash Redis — all dynamic layer caching</li>
+</ul>
+<hr>
+<h2>Effort Estimate</h2>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Layers</th>
+<th>Est. Days</th>
+<th>Cumulative</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tier 1 (Plug &amp; Play)</td>
+<td>4</td>
+<td>2–3</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Tier 2 (API / Format)</td>
+<td>4</td>
+<td>3–4</td>
+<td>7</td>
+</tr>
+<tr>
+<td>Tier 3 (Geocode / Preprocess)</td>
+<td>5</td>
+<td>4–5</td>
+<td>12</td>
+</tr>
+<tr>
+<td>Enhancements</td>
+<td>4</td>
+<td>2–3</td>
+<td>15</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>17 tickets</strong></td>
+<td><strong>~12–15 days</strong></td>
+<td></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Implementation Order (Recommended)</h2>
+<ol>
+<li><strong>T1-1</strong> Community Housing — easiest GeoJSON, validates the static-layer pattern</li>
+<li><strong>T1-3</strong> Schools — same pattern, different data</li>
+<li><strong>T2-3</strong> Ravine Protection — introduces ArcGIS FeatureServer pattern</li>
+<li><strong>T2-2</strong> Cycling Network — reuses ArcGIS pattern, adds PathLayer</li>
+<li><strong>T2-1</strong> EV Charging — first API-key layer, validates dynamic pattern</li>
+<li><strong>T1-2</strong> Parks &amp; Rec + <strong>T2-4</strong> Live Status — combined static + dynamic</li>
+<li><strong>T1-4</strong> Green P Parking — low effort, frozen data</li>
+<li><strong>T3-5</strong> Green Roof Permits — introduces geocoding via existing helper</li>
+<li><strong>T3-1</strong> Library Branches — KML + proxy pattern</li>
+<li><strong>T3-2</strong> Childcare — XLSX + geocode batch</li>
+<li><strong>T3-3</strong> Flu Clinics — seasonal conditional logic</li>
+<li><strong>T3-4</strong> AGCO — lowest value, last</li>
+<li><strong>E-1 through E-4</strong> — enhancements to existing layers</li>
+</ol>
+<hr>
+<h2>Known Gotchas (from research)</h2>
+<ol>
+<li><strong>Toronto Open Data &quot;Retired&quot; bug</strong> — Portal shows &quot;Retired&quot; for active datasets (Parks, Schools, Building Permits, Bikeways). Always check CKAN <code>package_show</code> API, not the portal UI.</li>
+<li><strong>CKAN datastore default limit</strong> — 100 rows. Always append <code>&amp;limit=32000</code> for bulk exports.</li>
+<li><strong>ArcGIS <code>outSR=4326</code></strong> — Default spatial reference is EPSG:3857. Always add <code>&amp;outSR=4326</code> for WGS84.</li>
+<li><strong>HTTP-only endpoints</strong> — <code>files.ontario.ca</code> uses HTTP. Proxy via Edge Function (mixed content blocked in browsers).</li>
+<li><strong>Green Roof Bylaw revoked</strong> — Ontario revoked the enabling City of Toronto Act section on Nov 3, 2025. Voluntary applications continue but bylaw-mandated permits have effectively stopped.</li>
+</ol>
+</body></html>

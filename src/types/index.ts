@@ -16,6 +16,7 @@ export type DataSourceId =
   | "economic"
   | "oil"
   | "spending"
+  | "thermal-escalation"
   | "firms"
   | "acled_conflict"
   | "ucdp"
@@ -45,7 +46,41 @@ export type DataSourceId =
   | "ontario_spills"
   | "toronto_airtraffic"
   | "trca_floods"
-  | "eccc_alerts";
+  | "eccc_alerts"
+  | "community_housing"
+  | "parks_recreation"
+  | "green_p_parking"
+  | "schools"
+  | "ev_charging"
+  | "cycling_network"
+  | "ravine_protection"
+  | "crime_incidents"
+  | "police_divisions"
+  | "eccc_aqhi"
+  | "childcare"
+  | "flu_clinics"
+  | "agco_licences"
+  | "green_roof_permits"
+  | "library_branches"
+  | "tree_canopy"
+  | "lake_ontario_level"
+  | "bike_share"
+  | "court_facilities"
+  | "ttc_realtime"
+  | "road_construction"
+  | "ontario_wildfires"
+  | "flooding_composite"
+  | "federal_ridings"
+  | "mls_investigations"
+  | "neighbourhoods"
+  | "ward_boundaries"
+  | "toronto_hydro_outages"
+  | "traffic_signals"
+  | "election_data"
+  | "urban_heat"
+  | "urban_heat_island"
+  | "ttc_vehicles"
+  | "protest_events";
 
 // AppContext lives in src/app/app-context.ts because it references
 // components, services, and utils (top-level aggregate type).
@@ -707,6 +742,67 @@ export interface MapLayers {
   ontario_roads: boolean;
   ontario_weather_alerts: boolean;
   ontario_floods: boolean;
+  schools: boolean;
+  // Green P Parking (2019 snapshot)
+  greenPParking: boolean;
+  parksRecreation: boolean;
+  communityHousing: boolean;
+  cyclingNetwork: boolean;
+  ravineProtection: boolean;
+  evCharging: boolean;
+  // N1: TPS Crime Incidents
+  crimeIncidents: boolean;
+  // N2: TPS Police Division Boundaries
+  policeDivisions: boolean;
+  // N7: ECCC Air Quality Health Index
+  ecccAqhi: boolean;
+  // T3-1: Toronto Public Library Branches
+  libraries: boolean;
+  // T3-2: Licensed Childcare Centres
+  childcare: boolean;
+  // T3-3: Vaccination / Flu Clinics (seasonal)
+  fluClinics: boolean;
+  // T3-4: AGCO Liquor Licences
+  agcoLicences: boolean;
+  // T3-5: Green Roof Permits
+  greenRoofPermits: boolean;
+  // T3-6: Toronto Public Library Branches (new)
+  libraryBranches: boolean;
+  // N14: Tree Canopy & Green Space
+  treeCanopy: boolean;
+  // N8: Lake Ontario Water Level
+  lakeOntarioLevel: boolean;
+  // N19: Bike Share GBFS
+  bikeShare: boolean;
+  // N20: Toronto Urban Heat Island
+  urbanHeat: boolean;
+  // N3: Federal Riding Boundaries
+  federalRidings: boolean;
+  // N5: ML&S Investigation Activity
+  mlsInvestigations: boolean;
+  // N9: Neighbourhood Profiles & Demographics
+  neighbourhoods: boolean;
+  // N10: Council Votes & Ward Boundaries
+  wardBoundaries: boolean;
+  // N12: Toronto Hydro Power Outages
+  torontoHydroOutages: boolean;
+  // N13: Traffic Signal Locations
+  trafficSignals: boolean;
+  // N4: Court & Judicial Facility Locations
+  courtFacilities: boolean;
+  // N6: TTC Real-Time Vehicle Positions
+  ttcRealtime: boolean;
+  // N11: Road Construction & Closures
+  roadConstruction: boolean;
+  // N15: Ontario Wildfire & Fire Risk Zones
+  ontarioWildfires: boolean;
+  // N16: Flooding Composite
+  floodingComposite: boolean;
+  // New layers
+  electionData: boolean;
+  urbanHeatIsland: boolean;
+  ttcVehicles: boolean;
+  protestEvents: boolean;
 }
 
 export interface AIDataCenter {
@@ -1646,4 +1742,68 @@ export interface OntarioHousingTarget {
 
 export interface OntarioHousingResponse {
   data: OntarioHousingTarget[];
+}
+
+// T3-1: Toronto Public Library Branches
+export interface LibraryBranch {
+  id: string;
+  name: string;
+  type: string; // "Regional" or "Neighbourhood"
+  address: string;
+  phone?: string;
+  lat: number;
+  lon: number;
+}
+
+export interface LibrariesData {
+  branches: LibraryBranch[];
+  total: number;
+  typeCounts: Record<string, number>;
+}
+
+// T3-2: Licensed Childcare Centres
+export interface ChildcareCentre {
+  id: string;
+  name: string;
+  operator: string;
+  address: string;
+  postalCode?: string;
+  phone?: string;
+  ageGroup: string;
+  capacity: number;
+  lat: number;
+  lon: number;
+  licenseNumber?: string;
+  cmsm: string; // Consolidated Municipal Service Manager
+}
+
+export interface ChildcareData {
+  centres: ChildcareCentre[];
+  total: number;
+  ageGroupCounts: Record<string, number>;
+  totalCapacity: number;
+}
+
+// T3-3: Vaccination / Flu Clinics
+export interface FluClinic {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  postalCode?: string;
+  phone?: string;
+  vaccineType: string;
+  clinicType: string;
+  startDate?: string;
+  endDate?: string;
+  hours?: string;
+  lat: number;
+  lon: number;
+}
+
+export interface FluClinicsData {
+  clinics: FluClinic[];
+  total: number;
+  vaccineTypeCounts: Record<string, number>;
+  isSeasonActive: boolean;
 }

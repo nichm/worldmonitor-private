@@ -67,6 +67,17 @@ import {
   fetchRadiationWatch,
   fetchTorontoFireIncidents,
   fetchEcccAlerts,
+  fetchCrimeIncidents,
+  fetchPoliceDivisions,
+  fetchAQHI,
+  fetchElectionData,
+  fetchUrbanHeat,
+  fetchTTCVehicles,
+  fetchProtestEvents,
+  getFederalRidings,
+  getMLSInvestigations,
+  getTrafficSignals,
+  fetchTorontoHydro,
 } from "@/services";
 import { getMarketWatchlistEntries } from "@/services/market-watchlist";
 import {
@@ -175,9 +186,32 @@ import {
 } from "@/services/oref-alerts";
 import { enrichEventsWithExposure } from "@/services/population-exposure";
 import { fetchTorontoShelter } from "@/services/toronto-shelter";
+import { fetchSchools } from "@/services/schools";
 import { fetchTorontoPermits } from "@/services/toronto-permits";
 import { fetchTorontoDineSafe } from "@/services/toronto-dinesafe";
+import { fetchParksRecreation } from "@/services/parks-recreation";
+import { fetchCommunityHousing } from "@/services/community-housing";
+import { fetchEVChargingStations } from "@/services/ev-charging";
+import { fetchCyclingNetwork } from "@/services/cycling-network";
+import { fetchRavineProtection } from "@/services/ravine-protection";
+import { fetchTreeCanopy } from "@/services/tree-canopy";
+import { fetchLakeOntarioLevel } from "@/services/lake-ontario-level";
+import { fetchBikeShare } from "@/services/bike-share";
+import { fetchProtestEvents } from "@/services/protest-events";
+import { fetchUrbanHeat } from "@/services/urban-heat";
+import { fetchCourtFacilities } from "@/services/court-facilities";
+import { fetchTtcVehicles } from "@/services/ttc-realtime";
+import { fetchRoadConstruction } from "@/services/road-construction";
+import { fetchOntarioWildfires } from "@/services/ontario-wildfires";
+import { fetchFloodingComposite } from "@/services/flooding-composite";
 import { fetchOntarioHousing } from "@/services/ontario-housing";
+import {
+  fetchChildcareCentres,
+  fetchFluClinics,
+  fetchAGCOLicences,
+  fetchGreenRoofPermits,
+  fetchLibraryBranches,
+} from "@/services";
 import {
   fetchOntarioRoads,
   startOntarioRoadsPolling,
@@ -307,6 +341,7 @@ export class DataLoaderManager implements AppModule {
   private callbacks: DataLoaderCallbacks;
 
   private mapFlashCache: Map<string, number> = new Map();
+  private inflightRequests = new Map<string, Promise<any>>();
   private readonly MAP_FLASH_COOLDOWN_MS = 10 * 60 * 1000;
   private readonly applyTimeRangeFilterToNewsPanelsDebounced = debounce(() => {
     this.applyTimeRangeFilterToNewsPanels();
@@ -345,6 +380,33 @@ export class DataLoaderManager implements AppModule {
   constructor(ctx: AppContext, callbacks: DataLoaderCallbacks) {
     this.ctx = ctx;
     this.callbacks = callbacks;
+  }
+
+  private async dedupe<T>(key: string, fn: () => Promise<T>): Promise<T> {
+    const existing = this.inflightRequests.get(key);
+    if (existing) return existing;
+    const promise = fn().finally(() => this.inflightRequests.delete(key));
+    this.inflightRequests.set(key, promise);
+    return promise;
+  }
+
+  private async retryWithBackoff<T>(
+    fn: () => Promise<T>,
+    key: string,
+    maxRetries = 2,
+    baseDelay = 1000,
+  ): Promise<T> {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        if (attempt === maxRetries) throw error;
+        const delay = baseDelay * Math.pow(2, attempt);
+        console.warn(`[App] ${key} failed (attempt ${attempt + 1}), retrying in ${delay}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+    throw new Error("Unreachable");
   }
 
   init(): void {
@@ -510,6 +572,11 @@ export class DataLoaderManager implements AppModule {
       { name: "news", task: runGuarded("news", () => this.loadNews()) },
     ];
 
+    // OPTIMAL LOAD ORDER:
+    // 1. Static/slow-changing layers load first (parks, schools, community housing) for fast initial render
+    // 2. Real-time layers load last (ttc-vehicles, bike-share, eccc-aqhi) to prioritize static data
+    // Note: Current order mixes static and real-time; consider reorganizing for better UX
+    //
     // Happy variant only loads news data -- skip all geopolitical/financial/military data
     if (SITE_VARIANT !== "happy") {
       if (
@@ -844,6 +911,18 @@ export class DataLoaderManager implements AppModule {
         task: runGuarded("dineSafe", () => this.loadTorontoDineSafe()),
       });
     }
+    if (SITE_VARIANT === "toronto" || shouldLoad("parks-recreation")) {
+      tasks.push({
+        name: "parksRecreation",
+        task: runGuarded("parksRecreation", () => this.loadParksRecreation()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("schools")) {
+      tasks.push({
+        name: "schools",
+        task: runGuarded("schools", () => this.loadSchools()),
+      });
+    }
     if (SITE_VARIANT === "toronto" || shouldLoad("housing-targets")) {
       tasks.push({
         name: "housingTargets",
@@ -854,6 +933,180 @@ export class DataLoaderManager implements AppModule {
       tasks.push({
         name: "ontarioRoads",
         task: runGuarded("ontarioRoads", () => this.loadOntarioRoads()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("community-housing")) {
+      tasks.push({
+        name: "communityHousing",
+        task: runGuarded("communityHousing", () => this.loadCommunityHousing()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("green-p-parking")) {
+      tasks.push({
+        name: "greenPParking",
+        task: runGuarded("greenPParking", () => this.loadGreenPParking()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("ev-charging")) {
+      tasks.push({
+        name: "evCharging",
+        task: runGuarded("evCharging", () => this.loadEVCharging()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("cycling-network")) {
+      tasks.push({
+        name: "cyclingNetwork",
+        task: runGuarded("cyclingNetwork", () => this.loadCyclingNetwork()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("ravine-protection")) {
+      tasks.push({
+        name: "ravineProtection",
+        task: runGuarded("ravineProtection", () => this.loadRavineProtection()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("tree-canopy")) {
+      tasks.push({
+        name: "treeCanopy",
+        task: runGuarded("treeCanopy", () => this.loadTreeCanopy()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("lake-ontario-level")) {
+      tasks.push({
+        name: "lakeOntarioLevel",
+        task: runGuarded("lakeOntarioLevel", () => this.loadLakeOntarioLevel()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("bike-share")) {
+      tasks.push({
+        name: "bikeShare",
+        task: runGuarded("bikeShare", () => this.loadBikeShare()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("protest-events")) {
+      tasks.push({
+        name: "protestEvents",
+        task: runGuarded("protestEvents", () => this.loadProtestEvents()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("urban-heat")) {
+      tasks.push({
+        name: "urbanHeat",
+        task: runGuarded("urbanHeat", () => this.loadUrbanHeat()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("childcare")) {
+      tasks.push({
+        name: "childcare",
+        task: runGuarded("childcare", () => this.loadChildcare()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("flu-clinics")) {
+      tasks.push({
+        name: "fluClinics",
+        task: runGuarded("fluClinics", () => this.loadFluClinics()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("agco-licences")) {
+      tasks.push({
+        name: "agcoLicences",
+        task: runGuarded("agcoLicences", () => this.loadAGCOLicences()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("green-roof-permits")) {
+      tasks.push({
+        name: "greenRoofPermits",
+        task: runGuarded("greenRoofPermits", () => this.loadGreenRoofPermits()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("library-branches")) {
+      tasks.push({
+        name: "libraryBranches",
+        task: runGuarded("libraryBranches", () => this.loadLibraryBranches()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("election-data")) {
+      tasks.push({
+        name: "electionData",
+        task: runGuarded("electionData", () => this.loadElectionData()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("federal-ridings")) {
+      tasks.push({
+        name: "federalRidings",
+        task: runGuarded("federalRidings", () => this.loadFederalRidings()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("mls-investigations")) {
+      tasks.push({
+        name: "mlsInvestigations",
+        task: runGuarded("mlsInvestigations", () => this.loadMLSInvestigations()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("traffic-signals")) {
+      tasks.push({
+        name: "trafficSignals",
+        task: runGuarded("trafficSignals", () => this.loadTrafficSignals()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("toronto-hydro")) {
+      tasks.push({
+        name: "torontoHydroOutages",
+        task: runGuarded("torontoHydroOutages", () => this.loadTorontoHydro()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("ttc-vehicles")) {
+      tasks.push({
+        name: "ttcVehicles",
+        task: runGuarded("ttcVehicles", () => this.loadTTCVehicles()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("court-facilities")) {
+      tasks.push({
+        name: "courtFacilities",
+        task: runGuarded("courtFacilities", () => this.loadCourtFacilities()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("ttc-realtime")) {
+      tasks.push({
+        name: "ttcRealtime",
+        task: runGuarded("ttcRealtime", () => this.loadTtcRealtime()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("road-construction")) {
+      tasks.push({
+        name: "roadConstruction",
+        task: runGuarded("roadConstruction", () => this.loadRoadConstruction()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("ontario-wildfires")) {
+      tasks.push({
+        name: "ontarioWildfires",
+        task: runGuarded("ontarioWildfires", () => this.loadOntarioWildfires()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("flooding-composite")) {
+      tasks.push({
+        name: "floodingComposite",
+        task: runGuarded("floodingComposite", () => this.loadFloodingComposite()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("crime-incidents")) {
+      tasks.push({
+        name: "crimeIncidents",
+        task: runGuarded("crimeIncidents", () => this.loadCrimeIncidents()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("police-divisions")) {
+      tasks.push({
+        name: "policeDivisions",
+        task: runGuarded("policeDivisions", () => this.loadPoliceDivisions()),
+      });
+    }
+    if (SITE_VARIANT === "toronto" || shouldLoad("eccc-aqhi")) {
+      tasks.push({
+        name: "ecccAqhi",
+        task: runGuarded("ecccAqhi", () => this.loadAQHI()),
       });
     }
     if (SITE_VARIANT === "toronto" || shouldLoad("eccc-alerts")) {
@@ -3892,6 +4145,31 @@ export class DataLoaderManager implements AppModule {
     }
   }
 
+  async loadGreenPParking(): Promise<void> {
+    try {
+      const res = await fetch("/api/green-p-parking");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const lots = data.lots || [];
+      this.ctx.map?.setGreenPParking(lots);
+      this.callPanel("green-p-parking", "setData", lots);
+      dataFreshness.recordUpdate(
+        "green_p_parking" as DataSourceId,
+        lots.length,
+      );
+      console.log(
+        `[App] Green P Parking loaded: ${lots.length} lots (${data.meta?.warning || "2019 data"})`,
+      );
+    } catch (error) {
+      console.error("[App] Green P Parking fetch failed:", error);
+      dataFreshness.recordError(
+        "green_p_parking" as DataSourceId,
+        String(error),
+      );
+      this.callPanel("green-p-parking", "setData", []);
+    }
+  }
+
   async loadEcccAlerts(): Promise<void> {
     try {
       const alerts = await fetchEcccAlerts();
@@ -3953,6 +4231,44 @@ export class DataLoaderManager implements AppModule {
     }
   }
 
+  async loadParksRecreation(): Promise<void> {
+    try {
+      const facilities = await fetchParksRecreation();
+      this.ctx.map?.setParksRecreationFacilities(facilities);
+      this.callPanel("parks-recreation", "setData", facilities);
+      dataFreshness.recordUpdate(
+        "parks_recreation" as DataSourceId,
+        facilities.length,
+      );
+    } catch (error) {
+      console.error("[App] Parks & Recreation fetch failed:", error);
+      this.callPanel("parks-recreation", "setData", []);
+      dataFreshness.recordError(
+        "parks_recreation" as DataSourceId,
+        String(error),
+      );
+    }
+  }
+
+  async loadCommunityHousing(): Promise<void> {
+    try {
+      const buildings = await fetchCommunityHousing();
+      this.ctx.map?.setCommunityHousingBuildings(buildings);
+      this.callPanel("community-housing", "setData", buildings);
+      dataFreshness.recordUpdate(
+        "community_housing" as DataSourceId,
+        buildings.length,
+      );
+    } catch (error) {
+      console.error("[App] Community housing fetch failed:", error);
+      this.callPanel("community-housing", "setData", []);
+      dataFreshness.recordError(
+        "community_housing" as DataSourceId,
+        String(error),
+      );
+    }
+  }
+
   async loadOntarioHousing(): Promise<void> {
     try {
       const targets = await fetchOntarioHousing();
@@ -3997,6 +4313,476 @@ export class DataLoaderManager implements AppModule {
         "toronto_permits" as DataSourceId,
         String(error),
       );
+    }
+  }
+
+  async loadSchools(): Promise<void> {
+    try {
+      const data = await fetchSchools();
+      this.ctx.map?.setSchools(data.schools);
+      this.callPanel("schools", "setData", data);
+      dataFreshness.recordUpdate(
+        "toronto_schools" as DataSourceId,
+        data.total,
+      );
+    } catch (error) {
+      console.error("[App] Schools fetch failed:", error);
+      dataFreshness.recordError(
+        "toronto_schools" as DataSourceId,
+        String(error),
+      );
+      this.callPanel("schools", "setData", { schools: [], total: 0 });
+    }
+  }
+
+  async loadEVCharging(): Promise<void> {
+    try {
+      const data = await fetchEVChargingStations();
+      this.ctx.map?.setEVChargingStations(data.stations);
+      this.callPanel("ev-charging", "setData", data);
+      dataFreshness.recordUpdate(
+        "ev_charging" as DataSourceId,
+        data.total,
+      );
+    } catch (error) {
+      console.error("[App] EV Charging fetch failed:", error);
+      dataFreshness.recordError(
+        "ev_charging" as DataSourceId,
+        String(error),
+      );
+      this.callPanel("ev-charging", "setData", { stations: [], total: 0 });
+    }
+  }
+
+  async loadCyclingNetwork(): Promise<void> {
+    try {
+      const segments = await fetchCyclingNetwork();
+      this.ctx.map?.setCyclingNetwork(segments);
+      this.callPanel("cycling-network", "setData", segments);
+      dataFreshness.recordUpdate(
+        "cycling_network" as DataSourceId,
+        segments.length,
+      );
+    } catch (error) {
+      console.error("[App] Cycling Network fetch failed:", error);
+      dataFreshness.recordError(
+        "cycling_network" as DataSourceId,
+        String(error),
+      );
+      this.callPanel("cycling-network", "setData", []);
+    }
+  }
+
+  async loadRavineProtection(): Promise<void> {
+    try {
+      const areas = await fetchRavineProtection();
+      this.ctx.map?.setRavineProtectionAreas(areas);
+      this.callPanel("ravine-protection", "setData", areas);
+      dataFreshness.recordUpdate(
+        "ravine_protection" as DataSourceId,
+        areas.length,
+      );
+    } catch (error) {
+      console.error("[App] Ravine Protection fetch failed:", error);
+      dataFreshness.recordError(
+        "ravine_protection" as DataSourceId,
+        String(error),
+      );
+      this.callPanel("ravine-protection", "setData", []);
+    }
+  }
+
+  async loadCrimeIncidents(): Promise<void> {
+    try {
+      const incidents = await this.dedupe("crime-incidents", () =>
+        fetchCrimeIncidents(),
+      );
+      this.ctx.map?.setCrimeIncidents(incidents);
+      this.callPanel("crime-incidents", "setData", {
+        incidents,
+        summary: this.ctx.map?.getCrimeIncidentSummary?.(incidents) || {},
+        total: incidents.length,
+      });
+      dataFreshness.recordUpdate(
+        "crime_incidents" as DataSourceId,
+        incidents.length,
+      );
+    } catch (error) {
+      console.error("[App] Crime Incidents fetch failed:", error);
+      dataFreshness.recordError(
+        "crime_incidents" as DataSourceId,
+        String(error),
+      );
+      this.callPanel("crime-incidents", "setData", {
+        incidents: [],
+        summary: {},
+        total: 0,
+      });
+    }
+  }
+
+  async loadPoliceDivisions(): Promise<void> {
+    try {
+      const divisions = await fetchPoliceDivisions();
+      this.ctx.map?.setPoliceDivisions(divisions);
+      this.callPanel("police-divisions", "setData", divisions);
+      dataFreshness.recordUpdate(
+        "police_divisions" as DataSourceId,
+        divisions.length,
+      );
+    } catch (error) {
+      console.error("[App] Police Divisions fetch failed:", error);
+      dataFreshness.recordError(
+        "police_divisions" as DataSourceId,
+        String(error),
+      );
+      this.callPanel("police-divisions", "setData", []);
+    }
+  }
+
+  async loadAQHI(): Promise<void> {
+    try {
+      const readings = await this.retryWithBackoff(
+        () => this.dedupe("eccc-aqhi", () => fetchAQHI()),
+        "eccc-aqhi",
+      );
+      this.ctx.map?.setAQHI(readings);
+      this.callPanel("eccc-aqhi", "setData", {
+        readings,
+        summary: this.ctx.map?.getAQHISummary?.(readings) || {},
+        total: readings.length,
+      });
+      dataFreshness.recordUpdate(
+        "eccc_aqhi" as DataSourceId,
+        readings.length,
+      );
+    } catch (error) {
+      console.error("[App] AQHI fetch failed:", error);
+      dataFreshness.recordError("eccc_aqhi" as DataSourceId, String(error));
+      this.callPanel("eccc-aqhi", "setData", {
+        readings: [],
+        summary: {},
+        total: 0,
+      });
+    }
+  }
+
+  async loadTreeCanopy(): Promise<void> {
+    try {
+      const data = await fetchTreeCanopy();
+      this.ctx.map?.setTreeCanopyAreas(data);
+      this.callPanel("tree-canopy", "setData", data);
+      dataFreshness.recordUpdate("tree_canopy" as DataSourceId, data.length);
+    } catch (error) {
+      console.error("[App] Tree Canopy fetch failed:", error);
+      dataFreshness.recordError("tree_canopy" as DataSourceId, String(error));
+      this.callPanel("tree-canopy", "setData", []);
+    }
+  }
+
+  async loadLakeOntarioLevel(): Promise<void> {
+    try {
+      const data = await fetchLakeOntarioLevel();
+      this.ctx.map?.setLakeOntarioLevel(data);
+      this.callPanel("lake-ontario-level", "setData", data);
+      dataFreshness.recordUpdate("lake_ontario_level" as DataSourceId, data.length);
+    } catch (error) {
+      console.error("[App] Lake Ontario Level fetch failed:", error);
+      dataFreshness.recordError("lake_ontario_level" as DataSourceId, String(error));
+      this.callPanel("lake-ontario-level", "setData", []);
+    }
+  }
+
+  async loadBikeShare(): Promise<void> {
+    try {
+      const data = await this.dedupe("bike-share", () => fetchBikeShare());
+      this.ctx.map?.setBikeShareStations(data);
+      this.callPanel("bike-share", "setData", data);
+      dataFreshness.recordUpdate("bike_share" as DataSourceId, data.length);
+    } catch (error) {
+      console.error("[App] Bike Share fetch failed:", error);
+      dataFreshness.recordError("bike_share" as DataSourceId, String(error));
+      this.callPanel("bike-share", "setData", []);
+    }
+  }
+
+  async loadProtestEvents(): Promise<void> {
+    try {
+      const response = await this.retryWithBackoff(
+        () => fetchProtestEvents(),
+        "protest-events",
+      );
+      this.ctx.map?.setProtestEvents(response.events);
+      this.callPanel("protest-events", "setData", response.events);
+      dataFreshness.recordUpdate(
+        "protest_events" as DataSourceId,
+        response.events.length,
+      );
+    } catch (error) {
+      console.error("[App] Protest Events fetch failed:", error);
+      dataFreshness.recordError("protest_events" as DataSourceId, String(error));
+      this.callPanel("protest-events", "setData", []);
+    }
+  }
+
+  async loadUrbanHeat(): Promise<void> {
+    try {
+      const data = await fetchUrbanHeat();
+      this.ctx.map?.setUrbanHeatZones(data);
+      this.callPanel("urban-heat", "setData", data);
+      dataFreshness.recordUpdate("urban_heat" as DataSourceId, data.length);
+    } catch (error) {
+      console.error("[App] Urban Heat fetch failed:", error);
+      dataFreshness.recordError("urban_heat" as DataSourceId, String(error));
+      this.callPanel("urban-heat", "setData", []);
+    }
+  }
+
+  async loadChildcare(): Promise<void> {
+    try {
+      const data = await fetchChildcareCentres();
+      this.ctx.map?.setChildcareCentres(data);
+      this.callPanel("childcare", "setData", data);
+      dataFreshness.recordUpdate("childcare" as DataSourceId, Array.isArray(data) ? data.length : 0);
+    } catch (error) {
+      console.error("[App] Childcare fetch failed:", error);
+      dataFreshness.recordError("childcare" as DataSourceId, String(error));
+      this.callPanel("childcare", "setData", []);
+    }
+  }
+
+  async loadFluClinics(): Promise<void> {
+    try {
+      const data = await fetchFluClinics();
+      this.ctx.map?.setFluClinics(data);
+      this.callPanel("flu-clinics", "setData", data);
+      dataFreshness.recordUpdate("flu_clinics" as DataSourceId, Array.isArray(data) ? data.length : 0);
+    } catch (error) {
+      console.error("[App] Flu Clinics fetch failed:", error);
+      dataFreshness.recordError("flu_clinics" as DataSourceId, String(error));
+      this.callPanel("flu-clinics", "setData", []);
+    }
+  }
+
+  async loadAGCOLicences(): Promise<void> {
+    try {
+      const data = await fetchAGCOLicences();
+      this.ctx.map?.setAGCOLicences(data);
+      this.callPanel("agco-licences", "setData", data);
+      dataFreshness.recordUpdate("agco_licences" as DataSourceId, Array.isArray(data) ? data.length : 0);
+    } catch (error) {
+      console.error("[App] AGCO Licences fetch failed:", error);
+      dataFreshness.recordError("agco_licences" as DataSourceId, String(error));
+      this.callPanel("agco-licences", "setData", []);
+    }
+  }
+
+  async loadGreenRoofPermits(): Promise<void> {
+    try {
+      const data = await fetchGreenRoofPermits();
+      this.ctx.map?.setGreenRoofPermits(data);
+      this.callPanel("green-roof-permits", "setData", data);
+      dataFreshness.recordUpdate("green_roof_permits" as DataSourceId, Array.isArray(data) ? data.length : 0);
+    } catch (error) {
+      console.error("[App] Green Roof Permits fetch failed:", error);
+      dataFreshness.recordError("green_roof_permits" as DataSourceId, String(error));
+      this.callPanel("green-roof-permits", "setData", []);
+    }
+  }
+
+  async loadLibraryBranches(): Promise<void> {
+    try {
+      const data = await fetchLibraryBranches();
+      this.ctx.map?.setLibraryBranches(data);
+      this.callPanel("library-branches", "setData", data);
+      dataFreshness.recordUpdate("library_branches" as DataSourceId, Array.isArray(data) ? data.length : 0);
+    } catch (error) {
+      console.error("[App] Library Branches fetch failed:", error);
+      dataFreshness.recordError("library_branches" as DataSourceId, String(error));
+      this.callPanel("library-branches", "setData", []);
+    }
+  }
+
+  // Election Data
+  async loadElectionData(): Promise<void> {
+    try {
+      const data = await fetchElectionData();
+      this.ctx.map?.setElectionData(data);
+
+      // Transform data for panel
+      const panelData = {
+        pollingStations: data.pollingStations,
+        total: data.pollingStations.length,
+        byDistrict: data.pollingStations.reduce((acc, station) => {
+          acc[station.electoralDistrict] = (acc[station.electoralDistrict] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
+        accessibleCount: data.pollingStations.filter(s => s.accessibility).length,
+      };
+
+      this.callPanel("election-data", "setData", panelData);
+      dataFreshness.recordUpdate("election_data" as DataSourceId, data.pollingStations.length);
+    } catch (error) {
+      console.error("[App] Election Data fetch failed:", error);
+      dataFreshness.recordError("election_data" as DataSourceId, String(error));
+      this.callPanel("election-data", "setData", {
+        pollingStations: [],
+        total: 0,
+        byDistrict: {},
+        accessibleCount: 0,
+      });
+    }
+  }
+
+  // Urban Heat Island
+  // TTC Vehicles
+  async loadTTCVehicles(): Promise<void> {
+    try {
+      const data = await this.retryWithBackoff(
+        () => this.dedupe("ttc-vehicles", () => fetchTTCVehicles()),
+        "ttc-vehicles",
+      );
+      this.ctx.map?.setTTCVehicles(data);
+      this.callPanel("ttc-vehicles", "setData", data);
+      dataFreshness.recordUpdate(
+        "ttc_vehicles" as DataSourceId,
+        Array.isArray(data) ? data.length : 0,
+      );
+    } catch (error) {
+      console.error("[App] TTC Vehicles fetch failed:", error);
+      dataFreshness.recordError("ttc_vehicles" as DataSourceId, String(error));
+      this.callPanel("ttc-vehicles", "setData", []);
+    }
+  }
+
+  // N3: Federal Ridings
+  async loadFederalRidings(): Promise<void> {
+    try {
+      const data = await getFederalRidings();
+      this.ctx.map?.setFederalRidings(data);
+      this.callPanel("federal-ridings", "setData", data);
+      dataFreshness.recordUpdate("federal_ridings" as DataSourceId, Array.isArray(data) ? data.length : 0);
+    } catch (error) {
+      console.error("[App] Federal Ridings fetch failed:", error);
+      dataFreshness.recordError("federal_ridings" as DataSourceId, String(error));
+      this.callPanel("federal-ridings", "setData", []);
+    }
+  }
+
+  // N5: ML&S Investigations
+  async loadMLSInvestigations(): Promise<void> {
+    try {
+      const data = await getMLSInvestigations();
+      this.ctx.map?.setMLSInvestigations(data);
+      this.callPanel("mls-investigations", "setData", data);
+      dataFreshness.recordUpdate("mls_investigations" as DataSourceId, Array.isArray(data) ? data.length : 0);
+    } catch (error) {
+      console.error("[App] ML&S Investigations fetch failed:", error);
+      dataFreshness.recordError("mls_investigations" as DataSourceId, String(error));
+      this.callPanel("mls-investigations", "setData", []);
+    }
+  }
+
+  // N13: Traffic Signals
+  async loadTrafficSignals(): Promise<void> {
+    try {
+      const data = await getTrafficSignals();
+      this.ctx.map?.setTrafficSignals(data);
+      this.callPanel("traffic-signals", "setData", data);
+      dataFreshness.recordUpdate("traffic_signals" as DataSourceId, Array.isArray(data) ? data.length : 0);
+    } catch (error) {
+      console.error("[App] Traffic Signals fetch failed:", error);
+      dataFreshness.recordError("traffic_signals" as DataSourceId, String(error));
+      this.callPanel("traffic-signals", "setData", []);
+    }
+  }
+
+  // N12: Toronto Hydro Outages
+  async loadTorontoHydro(): Promise<void> {
+    try {
+      const data = await fetchTorontoHydro();
+      this.ctx.map?.setTorontoHydro(data);
+      this.callPanel("toronto-hydro", "setData", data);
+      dataFreshness.recordUpdate("toronto_hydro_outages" as DataSourceId, Array.isArray(data) ? data.length : 0);
+    } catch (error) {
+      console.error("[App] Toronto Hydro fetch failed:", error);
+      dataFreshness.recordError("toronto_hydro_outages" as DataSourceId, String(error));
+      this.callPanel("toronto-hydro", "setData", []);
+    }
+  }
+
+  // N4: Court Facilities
+  async loadCourtFacilities(): Promise<void> {
+    try {
+      const data = await fetchCourtFacilities();
+      this.ctx.map?.setCourtFacilities(data);
+      this.callPanel("court-facilities", "setData", data);
+      dataFreshness.recordUpdate("court_facilities" as DataSourceId, data.length);
+    } catch (error) {
+      console.error("[App] Court Facilities fetch failed:", error);
+      dataFreshness.recordError("court_facilities" as DataSourceId, String(error));
+      this.callPanel("court-facilities", "setData", []);
+    }
+  }
+
+  // N6: TTC Real-Time
+  async loadTtcRealtime(): Promise<void> {
+    try {
+      const data = await fetchTtcVehicles();
+      this.ctx.map?.setTtcVehicles(data);
+      this.callPanel("ttc-realtime", "setData", data);
+      dataFreshness.recordUpdate("ttc_realtime" as DataSourceId, data.length);
+    } catch (error) {
+      console.error("[App] TTC Real-Time fetch failed:", error);
+      dataFreshness.recordError("ttc_realtime" as DataSourceId, String(error));
+      this.callPanel("ttc-realtime", "setData", []);
+    }
+  }
+
+  // N11: Road Construction
+  async loadRoadConstruction(): Promise<void> {
+    try {
+      const data = await this.dedupe("road-construction", () =>
+        fetchRoadConstruction(),
+      );
+      this.ctx.map?.setRoadConstructionEvents(data);
+      this.callPanel("road-construction", "setData", data);
+      dataFreshness.recordUpdate(
+        "road_construction" as DataSourceId,
+        data.length,
+      );
+    } catch (error) {
+      console.error("[App] Road Construction fetch failed:", error);
+      dataFreshness.recordError("road_construction" as DataSourceId, String(error));
+      this.callPanel("road-construction", "setData", []);
+    }
+  }
+
+  // N15: Ontario Wildfires
+  async loadOntarioWildfires(): Promise<void> {
+    try {
+      const data = await fetchOntarioWildfires();
+      this.ctx.map?.setOntarioWildfires(data);
+      this.callPanel("ontario-wildfires", "setData", data);
+      dataFreshness.recordUpdate("ontario_wildfires" as DataSourceId, data.wildfires.length + data.riskZones.length);
+    } catch (error) {
+      console.error("[App] Ontario Wildfires fetch failed:", error);
+      dataFreshness.recordError("ontario_wildfires" as DataSourceId, String(error));
+      this.callPanel("ontario-wildfires", "setData", { wildfires: [], riskZones: [] });
+    }
+  }
+
+  // N16: Flooding Composite
+  async loadFloodingComposite(): Promise<void> {
+    try {
+      const data = await fetchFloodingComposite();
+      this.ctx.map?.setFloodingComposite(data);
+      this.callPanel("flooding-composite", "setData", data);
+      dataFreshness.recordUpdate("flooding_composite" as DataSourceId, data.floodZones.length + data.floodReports.length + data.hydrometricStations.length);
+    } catch (error) {
+      console.error("[App] Flooding Composite fetch failed:", error);
+      dataFreshness.recordError("flooding_composite" as DataSourceId, String(error));
+      this.callPanel("flooding-composite", "setData", { floodZones: [], floodReports: [], hydrometricStations: [] });
     }
   }
 }

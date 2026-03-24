@@ -39,8 +39,11 @@ function normalizeLevel(rawLevel) {
   const level = String(rawLevel || "").toLowerCase();
   return Object.hasOwn(LEVEL_COLORS, level) ? level : "normal";
 }
-function handler(req, res) {
-  const url = new URL(req.url, `https://${req.headers.host}`);
+function escapeXml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+async function handler(req) {
+  const url = new URL(req.url);
   const countryCode = (url.searchParams.get("c") || "").toUpperCase();
   const type = url.searchParams.get("t") || "ciianalysis";
   const score = url.searchParams.get("s");
@@ -222,13 +225,18 @@ function handler(req, res) {
   <text x="60" y="610" font-family="system-ui, sans-serif" font-size="14" fill="#555"
     >worldmonitor.app \xB7 ${dateStr} \xB7 Free &amp; open source</text>
 </svg>`;
-  res.setHeader("Content-Type", "image/svg+xml");
-  res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600, stale-while-revalidate=600");
-  res.status(200).send(svg);
+
+  return new Response(svg, {
+    status: 200,
+    headers: {
+      "Content-Type": "image/svg+xml",
+      "Cache-Control": "public, max-age=3600, s-maxage=3600, stale-while-revalidate=600",
+      "Access-Control-Allow-Origin": "*"
+    }
+  });
 }
-function escapeXml(str) {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
+var config = { runtime: "edge" };
 export {
+  config,
   handler as default
 };

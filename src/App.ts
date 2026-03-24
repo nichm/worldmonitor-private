@@ -1026,11 +1026,185 @@ export class App {
       REFRESH_INTERVALS.strategicRisk,
       () => this.isPanelNearViewport('strategic-risk')
     );
+    // Toronto Fire: refresh every 60s — active incidents change fast
     this.refreshScheduler.scheduleRefresh(
       'toronto-fire',
       () => this.dataLoader.loadTorontoFire(),
       REFRESH_INTERVALS.torontoFire,
       () => this.state.mapLayers.toronto_fire_incidents && this.isPanelNearViewport('toronto-fire')
+    );
+    // Parks & Recreation: refresh every 15 min — live status updates
+    this.refreshScheduler.scheduleRefresh(
+      'parks-recreation',
+      () => this.dataLoader.loadParksRecreation(),
+      REFRESH_INTERVALS.parksRecreationLive,
+      () => this.state.mapLayers.parksRecreation && this.isPanelNearViewport('parks-recreation')
+    );
+    // Schools layer (monthly refresh — school data rarely changes)
+    this.refreshScheduler.scheduleRefresh(
+      'schools',
+      () => this.dataLoader.loadSchools(),
+      REFRESH_INTERVALS.schools,
+      () => this.state.mapLayers.schools && this.isPanelNearViewport('schools')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'community-housing',
+      () => this.dataLoader.loadCommunityHousing(),
+      REFRESH_INTERVALS.communityHousing,
+      () => this.state.mapLayers.communityHousing && this.isPanelNearViewport('community-housing')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'ev-charging',
+      () => this.dataLoader.loadEVCharging(),
+      REFRESH_INTERVALS.evCharging,
+      () => this.state.mapLayers.evCharging && this.isPanelNearViewport('ev-charging')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'cycling-network',
+      () => this.dataLoader.loadCyclingNetwork(),
+      REFRESH_INTERVALS.cyclingNetwork,
+      () => this.state.mapLayers.cyclingNetwork && this.isPanelNearViewport('cycling-network')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'ravine-protection',
+      () => this.dataLoader.loadRavineProtection(),
+      REFRESH_INTERVALS.ravineProtection,
+      () => this.state.mapLayers.ravineProtection && this.isPanelNearViewport('ravine-protection')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'tree-canopy',
+      () => this.dataLoader.loadTreeCanopy(),
+      REFRESH_INTERVALS.treeCanopy,
+      () => this.state.mapLayers.treeCanopy && this.isPanelNearViewport('tree-canopy')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'lake-ontario-level',
+      () => this.dataLoader.loadLakeOntarioLevel(),
+      REFRESH_INTERVALS.lakeOntarioLevel,
+      () => this.state.mapLayers.lakeOntarioLevel && this.isPanelNearViewport('lake-ontario-level')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'bike-share',
+      () => this.dataLoader.loadBikeShare(),
+      REFRESH_INTERVALS.bikeShare,
+      () => this.state.mapLayers.bikeShare && this.isPanelNearViewport('bike-share')
+    );
+    // TTC Vehicles: refresh every 20s — vehicles move constantly
+    this.refreshScheduler.scheduleRefresh(
+      'ttc-vehicles',
+      () => this.dataLoader.loadTTCVehicles(),
+      REFRESH_INTERVALS.ttcVehicles,
+      () => this.state.mapLayers.ttcVehicles && this.isPanelNearViewport('ttc-vehicles')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'crime-incidents',
+      () => this.dataLoader.loadCrimeIncidents(),
+      REFRESH_INTERVALS.crimeIncidents,
+      () => this.state.mapLayers.crimeIncidents && this.isPanelNearViewport('crime-incidents')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'police-divisions',
+      () => this.dataLoader.loadPoliceDivisions(),
+      REFRESH_INTERVALS.policeDivisions,
+      () => this.state.mapLayers.policeDivisions
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'eccc-aqhi',
+      () => this.dataLoader.loadAQHI(),
+      REFRESH_INTERVALS.ecccAqhi,
+      () => this.state.mapLayers.ecccAqhi && this.isPanelNearViewport('eccc-aqhi')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'childcare',
+      () => this.dataLoader.loadChildcare(),
+      REFRESH_INTERVALS.childcare,
+      () => this.state.mapLayers.childcare && this.isPanelNearViewport('childcare')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'flu-clinics',
+      () => this.dataLoader.loadFluClinics(),
+      REFRESH_INTERVALS.fluClinics,
+      () => this.state.mapLayers.fluClinics && this.isPanelNearViewport('flu-clinics')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'agco-licences',
+      () => this.dataLoader.loadAGCOLicences(),
+      REFRESH_INTERVALS.agcoLicences,
+      () => this.state.mapLayers.agcoLicences && this.isPanelNearViewport('agco-licences')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'green-roof-permits',
+      () => this.dataLoader.loadGreenRoofPermits(),
+      REFRESH_INTERVALS.greenRoofPermits,
+      () => this.state.mapLayers.greenRoofPermits && this.isPanelNearViewport('green-roof-permits')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'library-branches',
+      () => this.dataLoader.loadLibraryBranches(),
+      REFRESH_INTERVALS.libraryBranches,
+      () => this.state.mapLayers.libraryBranches && this.isPanelNearViewport('library-branches')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'election-data',
+      () => this.dataLoader.loadElectionData(),
+      REFRESH_INTERVALS.electionData,
+      () => this.state.mapLayers.electionData && this.isPanelNearViewport('election-data')
+    );
+
+    // New Toronto layers
+    this.refreshScheduler.scheduleRefresh(
+      'federal-ridings',
+      () => this.dataLoader.loadFederalRidings(),
+      REFRESH_INTERVALS.federalRidings, // 24h — electoral boundaries rarely change
+      () => this.state.mapLayers.federalRidings && this.isPanelNearViewport('federal-ridings')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'mls-investigations',
+      () => this.dataLoader.loadMLSInvestigations(),
+      REFRESH_INTERVALS.mlsInvestigations, // 30 min — MLS investigation data
+      () => this.state.mapLayers.mlsInvestigations && this.isPanelNearViewport('mls-investigations')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'traffic-signals',
+      () => this.dataLoader.loadTrafficSignals(),
+      REFRESH_INTERVALS.trafficSignals, // 24h — signal infrastructure rarely changes
+      () => this.state.mapLayers.trafficSignals && this.isPanelNearViewport('traffic-signals')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'toronto-hydro',
+      () => this.dataLoader.loadTorontoHydro(),
+      REFRESH_INTERVALS.torontoHydroOutages, // 300s — outage updates
+      () => this.state.mapLayers.torontoHydroOutages && this.isPanelNearViewport('toronto-hydro')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'court-facilities',
+      () => this.dataLoader.loadCourtFacilities(),
+      REFRESH_INTERVALS.courtFacilities, // 24h — court facilities rarely change
+      () => this.state.mapLayers.courtFacilities && this.isPanelNearViewport('court-facilities')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'road-construction',
+      () => this.dataLoader.loadRoadConstruction(),
+      REFRESH_INTERVALS.roadConstruction, // 300s — updates during work hours
+      () => this.state.mapLayers.roadConstruction && this.isPanelNearViewport('road-construction')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'ontario-wildfires',
+      () => this.dataLoader.loadOntarioWildfires(),
+      REFRESH_INTERVALS.ontarioWildfires, // 600s — fire season updates
+      () => this.state.mapLayers.ontarioWildfires && this.isPanelNearViewport('ontario-wildfires')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'flooding-composite',
+      () => this.dataLoader.loadFloodingComposite(),
+      REFRESH_INTERVALS.floodingComposite, // 300s — water levels change
+      () => this.state.mapLayers.floodingComposite && this.isPanelNearViewport('flooding-composite')
+    );
+    this.refreshScheduler.scheduleRefresh(
+      'urban-heat',
+      () => this.dataLoader.loadUrbanHeat(),
+      REFRESH_INTERVALS.urbanHeat, // 24h — urban heat data stable
+      () => this.state.mapLayers.urbanHeatIsland && this.isPanelNearViewport('urban-heat')
     );
 
     // Server-side temporal anomalies (news + satellite_fires)

@@ -54,6 +54,7 @@ import type {
 import type { TorontoFireIncident } from "@/services/toronto-fire";
 import type { OntarioRoadIncident } from "@/services/ontario-roads";
 import type { DineSafeClosure } from "@/types";
+import type { CommunityHousingBuilding } from "@/config/community-housing";
 
 export type TimeRange = "1h" | "6h" | "24h" | "48h" | "7d" | "all";
 export type MapView =
@@ -580,6 +581,16 @@ export class MapContainer {
     // SVG map does not support DineSafe layer
   }
 
+  public setCommunityHousingBuildings(buildings: CommunityHousingBuilding[]): void {
+    if (this.useGlobe) {
+      this.globeMap?.setCommunityHousingBuildings(buildings);
+      return;
+    }
+    if (this.useDeckGL) {
+      this.deckGLMap?.setCommunityHousingBuildings(buildings);
+    }
+  }
+
   public setTorontoNeighbourhoods(geojson: any): void {
     if (this.useGlobe) {
       this.globeMap?.setTorontoNeighbourhoods(geojson);
@@ -589,6 +600,16 @@ export class MapContainer {
       this.deckGLMap?.setTorontoNeighbourhoods(geojson);
     }
     // SVG map does not support Toronto neighbourhoods layer
+  }
+
+  public setSchools(schools: any[]): void {
+    if (this.useGlobe) {
+      this.globeMap?.setSchools(schools);
+      return;
+    }
+    if (this.useDeckGL) {
+      this.deckGLMap?.setSchools(schools);
+    }
   }
 
   public setEarthquakes(earthquakes: Earthquake[]): void {

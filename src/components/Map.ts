@@ -616,11 +616,64 @@ export class MapComponent {
       </div>
     `;
 
+    const torontoHelpContent = `
+      ${helpHeader}
+      <div class="layer-help-content">
+        ${helpSection('torontoLayers', [
+      helpItem(label('torontoFireIncidents'), 'torontoFireIncidents'),
+      helpItem(label('torontoDinesafe'), 'torontoDinesafe'),
+      helpItem(label('torontoNeighbourhoods'), 'torontoNeighbourhoods'),
+      helpItem(label('toronto311Stress'), 'toronto311Stress'),
+      helpItem(label('torontoDevelopment'), 'torontoDevelopment'),
+      helpItem(label('communityHousing'), 'communityHousing'),
+      helpItem(label('schools'), 'schools'),
+      helpItem(label('highwayIncidents'), 'ontarioRoads'),
+      helpItem(label('weatherAlerts'), 'torontoWeatherAlerts'),
+      helpItem(label('weatherRadar'), 'weatherRadar'),
+    ])}
+        ${helpSection('torontoRegional', [
+      helpItem(label('lakeOntarioSurge'), 'torontoWaterLevel'),
+      helpItem(label('earthquakes'), 'torontoEarthquakes'),
+      helpItem(label('hazardousSpills'), 'ontarioSpills'),
+      helpItem(label('trcaFloodWatch'), 'ontarioFloods'),
+      helpItem(label('parksRecreation'), 'parksRecreation'),
+      helpItem(label('evCharging'), 'evCharging'),
+      helpItem(label('cyclingNetwork'), 'cyclingNetwork'),
+      helpItem(label('ravineProtection'), 'ravineProtection'),
+      helpItem(label('treeCanopy'), 'treeCanopy'),
+      helpItem(label('lakeOntarioLevel'), 'lakeOntarioLevel'),
+      helpItem(label('bikeShare'), 'bikeShare'),
+      helpItem(label('crimeIncidents'), 'crimeIncidents'),
+      helpItem(label('policeDivisions'), 'policeDivisions'),
+      helpItem(label('ecccAqhi'), 'ecccAqhi'),
+      helpItem(label('childcare'), 'childcare'),
+      helpItem(label('fluClinics'), 'fluClinics'),
+      helpItem(label('agcoLicences'), 'agcoLicences'),
+      helpItem(label('greenRoofPermits'), 'greenRoofPermits'),
+      helpItem(label('libraryBranches'), 'libraryBranches'),
+      helpItem(label('federalRidings'), 'federalRidings'),
+      helpItem(label('mlsInvestigations'), 'mlsInvestigations'),
+      helpItem(label('trafficSignals'), 'trafficSignals'),
+      helpItem(label('torontoHydroOutages'), 'torontoHydroOutages'),
+      helpItem(label('courtFacilities'), 'courtFacilities'),
+      helpItem(label('roadConstruction'), 'roadConstruction'),
+      helpItem(label('ontarioWildfires'), 'ontarioWildfires'),
+      helpItem(label('floodingComposite'), 'floodingComposite'),
+      helpItem(label('electionData'), 'electionData'),
+      helpItem(label('urbanHeatIsland'), 'urbanHeatIsland'),
+      helpItem(label('ttcVehicles'), 'ttcVehicles'),
+      helpItem(label('protestEvents'), 'protestEvents'),
+    ])}
+      </div>
+    `;
+
     popup.innerHTML = SITE_VARIANT === 'tech'
       ? techHelpContent
       : SITE_VARIANT === 'finance'
         ? financeHelpContent
-        : fullHelpContent;
+        : SITE_VARIANT === 'toronto'
+          ? torontoHelpContent
+          : fullHelpContent;
 
     popup.querySelector('.layer-help-close')?.addEventListener('click', () => popup.remove());
 
