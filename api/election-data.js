@@ -123,89 +123,79 @@ async function handler(context) {
     const withVoterCount = filtered.filter((loc) => loc.voterCount !== null);
     const totalVoterCount = withVoterCount.reduce((sum, loc) => sum + loc.voterCount, 0);
 
+    // Build pollingStations array matching client contract
+    const pollingStations = limited.map(loc => ({
+      id: loc.id,
+      name: loc.name,
+      address: loc.address,
+      lat: loc.lat,
+      lon: loc.lon,
+      type: loc.type,
+      voterCount: loc.voterCount,
+    }));
+
+    // Build GeoJSON electoral boundaries from locations
+    const electoralBoundaries = {
+      type: 'FeatureCollection',
+      features: limited
+        .filter(loc => loc.lat !== null && loc.lon !== null)
+        .map(loc => ({
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [loc.lon, loc.lat],
+          },
+          properties: {
+            id: loc.id,
+            name: loc.name,
+            address: loc.address,
+            type: loc.type,
+            voterCount: loc.voterCount,
+          },
+        })),
+    };
+
     return new Response(JSON.stringify({
-      success: true,
-      data: {
-        locations: limited,
-        statistics: {
-          totalLocations: filtered.length,
-          returnedLocations: limited.length,
-          locationsWithVoterCount: withVoterCount.length,
-          totalVoterCount: totalVoterCount,
-          averageVoterCount: withVoterCount.length > 0 ? Math.round(totalVoterCount / withVoterCount.length) : null,
-        },
-      },
-      meta: {
-        source: 'Toronto Open Data - Elections Voting Locations (2023)',
-        datasetUrl: 'https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/elections-voting-locations',
-        ward: ward || 'all',
-        limit: limit,
-        timestamp: new Date().toISOString(),
-      },
+      pollingStations,
+      electoralBoundaries,
+      lastUpdated: new Date().toISOString(),
     }), {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=3600', // 1 hour
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=1800',
         'Access-Control-Allow-Origin': '*',
       },
+      status: 200,
     });
 
   } catch (error) {
     console.error('Election data fetch error:', error);
 
-    // Fallback to seed data on error
+    const seedPollingStations = [
+      { id: 'seed-1', name: 'Masaryk-Cowan Community Centre', address: '220 Cowan Ave, Toronto', lat: 43.640716, lon: -79.43323, type: 'VOTING_LOCATION', voterCount: null },
+      { id: 'seed-2', name: 'Dennis R. Timbrell Resource Centre', address: '29 St Dennis Dr, Toronto', lat: 43.717941, lon: -79.331687, type: 'VOTING_LOCATION', voterCount: null },
+      { id: 'seed-3', name: 'Main Square Community Centre', address: '245 Main St, Toronto', lat: 43.687164, lon: -79.299787, type: 'VOTING_LOCATION', voterCount: null },
+    ];
+
+    const seedBoundaries = {
+      type: 'FeatureCollection',
+      features: seedPollingStations.map(s => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [s.lon, s.lat] },
+        properties: { id: s.id, name: s.name, address: s.address, type: s.type },
+      })),
+    };
+
     const seedData = {
-      success: true,
-      data: {
-        locations: [
-          {
-            id: 'seed-1',
-            name: 'Masaryk-Cowan Community Centre',
-            address: '220 Cowan Ave, Toronto',
-            lat: 43.640716,
-            lon: -79.43323,
-            type: 'VOTING_LOCATION',
-            voterCount: null,
-          },
-          {
-            id: 'seed-2',
-            name: 'Dennis R. Timbrell Resource Centre',
-            address: '29 St Dennis Dr, Toronto',
-            lat: 43.717941,
-            lon: -79.331687,
-            type: 'VOTING_LOCATION',
-            voterCount: null,
-          },
-          {
-            id: 'seed-3',
-            name: 'Main Square Community Centre',
-            address: '245 Main St, Toronto',
-            lat: 43.687164,
-            lon: -79.299787,
-            type: 'VOTING_LOCATION',
-            voterCount: null,
-          },
-        ],
-        statistics: {
-          totalLocations: 3,
-          returnedLocations: 3,
-          locationsWithVoterCount: 0,
-          totalVoterCount: 0,
-          averageVoterCount: null,
-        },
-      },
-      meta: {
-        source: 'seed data',
-        ward: ward || 'all',
-        limit: limit,
-        timestamp: new Date().toISOString(),
-      },
+      pollingStations: seedPollingStations,
+      electoralBoundaries: seedBoundaries,
+      lastUpdated: new Date().toISOString(),
     };
 
     return new Response(JSON.stringify(seedData), {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=300, s-maxage=600',
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=150',
         'Access-Control-Allow-Origin': '*',
       },
       status: 200,

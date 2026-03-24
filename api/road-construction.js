@@ -4,11 +4,12 @@
  */
 
 import { jsonResponse } from './_json-response.js';
-import { jsonWithUpstashCache } from './_upstash-json.js';
+import { getCachedData, setCachedData } from './_upstash-json.js';
 
 const DATA_URL = 'https://secure.toronto.ca/opendata/cart/road_restrictions/v3?format=json';
+var config = { runtime: "edge" };
 
-export async function GET() {
+async function handler(_req) {
   try {
     const res = await fetch(DATA_URL, {
       headers: { Accept: 'application/json' },
@@ -46,16 +47,17 @@ export async function GET() {
       }
     }
 
-    return await jsonWithUpstashCache(
-      'road-construction',
-      events,
-      { revalidate: 300 } // 5 minute cache
-    );
+    return jsonResponse(events, 200, {
+      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=150",
+      "Access-Control-Allow-Origin": "*",
+    });
   } catch (error) {
     console.error('[Road Construction API] Error:', error);
-    return jsonResponse({ events: [], error: String(error) }, 200);
+    return jsonResponse({ events: [], error: String(error) }, 200, {
+      "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+      "Access-Control-Allow-Origin": "*",
+    });
   }
 }
 
-export const config = { runtime: 'edge' };
-export { GET as default };
+export { config, handler as default };
