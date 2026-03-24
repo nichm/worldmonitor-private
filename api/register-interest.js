@@ -5211,34 +5211,34 @@ async function sendConfirmationEmail(email, referralCode) {
 }
 async function handler(req) {
   if (isDisallowedOrigin(req)) {
-    return jsonResponse({ error: "Origin not allowed" }, 403);
+    return jsonResponse({ error: "Origin not allowed" }, 403, { "Cache-Control": "no-store" });
   }
   const cors = getCorsHeaders(req, "POST, OPTIONS");
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: cors });
+    return new Response(null, { status: 204, headers: { ...cors, "Cache-Control": "no-store" } });
   }
   if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405, cors);
+    return jsonResponse({ error: "Method not allowed" }, 405, { ...cors, "Cache-Control": "no-store" });
   }
   const ip = getClientIp(req);
   if (rateLimiter.isRateLimited(ip)) {
-    return jsonResponse({ error: "Too many requests" }, 429, cors);
+    return jsonResponse({ error: "Too many requests" }, 429, { ...cors, "Cache-Control": "no-store" });
   }
   let body;
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: "Invalid JSON" }, 400, cors);
+    return jsonResponse({ error: "Invalid JSON" }, 400, { ...cors, "Cache-Control": "no-store" });
   }
   if (body.website) {
-    return jsonResponse({ status: "registered" }, 200, cors);
+    return jsonResponse({ status: "registered" }, 200, { ...cors, "Cache-Control": "no-store" });
   }
   const DESKTOP_SOURCES = /* @__PURE__ */ new Set(["desktop-settings"]);
   const isDesktopSource = typeof body.source === "string" && DESKTOP_SOURCES.has(body.source);
   if (isDesktopSource) {
     const entry = rateLimiter.getEntry(ip);
     if (entry && entry.count > 2) {
-      return jsonResponse({ error: "Rate limit exceeded" }, 429, cors);
+      return jsonResponse({ error: "Rate limit exceeded" }, 429, { ...cors, "Cache-Control": "no-store" });
     }
   } else {
     const turnstileOk = await verifyTurnstile({
@@ -5247,19 +5247,19 @@ async function handler(req) {
       logPrefix: "[register-interest]"
     });
     if (!turnstileOk) {
-      return jsonResponse({ error: "Bot verification failed" }, 403, cors);
+      return jsonResponse({ error: "Bot verification failed" }, 403, { ...cors, "Cache-Control": "no-store" });
     }
   }
   const { email, source, appVersion, referredBy } = body;
   if (!email || typeof email !== "string" || email.length > MAX_EMAIL_LENGTH || !EMAIL_RE.test(email)) {
-    return jsonResponse({ error: "Invalid email address" }, 400, cors);
+    return jsonResponse({ error: "Invalid email address" }, 400, { ...cors, "Cache-Control": "no-store" });
   }
   const safeSource = typeof source === "string" ? source.slice(0, MAX_META_LENGTH) : "unknown";
   const safeAppVersion = typeof appVersion === "string" ? appVersion.slice(0, MAX_META_LENGTH) : "unknown";
   const safeReferredBy = typeof referredBy === "string" ? referredBy.slice(0, 20) : void 0;
   const convexUrl = process.env.CONVEX_URL;
   if (!convexUrl) {
-    return jsonResponse({ error: "Registration service unavailable" }, 503, cors);
+    return jsonResponse({ error: "Registration service unavailable" }, 503, { ...cors, "Cache-Control": "no-store" });
   }
   try {
     const client = new ConvexHttpClient(convexUrl);
@@ -5272,10 +5272,10 @@ async function handler(req) {
     if (result.status === "registered" && result.referralCode) {
       await sendConfirmationEmail(email, result.referralCode);
     }
-    return jsonResponse(result, 200, cors);
+    return jsonResponse(result, 200, { ...cors, "Cache-Control": "no-store" });
   } catch (err) {
     console.error("[register-interest] Convex error:", err);
-    return jsonResponse({ error: "Registration failed" }, 500, cors);
+    return jsonResponse({ error: "Registration failed" }, 500, { ...cors, "Cache-Control": "no-store" });
   }
 }
 export {

@@ -489,6 +489,7 @@ export const DEFAULT_MAP_LAYERS: MapLayers = {
   commodityPorts: false,
   webcams: false,
   weatherRadar: false,
+  greenPParking: false,
   // Toronto variant layers (disabled in finance variant)
   toronto_fire_incidents: false,
   toronto_dinesafe: false,
@@ -502,6 +503,8 @@ export const DEFAULT_MAP_LAYERS: MapLayers = {
   ontario_weather_alerts: false,
   ontario_roads: false,
   ontario_floods: false,
+  communityHousing: false,
+  schools: false,
 };
 
 // Mobile defaults for finance variant
@@ -562,6 +565,7 @@ export const MOBILE_DEFAULT_MAP_LAYERS: MapLayers = {
   commodityPorts: false,
   webcams: false,
   weatherRadar: false,
+  greenPParking: false,
   // Toronto variant layers (disabled in finance variant)
   toronto_fire_incidents: false,
   toronto_dinesafe: false,
@@ -575,6 +579,8 @@ export const MOBILE_DEFAULT_MAP_LAYERS: MapLayers = {
   ontario_weather_alerts: false,
   ontario_roads: false,
   ontario_floods: false,
+  communityHousing: false,
+  schools: false,
 };
 
 export const VARIANT_CONFIG: VariantConfig = {

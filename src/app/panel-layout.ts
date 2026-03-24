@@ -1030,6 +1030,14 @@ export class PanelLayoutManager implements AppModule {
       import("@/components/DineSafePanel").then((m) => new m.DineSafePanel()),
     );
 
+    this.lazyPanel("parks-recreation", () =>
+      import("@/components/ParksRecreationPanel").then((m) => new m.ParksRecreationPanel()),
+    );
+
+    this.lazyPanel("schools", () =>
+      import("@/components/SchoolsPanel").then((m) => new m.SchoolsPanel()),
+    );
+
     this.lazyPanel("eccc-alerts", () =>
       import("@/components/EcccAlertsPanel").then(
         (m) => new m.EcccAlertsPanel(),
@@ -1046,6 +1054,145 @@ export class PanelLayoutManager implements AppModule {
       import("@/components/HousingTargetsPanel").then(
         (m) => new m.HousingTargetsPanel(),
       ),
+    );
+    this.lazyPanel("community-housing", () =>
+      import("@/components/CommunityHousingPanel").then(
+        (m) => new m.CommunityHousingPanel(),
+      ),
+    );
+
+    this.lazyPanel("ev-charging", () =>
+      import("@/components/EVChargingPanel").then(
+        (m) => new m.EVChargingPanel(),
+      ),
+    );
+
+    this.lazyPanel("cycling-network", () =>
+      import("@/components/CyclingNetworkPanel").then(
+        (m) => new m.CyclingNetworkPanel(),
+      ),
+    );
+
+    this.lazyPanel("ravine-protection", () =>
+      import("@/components/RavineProtectionPanel").then(
+        (m) => new m.RavineProtectionPanel(),
+      ),
+    );
+
+    this.lazyPanel("tree-canopy", () =>
+      import("@/components/TreeCanopyPanel").then(
+        (m) => new m.TreeCanopyPanel(),
+      ),
+    );
+
+    this.lazyPanel("lake-ontario-level", () =>
+      import("@/components/LakeOntarioLevelPanel").then(
+        (m) => new m.LakeOntarioLevelPanel(),
+      ),
+    );
+
+    this.lazyPanel("bike-share", () =>
+      import("@/components/BikeSharePanel").then(
+        (m) => new m.BikeSharePanel(),
+      ),
+    );
+
+    this.lazyPanel("crime-incidents", () =>
+      import("@/components/CrimeIncidentsPanel").then(
+        (m) => new m.CrimeIncidentsPanel(),
+      ),
+    );
+
+    this.lazyPanel("eccc-aqhi", () =>
+      import("@/components/AQHIPanel").then(
+        (m) => new m.AQHIPanel(),
+      ),
+    );
+
+    this.lazyPanel("childcare", () =>
+      import("@/components/ChildcarePanel").then(
+        (m) => new m.ChildcarePanel(),
+      ),
+    );
+
+    this.lazyPanel("flu-clinics", () =>
+      import("@/components/FluClinicsPanel").then(
+        (m) => new m.FluClinicsPanel(),
+      ),
+    );
+
+    this.lazyPanel("agco-licences", () =>
+      import("@/components/AGCOLicencesPanel").then(
+        (m) => new m.AGCOLicencesPanel(),
+      ),
+    );
+
+    this.lazyPanel("green-roof-permits", () =>
+      import("@/components/GreenRoofPermitsPanel").then(
+        (m) => new m.GreenRoofPermitsPanel(),
+      ),
+    );
+
+    this.lazyPanel("library-branches", () =>
+      import("@/components/LibraryBranchesPanel").then(
+        (m) => new m.LibraryBranchesPanel(),
+      ),
+    );
+
+    this.lazyPanel("election-data", () =>
+      import("@/components/ElectionDataPanel").then((m) => new m.ElectionDataPanel()),
+    );
+
+    this.lazyPanel("urban-heat", () =>
+      import("@/components/UrbanHeatPanel").then((m) => new m.UrbanHeatPanel()),
+    );
+
+    this.lazyPanel("ttc-vehicles", () =>
+      import("@/components/TTCVehiclesPanel").then((m) => new m.TTCVehiclesPanel()),
+    );
+
+    this.lazyPanel("protest-events", () =>
+      import("@/components/ProtestEventsPanel").then((m) => new m.ProtestEventsPanel()),
+    );
+
+    this.lazyPanel("green-p-parking", () =>
+      import("@/components/GreenPParkingPanel").then((m) => new m.GreenPParkingPanel()),
+    );
+
+    this.lazyPanel("police-divisions", () =>
+      import("@/components/PoliceDivisionsPanel").then((m) => new m.PoliceDivisionsPanel()),
+    );
+
+    this.lazyPanel("federal-ridings", () =>
+      import("@/components/FederalRidingsPanel").then((m) => new m.FederalRidingsPanel()),
+    );
+
+    this.lazyPanel("mls-investigations", () =>
+      import("@/components/MLSInvestigationsPanel").then((m) => new m.MLSInvestigationsPanel()),
+    );
+
+    this.lazyPanel("traffic-signals", () =>
+      import("@/components/TrafficSignalsPanel").then((m) => new m.TrafficSignalsPanel()),
+    );
+
+    this.lazyPanel("toronto-hydro", () =>
+      import("@/components/TorontoHydroPanel").then((m) => new m.TorontoHydroPanel()),
+    );
+
+    this.lazyPanel("court-facilities", () =>
+      import("@/components/CourtFacilitiesPanel").then((m) => new m.CourtFacilitiesPanel()),
+    );
+
+    this.lazyPanel("road-construction", () =>
+      import("@/components/RoadConstructionPanel").then((m) => new m.RoadConstructionPanel()),
+    );
+
+    this.lazyPanel("ontario-wildfires", () =>
+      import("@/components/OntarioWildfiresPanel").then((m) => new m.OntarioWildfiresPanel()),
+    );
+
+    this.lazyPanel("flooding-composite", () =>
+      import("@/components/FloodingCompositePanel").then((m) => new m.FloodingCompositePanel()),
     );
 
     this.createPanel(

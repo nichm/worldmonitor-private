@@ -46,28 +46,57 @@ async function handler(req) {
   const platform = url.searchParams.get("platform");
   const variant = (url.searchParams.get("variant") || "").toLowerCase();
   if (!platform || !PLATFORM_PATTERNS[platform]) {
-    return Response.redirect(RELEASES_PAGE, 302);
+    return new Response(null, {
+      status: 302,
+      headers: {
+        "Location": RELEASES_PAGE,
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=60"
+      }
+    });
   }
   try {
     const release = await fetchLatestRelease("WorldMonitor-Download-Redirect");
     if (!release) {
-      return Response.redirect(RELEASES_PAGE, 302);
+      return new Response(null, {
+        status: 302,
+        headers: {
+          "Location": RELEASES_PAGE,
+          "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "public, max-age=60"
+        }
+      });
     }
     const matcher = PLATFORM_PATTERNS[platform];
     const assets = Array.isArray(release.assets) ? release.assets : [];
     const asset = variant ? findAssetForVariant(assets, variant, matcher) : assets.find((a) => matcher(String(a?.name || "")));
     if (!asset) {
-      return Response.redirect(RELEASES_PAGE, 302);
+      return new Response(null, {
+        status: 302,
+        headers: {
+          "Location": RELEASES_PAGE,
+          "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "public, max-age=60"
+        }
+      });
     }
     return new Response(null, {
       status: 302,
       headers: {
         "Location": asset.browser_download_url,
+        "Access-Control-Allow-Origin": "*",
         "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60, stale-if-error=600"
       }
     });
   } catch {
-    return Response.redirect(RELEASES_PAGE, 302);
+    return new Response(null, {
+      status: 302,
+      headers: {
+        "Location": RELEASES_PAGE,
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=60"
+      }
+    });
   }
 }
 export {

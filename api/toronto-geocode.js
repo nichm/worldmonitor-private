@@ -36,7 +36,10 @@ async function handler(req) {
     const url = new URL(req.url);
     const address = url.searchParams.get("address");
     if (!address) {
-      return jsonResponse({ error: "Missing address parameter" }, 400);
+      return jsonResponse({ error: "Missing address parameter" }, 400, {
+        "Cache-Control": "no-store",
+        "Access-Control-Allow-Origin": "*"
+      });
     }
     const cacheKey = address.toLowerCase().trim();
     const cached = geocodeCache.get(cacheKey);
@@ -46,7 +49,8 @@ async function handler(req) {
         200,
         {
           "Cache-Control": `public, max-age=${CACHE_TTL}, s-maxage=${CACHE_TTL}`,
-          "X-Cache": "HIT"
+          "X-Cache": "HIT",
+          "Access-Control-Allow-Origin": "*"
         }
       );
     }
@@ -86,7 +90,8 @@ async function handler(req) {
         200,
         {
           "Cache-Control": `public, max-age=3600, s-maxage=3600`,
-          "X-Cache": "MISS"
+          "X-Cache": "MISS",
+          "Access-Control-Allow-Origin": "*"
         }
       );
     }
@@ -111,7 +116,8 @@ async function handler(req) {
       200,
       {
         "Cache-Control": `public, max-age=${CACHE_TTL}, s-maxage=${CACHE_TTL}`,
-        "X-Cache": "MISS"
+        "X-Cache": "MISS",
+        "Access-Control-Allow-Origin": "*"
       }
     );
   } catch (error) {
@@ -126,7 +132,8 @@ async function handler(req) {
       200,
       // Return 200 to avoid breaking the app
       {
-        "Cache-Control": "public, max-age=60, stale-while-revalidate=30"
+        "Cache-Control": "public, max-age=60, stale-while-revalidate=30",
+        "Access-Control-Allow-Origin": "*"
       }
     );
   }

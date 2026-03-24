@@ -72,6 +72,43 @@ import type { RadiationObservation } from "@/services/radiation";
 import type { TorontoFireIncident } from "@/services/toronto-fire";
 import type { OntarioRoadIncident } from "@/services/ontario-roads";
 import type { DineSafeClosure } from "@/types";
+import type { School } from "@/config/schools";
+import type { ProtestEvent } from "@/config/protest-events";
+import { getProtestEventTypeColor, getProtestEventRadius } from "@/config/protest-events";
+import type { ParksRecreationFacility } from "@/config/parks-recreation";
+import { AMENITY_CONFIG } from "@/config/parks-recreation";
+import type { CommunityHousingBuilding } from "@/config/community-housing";
+import type { EVChargingStation } from "@/services/ev-charging";
+import type { CyclingSegment } from "@/config/cycling-network";
+import { getCyclingInfraColor } from "@/config/cycling-network";
+import type { RavineProtectionArea } from "@/config/ravine-protection";
+import type { TreeCanopyArea } from "@/config/tree-canopy";
+import type { WaterLevelReading } from "@/config/lake-ontario-level";
+import type { BikeShareStation } from "@/config/bike-share";
+import type { UrbanHeatZone } from "@/config/urban-heat";
+import { zonesToGeoJSON, getHeatIndexColor } from "@/config/urban-heat";
+import type { CrimeIncident } from "@/config/toronto-crime-incidents";
+import { getCrimeIncidentColor } from "@/config/toronto-crime-incidents";
+import type { PoliceDivision } from "@/config/police-divisions";
+import type { AQHIReading } from "@/config/eccc-aqhi";
+import type { ChildcareCentre } from "@/config/childcare";
+import type { FederalRiding } from "@/config/federal-ridings";
+import type { MLSInvestigation } from "@/config/mls-investigations";
+import type { TrafficSignal } from "@/config/traffic-signals";
+import type { TorontoHydroOutage } from "@/config/toronto-hydro";
+import type { CourtFacility } from "@/config/court-facilities";
+import type { RoadConstructionEvent } from "@/config/road-construction";
+import { getRoadConstructionColor } from "@/config/road-construction";
+import type { WildfireIncident } from "@/config/ontario-wildfires";
+import type { FloodZone, FloodReport } from "@/config/flooding-composite";
+import { getFloodZoneColor, getFloodReportColor } from "@/config/flooding-composite";
+import { getDineSafeColor } from "@/config/dinesafe-colors";
+import type { ElectionDataConfig } from "@/config/election-data";
+import type { FluClinic } from "@/config/flu-clinics";
+import type { AGCOLicence } from "@/config/agco-licences";
+import type { GreenRoofPermit } from "@/config/green-roof-permits";
+import type { LibraryBranch } from "@/config/tpl-libraries";
+import { getAQHIColor } from "@/config/eccc-aqhi";
 import { ArcLayer } from "@deck.gl/layers";
 import { HeatmapLayer } from "@deck.gl/aggregation-layers";
 import { H3HexagonLayer } from "@deck.gl/geo-layers";
@@ -365,6 +402,15 @@ const DATACENTER_ICON_MAPPING = {
 const AIRCRAFT_ICON_MAPPING = {
   plane: { x: 0, y: 0, width: 32, height: 32, mask: true },
 };
+// Green P "P" icon
+const PARKING_ICON =
+  "data:image/svg+xml;base64," +
+  btoa(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="#2563eb" stroke="#1e40af" stroke-width="1"/><text x="16" y="22" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="18" fill="white">P</text></svg>`,
+  );
+const PARKING_ICON_MAPPING = {
+  parking: { x: 0, y: 0, width: 32, height: 32, mask: true },
+};
 
 const CONFLICT_COUNTRY_ISO: Record<string, string[]> = {
   iran: ["IR"],
@@ -495,7 +541,47 @@ export class DeckGLMap {
   private happinessSource = "";
   private torontoFireIncidents: TorontoFireIncident[] = [];
   private dinesafeClosures: DineSafeClosure[] = [];
+  private schools: School[] = [];
+  private parksRecreationFacilities: ParksRecreationFacility[] = [];
+  private communityHousingBuildings: CommunityHousingBuilding[] = [];
+  private evChargingStations: EVChargingStation[] = [];
+  private cyclingNetworkSegments: CyclingSegment[] = [];
+  private ravineProtectionAreas: RavineProtectionArea[] = [];
+  private childcareCentres: ChildcareCentre[] = [];
+  private fluClinics: FluClinic[] = [];
+  private agcoLicences: AGCOLicence[] = [];
+  private greenRoofPermits: GreenRoofPermit[] = [];
+  private libraryBranches: LibraryBranch[] = [];
+  private treeCanopyAreas: TreeCanopyArea[] = [];
+  private lakeOntarioLevelReadings: WaterLevelReading[] = [];
+  private bikeShareStations: BikeShareStation[] = [];
+  private protestEvents: ProtestEvent[] = [];
+  private urbanHeatZones: UrbanHeatZone[] = [];
+  private federalRidings: FederalRiding[] = [];
+  private mlsInvestigations: MLSInvestigation[] = [];
+  private trafficSignals: TrafficSignal[] = [];
+  private torontoHydroOutages: TorontoHydroOutage[] = [];
+  private courtFacilities: CourtFacility[] = [];
+  private roadConstructionEvents: RoadConstructionEvent[] = [];
+  private wildfireIncidents: WildfireIncident[] = [];
+  private floodZones: (FloodZone | FloodReport)[] = [];
+  private electionData: ElectionDataConfig | null = null;
+  private crimeIncidents: CrimeIncident[] = [];
+  private policeDivisions: PoliceDivision[] = [];
+  private electionData: { pollingStations: any[]; electoralBoundaries: any } | null = null;
+  private aqhiReadings: AQHIReading[] = [];
   private ontarioRoadsIncidents: OntarioRoadIncident[] = [];
+  private greenPParkingLots: Array<{
+    id: string;
+    address: string;
+    lat: number;
+    lng: number;
+    rate: string;
+    carpark_type: string;
+    carpark_type_str: string;
+    capacity: string;
+    bike_racks: string;
+  }> = [];
   private torontoNeighbourhoods: any = null; // GeoJSON FeatureCollection
   private speciesRecoveryZones: Array<
     SpeciesRecovery & {
@@ -2081,7 +2167,7 @@ export class DeckGLMap {
       );
     }
 
-    // Toronto DineSafe Closures (red pins)
+    // Toronto DineSafe Closures (color-coded by status)
     if (mapLayers.toronto_dinesafe && this.dinesafeClosures.length > 0) {
       layers.push(
         new ScatterplotLayer<DineSafeClosure>({
@@ -2089,7 +2175,7 @@ export class DeckGLMap {
           data: this.dinesafeClosures,
           getPosition: (d) => [d.lon, d.lat],
           getRadius: 6,
-          getFillColor: [220, 38, 38, 200] as [number, number, number, number],
+          getFillColor: (d) => getDineSafeColor(d.establishment_status),
           getLineColor: [255, 255, 255, 150] as [
             number,
             number,
@@ -2098,6 +2184,26 @@ export class DeckGLMap {
           ],
           lineWidthUnits: "pixels",
           getLineWidth: () => 2,
+          stroked: true,
+          radiusUnits: "pixels",
+          pickable: true,
+        }),
+      );
+    }
+
+    // Toronto Community Housing Buildings (blue dots, sized by unit count)
+    if (mapLayers.communityHousing && this.communityHousingBuildings.length > 0) {
+      const maxUnits = Math.max(...this.communityHousingBuildings.map((b) => b.totalUnits), 1);
+      layers.push(
+        new ScatterplotLayer<CommunityHousingBuilding>({
+          id: "community-housing-layer",
+          data: this.communityHousingBuildings,
+          getPosition: (d) => [d.lon, d.lat],
+          getRadius: (d) => Math.max(4, Math.min(20, (d.totalUnits / maxUnits) * 20)),
+          getFillColor: [37, 99, 235, 180] as [number, number, number, number],
+          getLineColor: [255, 255, 255, 100] as [number, number, number, number],
+          lineWidthUnits: "pixels",
+          getLineWidth: 1,
           stroked: true,
           radiusUnits: "pixels",
           pickable: true,
@@ -2152,6 +2258,595 @@ export class DeckGLMap {
           getLineWidth: () => 2,
           stroked: true,
           radiusUnits: "pixels",
+          pickable: true,
+        }),
+      );
+    }
+
+    // Toronto Schools — color by board, size by level
+    if (mapLayers.schools && this.schools.length > 0) {
+      layers.push(
+        new ScatterplotLayer<School>({
+          id: "schools-layer",
+          data: this.schools,
+          getPosition: (d) => [d.lon, d.lat],
+          getRadius: (d) => {
+            const lvl = (d.schoolLevel || "").toLowerCase();
+            if (lvl.includes("secondary")) return 10;
+            if (lvl.includes("elementary")) return 6;
+            return 7;
+          },
+          getFillColor: (d) => {
+            const board = (d.boardName || "").toLowerCase();
+            if (board.includes("toronto district")) return [59, 130, 246, 200]; // TDSB blue
+            if (board.includes("toronto catholic")) return [16, 185, 129, 200]; // TCDSB green
+            if (d.schoolType === "PR") return [168, 85, 247, 200]; // Private purple
+            if (board.includes("viamonde") || board.includes("centre-sud")) return [245, 158, 11, 200]; // French orange
+            return [107, 114, 128, 180]; // Other gray
+          },
+          getLineColor: [255, 255, 255, 120] as [number, number, number, number],
+          lineWidthUnits: "pixels",
+          getLineWidth: () => 1,
+          stroked: true,
+          radiusUnits: "pixels",
+          pickable: true,
+        }),
+      );
+    }
+
+    // Parks & Recreation Facilities (amenity-based colored icons)
+    if (mapLayers.parksRecreation && this.parksRecreationFacilities.length > 0) {
+      layers.push(
+        new ScatterplotLayer<ParksRecreationFacility>({
+          id: "parks-recreation-layer",
+          data: this.parksRecreationFacilities,
+          getPosition: (d) => [d.lon, d.lat],
+          getRadius: (d) => (d.liveStatus === "open" ? 7 : d.liveStatus === "closed" ? 5 : 6),
+          getFillColor: (d) => {
+            const cfg = AMENITY_CONFIG[d.amenityType];
+            if (!cfg) return [107, 114, 128, 180] as [number, number, number, number];
+            const [r, g, b] = cfg.colorRgb;
+            const a = d.liveStatus === "closed" ? 120 : 200;
+            return [r, g, b, a] as [number, number, number, number];
+          },
+          getLineColor: [255, 255, 255, 120] as [
+            number,
+            number,
+            number,
+            number,
+          ],
+          lineWidthUnits: "pixels",
+          getLineWidth: 1.5,
+          stroked: true,
+          radiusUnits: "pixels",
+          pickable: true,
+        }),
+      );
+    }
+
+    // Green P Parking Lots (2019 snapshot)
+    if (mapLayers.greenPParking && this.greenPParkingLots.length > 0) {
+      layers.push(
+        new IconLayer({
+          id: "green-p-parking-layer",
+          data: this.greenPParkingLots.filter((lot) => lot.lat && lot.lng),
+          getPosition: (d) => [d.lng, d.lat],
+          getIcon: () => "parking",
+          iconAtlas: PARKING_ICON,
+          iconMapping: PARKING_ICON_MAPPING,
+          getSize: 24,
+          sizeScale: 1,
+          sizeMinPixels: 14,
+          sizeMaxPixels: 28,
+          pickable: true,
+        }),
+      );
+    }
+
+    // EV Charging Stations
+    if (mapLayers.evCharging && this.evChargingStations.length > 0) {
+      layers.push(
+        new ScatterplotLayer({
+          id: "ev-charging-layer",
+          data: this.evChargingStations,
+          getPosition: (d) => [d.longitude, d.latitude],
+          getRadius: 40,
+          getFillColor: (d) => {
+            if (d.evDcFastCount > 0) return [239, 68, 68, 200]; // red — DC Fast
+            if (d.evLevel2EvseNum > 0) return [59, 130, 246, 200]; // blue — Level 2
+            if (d.evLevel1EvseNum > 0) return [16, 185, 129, 200]; // green — Level 1
+            return [107, 114, 128, 180]; // gray — unknown
+          },
+          radiusMinPixels: 4,
+          radiusMaxPixels: 12,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Cycling Network (Bikeways)
+    if (mapLayers.cyclingNetwork && this.cyclingNetworkSegments.length > 0) {
+      layers.push(
+        new PathLayer({
+          id: "cycling-network-layer",
+          data: this.cyclingNetworkSegments.map((seg) => ({
+            path: seg.coordinates.map(([lon, lat]) => [lon, lat]),
+            infraType: seg.infraType,
+            streetName: seg.streetName,
+            infraDesc: seg.infraDesc,
+          })),
+          getPath: (d) => d.path,
+          getColor: (d) => {
+            const hex = getCyclingInfraColor(d.infraType);
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return [r, g, b, 220];
+          },
+          getWidth: 5,
+          widthMinPixels: 2,
+          widthMaxPixels: 6,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Ravine Protection Areas
+    if (mapLayers.ravineProtection && this.ravineProtectionAreas.length > 0) {
+      layers.push(
+        new GeoJsonLayer<any, any>({
+          id: "ravine-protection-layer",
+          data: this.ravineProtectionAreas.map((area) => ({
+            type: "Feature",
+            properties: { areaName: area.areaName, areaHa: area.areaHa, qualifier: area.qualifier },
+            geometry: { type: "Polygon", coordinates: area.coordinates },
+          })),
+          getFillColor: [34, 197, 94, 60] as [number, number, number, number],
+          getLineColor: [34, 197, 94, 150] as [number, number, number, number],
+          lineWidthMinPixels: 1,
+          getLineWidth: 1,
+          filled: true,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Tree Canopy Areas (GeoJsonLayer with green fill)
+    if (mapLayers.treeCanopy && this.treeCanopyAreas.length > 0) {
+      layers.push(
+        new GeoJsonLayer<any, any>({
+          id: "tree-canopy-layer",
+          data: this.treeCanopyAreas.map((area) => ({
+            type: "Feature",
+            properties: { areaName: area.areaName, areaHa: area.areaHa },
+            geometry: { type: "Polygon", coordinates: area.coordinates },
+          })),
+          getFillColor: [34, 197, 94, 50] as [number, number, number, number],
+          getLineColor: [34, 197, 94, 150] as [number, number, number, number],
+          lineWidthMinPixels: 1,
+          getLineWidth: 1,
+          filled: true,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Lake Ontario Level (ScatterplotLayer with blue points)
+    if (mapLayers.lakeOntarioLevel && this.lakeOntarioLevelReadings.length > 0) {
+      layers.push(
+        new ScatterplotLayer<WaterLevelReading>({
+          id: "lake-ontario-level-layer",
+          data: this.lakeOntarioLevelReadings,
+          getPosition: (d) => [d.longitude, d.latitude],
+          getRadius: 40,
+          getFillColor: [59, 130, 246, 220] as [number, number, number, number],
+          radiusMinPixels: 4,
+          radiusMaxPixels: 12,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Bike Share Stations (ScatterplotLayer colored by availability)
+    if (mapLayers.bikeShare && this.bikeShareStations.length > 0) {
+      layers.push(
+        new ScatterplotLayer<BikeShareStation>({
+          id: "bike-share-layer",
+          data: this.bikeShareStations,
+          getPosition: (d) => [d.lon, d.lat],
+          getRadius: 30,
+          getFillColor: (d) => {
+            const availabilityRatio = d.num_bikes_available / (d.num_bikes_available + d.num_docks_available);
+            if (availabilityRatio > 0.5) return [34, 197, 94, 220] as [number, number, number, number]; // Green - good availability
+            if (availabilityRatio > 0.2) return [234, 179, 8, 220] as [number, number, number, number]; // Yellow - moderate
+            return [239, 68, 68, 220] as [number, number, number, number]; // Red - low availability
+          },
+          radiusMinPixels: 4,
+          radiusMaxPixels: 10,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Toronto Protest & Demonstration Events — color by type, radius by crowd size
+    if (mapLayers.protestEvents && this.protestEvents.length > 0) {
+      layers.push(
+        new ScatterplotLayer<ProtestEvent>({
+          id: "protest-events-layer",
+          data: this.protestEvents,
+          getPosition: (d) => [d.lon, d.lat],
+          getRadius: (d) => getProtestEventRadius(d.typicalCrowdSize),
+          getFillColor: (d) => {
+            const colorHex = getProtestEventTypeColor(d.type);
+            // Convert hex to rgb array
+            const r = parseInt(colorHex.slice(1, 3), 16);
+            const g = parseInt(colorHex.slice(3, 5), 16);
+            const b = parseInt(colorHex.slice(5, 7), 16);
+            return [r, g, b, 200] as [number, number, number, number];
+          },
+          getLineColor: [255, 255, 255, 120] as [number, number, number, number],
+          lineWidthUnits: "pixels",
+          getLineWidth: () => 1,
+          stroked: true,
+          radiusUnits: "meters",
+          radiusMinPixels: 5,
+          radiusMaxPixels: 25,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Urban Heat Island Zones (GeoJsonLayer choropleth colored by heat index)
+    if (mapLayers.urbanHeat && this.urbanHeatZones.length > 0) {
+      layers.push(
+        new GeoJsonLayer<any, any>({
+          id: "urban-heat-layer",
+          data: zonesToGeoJSON(this.urbanHeatZones),
+          getFillColor: (d) => {
+            const heatIndex = d.properties?.heatIndex || 50;
+            const color = getHeatIndexColor(heatIndex);
+            // Convert hex to rgb array and add opacity
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            return [r, g, b, 120] as [number, number, number, number]; // 120/255 opacity
+          },
+          getLineColor: [0, 0, 0, 100] as [number, number, number, number],
+          getLineWidth: 2,
+          lineWidthMinPixels: 1,
+          lineWidthScale: 1,
+          pickable: true,
+          autoHighlight: true,
+          highlightColor: [255, 255, 255, 150] as [number, number, number, number],
+        }),
+      );
+    }
+
+    // Federal Riding Boundaries (GeoJsonLayer)
+    if (mapLayers.federalRidings && this.federalRidings.length > 0) {
+      layers.push(
+        new GeoJsonLayer<any, any>({
+          id: "federal-ridings-layer",
+          data: this.federalRidings,
+          getFillColor: [100, 149, 237, 60] as [number, number, number, number],
+          getLineColor: [100, 149, 237, 180] as [number, number, number, number],
+          lineWidthMinPixels: 1,
+          pickable: true,
+        }),
+      );
+    }
+
+    // ML&S Investigation Activity (ScatterplotLayer)
+    if (mapLayers.mlsInvestigations && this.mlsInvestigations.length > 0) {
+      layers.push(
+        new ScatterplotLayer<MLSInvestigation>({
+          id: "mls-investigations-layer",
+          data: this.mlsInvestigations,
+          getPosition: (d) => [d.longitude || d.lon || 0, d.latitude || d.lat || 0],
+          getRadius: 40,
+          getFillColor: [255, 165, 0, 200] as [number, number, number, number],
+          radiusMinPixels: 4,
+          radiusMaxPixels: 10,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Traffic Signals (ScatterplotLayer)
+    if (mapLayers.trafficSignals && this.trafficSignals.length > 0) {
+      layers.push(
+        new ScatterplotLayer<TrafficSignal>({
+          id: "traffic-signals-layer",
+          data: this.trafficSignals,
+          getPosition: (d) => [d.longitude || d.lon || 0, d.latitude || d.lat || 0],
+          getRadius: 20,
+          getFillColor: [76, 175, 80, 200] as [number, number, number, number],
+          radiusMinPixels: 3,
+          radiusMaxPixels: 7,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Toronto Hydro Outages (ScatterplotLayer colored by affected count)
+    if (mapLayers.torontoHydroOutages && this.torontoHydroOutages.length > 0) {
+      layers.push(
+        new ScatterplotLayer<TorontoHydroOutage>({
+          id: "toronto-hydro-layer",
+          data: this.torontoHydroOutages,
+          getPosition: (d) => [d.longitude, d.latitude],
+          getRadius: (d) => Math.min(200, Math.max(30, (d.affected || 1) * 0.5)),
+          getFillColor: (d) => d.status === 'Active' ? [255, 69, 0, 220] : [100, 100, 100, 150],
+          radiusMinPixels: 6,
+          radiusMaxPixels: 20,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Court Facilities (ScatterplotLayer)
+    if (mapLayers.courtFacilities && this.courtFacilities.length > 0) {
+      layers.push(
+        new ScatterplotLayer<CourtFacility>({
+          id: "court-facilities-layer",
+          data: this.courtFacilities,
+          getPosition: (d) => [d.longitude || d.lon || 0, d.latitude || d.lat || 0],
+          getRadius: 40,
+          getFillColor: [139, 69, 19, 200] as [number, number, number, number],
+          radiusMinPixels: 5,
+          radiusMaxPixels: 12,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Road Construction (ScatterplotLayer colored by classification/status)
+    if (mapLayers.roadConstruction && this.roadConstructionEvents.length > 0) {
+      layers.push(
+        new ScatterplotLayer<RoadConstructionEvent>({
+          id: "road-construction-layer",
+          data: this.roadConstructionEvents,
+          getPosition: (d) => [d.longitude || d.lon || 0, d.latitude || d.lat || 0],
+          getRadius: 50,
+          getFillColor: (d) => getRoadConstructionColor(d.classification || '', d.status || ''),
+          radiusMinPixels: 5,
+          radiusMaxPixels: 14,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Ontario Wildfires (ScatterplotLayer colored by size)
+    if (mapLayers.ontarioWildfires && this.wildfireIncidents.length > 0) {
+      layers.push(
+        new ScatterplotLayer<WildfireIncident>({
+          id: "ontario-wildfires-layer",
+          data: this.wildfireIncidents,
+          getPosition: (d) => [d.longitude || d.lon || 0, d.latitude || d.lat || 0],
+          getRadius: (d) => Math.min(300, Math.max(30, (d.hectares || d.size || 1) * 0.3)),
+          getFillColor: (d) => {
+            const status = d.status || d.fireStatus || '';
+            if (status.includes('active') || status.includes('being')) return [255, 0, 0, 220];
+            if (status.includes('held')) return [255, 140, 0, 200];
+            return [255, 200, 0, 180];
+          },
+          radiusMinPixels: 4,
+          radiusMaxPixels: 18,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Flooding Composite (GeoJsonLayer + ScatterplotLayer)
+    if (mapLayers.floodingComposite && this.floodZones.length > 0) {
+      // Check if first item has geometry (GeoJSON polygon) or coordinates (point)
+      const firstItem = this.floodZones[0];
+      if (firstItem && (firstItem as any).geometry) {
+        layers.push(
+          new GeoJsonLayer<any, any>({
+            id: "flooding-zones-layer",
+            data: this.floodZones as any[],
+            getFillColor: (d) => getFloodZoneColor(d.properties?.riskLevel || 'moderate'),
+            getLineColor: [0, 100, 255, 200] as [number, number, number, number],
+            lineWidthMinPixels: 1,
+            pickable: true,
+          }),
+        );
+      } else {
+        layers.push(
+          new ScatterplotLayer<any>({
+            id: "flooding-reports-layer",
+            data: this.floodZones,
+            getPosition: (d) => [d.longitude || d.lon || 0, d.latitude || d.lat || 0],
+            getRadius: 50,
+            getFillColor: (d) => getFloodReportColor(d.severity || 'moderate'),
+            radiusMinPixels: 5,
+            radiusMaxPixels: 14,
+            pickable: true,
+          }),
+        );
+      }
+    }
+
+    // Election Data (ScatterplotLayer for polling stations + GeoJsonLayer for boundaries)
+    if (mapLayers.electionData && this.electionData) {
+      const ed = this.electionData as any;
+      if (ed.pollingStations && ed.pollingStations.length > 0) {
+        layers.push(
+          new ScatterplotLayer<any>({
+            id: "election-polling-layer",
+            data: ed.pollingStations,
+            getPosition: (d) => [d.longitude || d.lon || 0, d.latitude || d.lat || 0],
+            getRadius: 30,
+            getFillColor: [128, 0, 128, 200] as [number, number, number, number],
+            radiusMinPixels: 4,
+            radiusMaxPixels: 10,
+            pickable: true,
+          }),
+        );
+      }
+    }
+
+    // Crime Incidents (ScatterplotLayer colored by MCI_CATEGORY)
+    if (mapLayers.crimeIncidents && this.crimeIncidents.length > 0) {
+      layers.push(
+        new ScatterplotLayer<CrimeIncident>({
+          id: "crime-incidents-layer",
+          data: this.crimeIncidents,
+          getPosition: (d) => [d.long, d.lat],
+          getRadius: 30,
+          getFillColor: (d) => getCrimeIncidentColor(d.mciCategory),
+          radiusMinPixels: 4,
+          radiusMaxPixels: 10,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Police Division Boundaries (GeoJsonLayer with semi-transparent blue fill)
+    if (mapLayers.policeDivisions && this.policeDivisions.length > 0) {
+      layers.push(
+        new GeoJsonLayer<any, any>({
+          id: "police-divisions-layer",
+          data: this.policeDivisions.map((division) => ({
+            type: "Feature",
+            properties: { division: division.division, divisionName: division.divisionName },
+            geometry: division.shape,
+          })),
+          getFillColor: [59, 130, 246, 40] as [number, number, number, number],
+          getLineColor: [59, 130, 246, 150] as [number, number, number, number],
+          lineWidthMinPixels: 1,
+          getLineWidth: 1,
+          filled: true,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Election Polling Stations (ScatterplotLayer)
+    if (mapLayers.electionData && this.electionData?.pollingStations?.length > 0) {
+      layers.push(
+        new ScatterplotLayer<any>({
+          id: "election-polling-stations-layer",
+          data: this.electionData.pollingStations,
+          getPosition: (d) => [d.lon, d.lat],
+          getRadius: 40,
+          getFillColor: (d) => (d.accessibility ? [59, 130, 246, 200] : [245, 158, 11, 200]) as [number, number, number, number],
+          radiusMinPixels: 4,
+          radiusMaxPixels: 12,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Electoral Boundaries (GeoJsonLayer with semi-transparent fill)
+    if (mapLayers.electionData && this.electionData?.electoralBoundaries?.features?.length > 0) {
+      layers.push(
+        new GeoJsonLayer<any, any>({
+          id: "electoral-boundaries-layer",
+          data: this.electionData.electoralBoundaries,
+          getFillColor: [99, 102, 241, 40] as [number, number, number, number],
+          getLineColor: [99, 102, 241, 150] as [number, number, number, number],
+          lineWidthMinPixels: 1,
+          getLineWidth: 1,
+          filled: true,
+          stroked: true,
+          pickable: true,
+        }),
+      );
+    }
+
+    // ECCC Air Quality Health Index (ScatterplotLayer colored by AQHI value)
+    if (mapLayers.ecccAqhi && this.aqhiReadings.length > 0) {
+      layers.push(
+        new ScatterplotLayer<AQHIReading>({
+          id: "eccc-aqhi-layer",
+          data: this.aqhiReadings,
+          getPosition: (d) => [d.longitude, d.latitude],
+          getRadius: 40,
+          getFillColor: (d) => getAQHIColor(d.aqhi),
+          radiusMinPixels: 4,
+          radiusMaxPixels: 12,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Childcare Centres
+    if (mapLayers.childcare && this.childcareCentres.length > 0) {
+      layers.push(
+        new ScatterplotLayer<ChildcareCentre>({
+          id: "childcare-layer",
+          data: this.childcareCentres,
+          getPosition: (d) => [d.longitude, d.latitude],
+          getRadius: 30,
+          getFillColor: [20, 184, 166, 200],
+          radiusMinPixels: 3,
+          radiusMaxPixels: 8,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Flu Clinics
+    if (mapLayers.fluClinics && this.fluClinics.length > 0) {
+      layers.push(
+        new ScatterplotLayer<FluClinic>({
+          id: "flu-clinics-layer",
+          data: this.fluClinics,
+          getPosition: (d) => [d.longitude, d.latitude],
+          getRadius: 35,
+          getFillColor: [239, 68, 68, 200],
+          radiusMinPixels: 4,
+          radiusMaxPixels: 10,
+          pickable: true,
+        }),
+      );
+    }
+
+    // AGCO Liquor Licences
+    if (mapLayers.agcoLicences && this.agcoLicences.length > 0) {
+      layers.push(
+        new ScatterplotLayer<AGCOLicence>({
+          id: "agco-licences-layer",
+          data: this.agcoLicences,
+          getPosition: (d) => [d.longitude, d.latitude],
+          getRadius: 25,
+          getFillColor: [245, 158, 11, 200],
+          radiusMinPixels: 3,
+          radiusMaxPixels: 7,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Green Roof Permits
+    if (mapLayers.greenRoofPermits && this.greenRoofPermits.length > 0) {
+      layers.push(
+        new ScatterplotLayer<GreenRoofPermit>({
+          id: "green-roof-permits-layer",
+          data: this.greenRoofPermits,
+          getPosition: (d) => [d.longitude, d.latitude],
+          getRadius: 30,
+          getFillColor: [34, 197, 94, 200],
+          radiusMinPixels: 3,
+          radiusMaxPixels: 8,
+          pickable: true,
+        }),
+      );
+    }
+
+    // Library Branches
+    if (mapLayers.libraryBranches && this.libraryBranches.length > 0) {
+      layers.push(
+        new ScatterplotLayer<LibraryBranch>({
+          id: "library-branches-layer",
+          data: this.libraryBranches,
+          getPosition: (d) => [d.longitude, d.latitude],
+          getRadius: 30,
+          getFillColor: [59, 130, 246, 200],
+          radiusMinPixels: 4,
+          radiusMaxPixels: 9,
           pickable: true,
         }),
       );
@@ -4731,6 +5426,55 @@ export class DeckGLMap {
           </div>`,
         };
       }
+      case "schools-layer": {
+        const school = obj as School;
+        const board = school.boardName || "Private";
+        return {
+          html: `<div class="deckgl-tooltip">
+            <strong>${text(school.name)}</strong><br>
+            ${text(board)}<br>
+            ${text(school.address || school.postalCode || "")}
+          </div>`,
+        };
+      }
+      case "green-p-parking-layer": {
+        const typeIcon = obj.carpark_type === "garage" ? "🏢" : "🅿️";
+        return {
+          html: `<div class="deckgl-tooltip">
+            <strong>${typeIcon} ${text(obj.address)}</strong><br>
+            ${text(obj.carpark_type_str)} \u00B7 ${obj.capacity} spaces<br>
+            ${text(obj.rate)}<br>
+            <span style="opacity: 0.5; font-size: 0.85em">⚠️ Data from 2019 \u2014 <a href="https://parking.greenp.com/find-parking/" target="_blank" style="color: #60a5fa">Live availability</a></span>
+          </div>`,
+        };
+      }
+      case "parks-recreation-layer": {
+        const amenityCfg = AMENITY_CONFIG[obj.amenityType] || AMENITY_CONFIG.other;
+        const statusColor =
+          obj.liveStatus === "open"
+            ? "#22c55e"
+            : obj.liveStatus === "closed"
+              ? "#ef4444"
+              : obj.liveStatus === "limited"
+                ? "#f59e0b"
+                : "#6b7280";
+        const statusLabel =
+          obj.liveStatus === "open"
+            ? "Open"
+            : obj.liveStatus === "closed"
+              ? "Closed"
+              : obj.liveStatus === "limited"
+                ? "Limited"
+                : "Unknown";
+        return {
+          html: `<div class="deckgl-tooltip">
+            <strong>${amenityCfg.icon} ${text(obj.name)}</strong><br>
+            ${text(obj.address)}<br>
+            <span style="color: ${statusColor}; font-weight: 500;">${statusLabel}</span>
+            ${obj.liveDetail ? `<br><span style="opacity: 0.7">${text(obj.liveDetail)}</span>` : ""}
+          </div>`,
+        };
+      }
       default:
         return null;
     }
@@ -6161,6 +6905,229 @@ export class DeckGLMap {
   public setTorontoDineSafe(closures: DineSafeClosure[]): void {
     this.dinesafeClosures = closures;
     this.render();
+  }
+
+  public setSchools(schools: School[]): void {
+    this.schools = schools;
+    this.render();
+  }
+
+  public setParksRecreationFacilities(facilities: ParksRecreationFacility[]): void {
+    this.parksRecreationFacilities = facilities;
+    this.render();
+  }
+
+  public setCommunityHousingBuildings(buildings: CommunityHousingBuilding[]): void {
+    this.communityHousingBuildings = buildings;
+    this.render();
+  }
+
+  public setGreenPParking(
+    lots: Array<{
+      id: string;
+      address: string;
+      lat: number;
+      lng: number;
+      rate: string;
+      carpark_type: string;
+      carpark_type_str: string;
+      capacity: string;
+      bike_racks: string;
+    }>,
+  ): void {
+    this.greenPParkingLots = lots;
+    this.render();
+  }
+
+  public setEVChargingStations(stations: EVChargingStation[]): void {
+    this.evChargingStations = stations;
+    this.render();
+  }
+
+  public setCyclingNetwork(segments: CyclingSegment[]): void {
+    this.cyclingNetworkSegments = segments;
+    this.render();
+  }
+
+  public setRavineProtectionAreas(areas: RavineProtectionArea[]): void {
+    this.ravineProtectionAreas = areas;
+    this.render();
+  }
+
+  public setChildcareCentres(centres: ChildcareCentre[]): void {
+    this.childcareCentres = centres;
+    this.render();
+  }
+
+  public setFluClinics(clinics: FluClinic[]): void {
+    this.fluClinics = clinics;
+    this.render();
+  }
+
+  public setAGCOLicences(licences: AGCOLicence[]): void {
+    this.agcoLicences = licences;
+    this.render();
+  }
+
+  public setGreenRoofPermits(permits: GreenRoofPermit[]): void {
+    this.greenRoofPermits = permits;
+    this.render();
+  }
+
+  public setLibraryBranches(branches: LibraryBranch[]): void {
+    this.libraryBranches = branches;
+    this.render();
+  }
+
+  public setTreeCanopyAreas(areas: TreeCanopyArea[]): void {
+    this.treeCanopyAreas = areas;
+    this.render();
+  }
+
+  public setLakeOntarioLevel(readings: WaterLevelReading[]): void {
+    this.lakeOntarioLevelReadings = readings;
+    this.render();
+  }
+
+  public setBikeShareStations(stations: BikeShareStation[]): void {
+    this.bikeShareStations = stations;
+    this.render();
+  }
+
+  public setProtestEvents(events: ProtestEvent[]): void {
+    this.protestEvents = events;
+    this.render();
+  }
+
+  public setUrbanHeatZones(zones: UrbanHeatZone[]): void {
+    this.urbanHeatZones = zones;
+    this.render();
+  }
+
+  public setCrimeIncidents(incidents: CrimeIncident[]): void {
+    this.crimeIncidents = incidents;
+    this.render();
+  }
+
+  public getCrimeIncidentSummary(incidents: CrimeIncident[]): Record<string, number> {
+    const summary: Record<string, number> = {};
+
+    for (const incident of incidents) {
+      const category = incident.mciCategory || "Unknown";
+      summary[category] = (summary[category] || 0) + 1;
+    }
+
+    return summary;
+  }
+
+  public setPoliceDivisions(divisions: PoliceDivision[]): void {
+    this.policeDivisions = divisions;
+    this.render();
+  }
+
+  public setElectionData(data: { pollingStations: any[]; electoralBoundaries: any }): void {
+    this.electionData = data;
+    this.render();
+  }
+
+  public setFederalRidings(ridings: FederalRiding[]): void {
+    this.federalRidings = ridings;
+    this.render();
+  }
+
+  public setMLSInvestigations(investigations: MLSInvestigation[]): void {
+    this.mlsInvestigations = investigations;
+    this.render();
+  }
+
+  public setTrafficSignals(signals: TrafficSignal[]): void {
+    this.trafficSignals = signals;
+    this.render();
+  }
+
+  public setTorontoHydro(outages: TorontoHydroOutage[]): void {
+    this.torontoHydroOutages = outages;
+    this.render();
+  }
+
+  public setCourtFacilities(facilities: CourtFacility[]): void {
+    this.courtFacilities = facilities;
+    this.render();
+  }
+
+  public setRoadConstructionEvents(events: RoadConstructionEvent[]): void {
+    this.roadConstructionEvents = events;
+    this.render();
+  }
+
+  public setOntarioWildfires(incidents: WildfireIncident[]): void {
+    this.wildfireIncidents = incidents;
+    this.render();
+  }
+
+  public setFloodZones(zones: (FloodZone | FloodReport)[]): void {
+    this.floodZones = zones;
+    this.render();
+  }
+
+  public setAQHI(readings: AQHIReading[]): void {
+    this.aqhiReadings = readings;
+    this.render();
+  }
+
+  public getAQHISummary(readings: AQHIReading[]): {
+    total: number;
+    lowRisk: number;
+    moderateRisk: number;
+    highRisk: number;
+    veryHighRisk: number;
+    averageAQHI: number;
+    maxAQHI: number;
+  } {
+    if (readings.length === 0) {
+      return {
+        total: 0,
+        lowRisk: 0,
+        moderateRisk: 0,
+        highRisk: 0,
+        veryHighRisk: 0,
+        averageAQHI: 0,
+        maxAQHI: 0,
+      };
+    }
+
+    const summary = {
+      total: readings.length,
+      lowRisk: 0,
+      moderateRisk: 0,
+      highRisk: 0,
+      veryHighRisk: 0,
+      averageAQHI: 0,
+      maxAQHI: 0,
+    };
+
+    let totalAQHI = 0;
+    let maxAQHI = 0;
+
+    for (const reading of readings) {
+      totalAQHI += reading.aqhi;
+      maxAQHI = Math.max(maxAQHI, reading.aqhi);
+
+      if (reading.aqhi <= 3) {
+        summary.lowRisk++;
+      } else if (reading.aqhi <= 6) {
+        summary.moderateRisk++;
+      } else if (reading.aqhi <= 9) {
+        summary.highRisk++;
+      } else {
+        summary.veryHighRisk++;
+      }
+    }
+
+    summary.averageAQHI = Math.round(totalAQHI / readings.length);
+    summary.maxAQHI = maxAQHI;
+
+    return summary;
   }
 
   public setTorontoNeighbourhoods(geojson: any): void {

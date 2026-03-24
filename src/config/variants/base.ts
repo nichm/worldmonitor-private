@@ -46,7 +46,39 @@ export const REFRESH_INTERVALS = {
   groceryBasket: 6 * 60 * 60 * 1000,
   intelligence: 15 * 60 * 1000,
   correlationEngine: 5 * 60 * 1000,
-  torontoFire: 5 * 60 * 1000,
+  // Real-time Toronto layers (should refresh frequently)
+  torontoFire: 60 * 1000, // 60s — active incidents change fast
+  ttcVehicles: 30 * 1000, // 30s — vehicles move constantly
+  bikeShare: 60 * 1000, // 60s — station status changes moderately
+  ecccAqhi: 300 * 1000, // 300s (5 min) — hourly readings, no need for sub-minute
+  roadConstruction: 300 * 1000, // 300s — updates during work hours
+  crimeIncidents: 300 * 1000, // 300s — moderate update frequency
+  protestEvents: 600 * 1000, // 600s — protest events
+  ontarioWildfires: 600 * 1000, // 600s — fire season
+  floodingComposite: 300 * 1000, // 300s — water levels change
+  torontoHydroOutages: 300 * 1000, // 300s — outage updates
+  // Semi-static Toronto layers (refresh less often)
+  communityHousing: 3600 * 1000, // 1h — rarely changes
+  parksRecreationStatic: 30 * 24 * 60 * 60 * 1000,
+  parksRecreationLive: 15 * 60 * 1000,
+  schools: 24 * 60 * 60 * 1000, // 24h — basically never changes
+  evCharging: 120 * 1000, // 120s — availability changes
+  cyclingNetwork: 24 * 60 * 60 * 1000, // 24h — infrastructure rarely changes
+  ravineProtection: 24 * 60 * 60 * 1000, // 24h — bylaw amendments rare
+  treeCanopy: 24 * 60 * 60 * 1000, // 24h — canopy data stable
+  libraryBranches: 3600 * 1000, // 1h — library data
+  federalRidings: 24 * 60 * 60 * 1000, // 24h — electoral boundaries
+  courtFacilities: 24 * 60 * 60 * 1000, // 24h — court facilities
+  policeDivisions: 24 * 60 * 60 * 1000, // 24h — static boundaries
+  childcare: 3600 * 1000, // 1h — childcare data
+  fluClinics: 24 * 60 * 60 * 1000, // 24h — seasonal, daily updates
+  agcoLicences: 24 * 60 * 60 * 1000, // 24h — licence updates
+  greenRoofPermits: 24 * 60 * 60 * 1000, // 24h — permit data
+  electionData: 24 * 60 * 60 * 1000, // 24h — election data
+  urbanHeat: 24 * 60 * 60 * 1000, // 24h — urban heat data
+  mlsInvestigations: 30 * 60 * 1000, // 30 min — MLS data
+  trafficSignals: 24 * 60 * 60 * 1000, // 24h — signal infrastructure
+  lakeOntarioLevel: 5 * 60 * 1000, // 5 minutes — water level updates frequently
 };
 
 // Monitor colors - shared

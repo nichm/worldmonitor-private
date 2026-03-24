@@ -4132,7 +4132,9 @@ export class GlobeMap {
   public setTorontoFireIncidents(_incidents: any[]): void {}
   public setOntarioRoadsIncidents(_incidents: any[]): void {}
   public setTorontoDineSafe(_closures: any[]): void {}
+  public setCommunityHousingBuildings(_buildings: any[]): void {}
   public setTorontoNeighbourhoods(_geojson: any): void {}
+  public setSchools(_schools: any[]): void {}
 
   public getHotspotLevel(_id: string) {
     return "low";

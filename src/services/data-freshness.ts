@@ -272,6 +272,16 @@ const SOURCE_METADATA: Record<
     requiredForRisk: false,
     panelId: "eccc-alerts",
   },
+  community_housing: {
+    name: "Toronto Community Housing",
+    requiredForRisk: false,
+    panelId: "community-housing",
+  },
+  schools: {
+    name: "Toronto Schools",
+    requiredForRisk: false,
+    panelId: "schools",
+  },
 };
 
 class DataFreshnessTracker {
@@ -608,6 +618,9 @@ const INTELLIGENCE_GAP_MESSAGES: Record<DataSourceId, string> = {
     "TRCA flood watch data unavailable—flood risk monitoring offline",
   eccc_alerts:
     "Environment Canada weather alerts unavailable—severe weather warnings may be missed",
+  community_housing:
+    "Toronto community housing data unavailable—housing visibility offline",
+  schools: "Toronto schools data unavailable—education infrastructure visibility offline",
 };
 
 /**

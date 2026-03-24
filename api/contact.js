@@ -5164,27 +5164,27 @@ function sanitizeForSubject(str, maxLen = 50) {
 }
 async function handler(req) {
   if (isDisallowedOrigin(req)) {
-    return jsonResponse({ error: "Origin not allowed" }, 403);
+    return jsonResponse({ error: "Origin not allowed" }, 403, { "Cache-Control": "no-store" });
   }
   const cors = getCorsHeaders(req, "POST, OPTIONS");
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: cors });
+    return new Response(null, { status: 204, headers: { ...cors, "Cache-Control": "no-store" } });
   }
   if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405, cors);
+    return jsonResponse({ error: "Method not allowed" }, 405, { ...cors, "Cache-Control": "no-store" });
   }
   const ip = getClientIp(req);
   if (rateLimiter.isRateLimited(ip)) {
-    return jsonResponse({ error: "Too many requests" }, 429, cors);
+    return jsonResponse({ error: "Too many requests" }, 429, { ...cors, "Cache-Control": "no-store" });
   }
   let body;
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: "Invalid JSON" }, 400, cors);
+    return jsonResponse({ error: "Invalid JSON" }, 400, { ...cors, "Cache-Control": "no-store" });
   }
   if (body.website) {
-    return jsonResponse({ status: "sent" }, 200, cors);
+    return jsonResponse({ status: "sent" }, 200, { ...cors, "Cache-Control": "no-store" });
   }
   const turnstileOk = await verifyTurnstile({
     token: body.turnstileToken || "",
@@ -5193,24 +5193,24 @@ async function handler(req) {
     missingSecretPolicy: "allow-in-development"
   });
   if (!turnstileOk) {
-    return jsonResponse({ error: "Bot verification failed" }, 403, cors);
+    return jsonResponse({ error: "Bot verification failed" }, 403, { ...cors, "Cache-Control": "no-store" });
   }
   const { email, name, organization, phone, message, source } = body;
   if (!email || typeof email !== "string" || !EMAIL_RE.test(email)) {
-    return jsonResponse({ error: "Invalid email" }, 400, cors);
+    return jsonResponse({ error: "Invalid email" }, 400, { ...cors, "Cache-Control": "no-store" });
   }
   const emailDomain = email.split("@")[1]?.toLowerCase();
   if (emailDomain && FREE_EMAIL_DOMAINS.has(emailDomain)) {
-    return jsonResponse({ error: "Please use your work email address" }, 422, cors);
+    return jsonResponse({ error: "Please use your work email address" }, 422, { ...cors, "Cache-Control": "no-store" });
   }
   if (!name || typeof name !== "string" || name.trim().length === 0) {
-    return jsonResponse({ error: "Name is required" }, 400, cors);
+    return jsonResponse({ error: "Name is required" }, 400, { ...cors, "Cache-Control": "no-store" });
   }
   if (!organization || typeof organization !== "string" || organization.trim().length === 0) {
-    return jsonResponse({ error: "Company is required" }, 400, cors);
+    return jsonResponse({ error: "Company is required" }, 400, { ...cors, "Cache-Control": "no-store" });
   }
   if (!phone || typeof phone !== "string" || !PHONE_RE.test(phone.trim())) {
-    return jsonResponse({ error: "Valid phone number is required" }, 400, cors);
+    return jsonResponse({ error: "Valid phone number is required" }, 400, { ...cors, "Cache-Control": "no-store" });
   }
   const safeName = name.slice(0, MAX_FIELD);
   const safeOrg = organization.slice(0, MAX_FIELD);
@@ -5219,7 +5219,7 @@ async function handler(req) {
   const safeSource = typeof source === "string" ? source.slice(0, 100) : "enterprise-contact";
   const convexUrl = process.env.CONVEX_URL;
   if (!convexUrl) {
-    return jsonResponse({ error: "Service unavailable" }, 503, cors);
+    return jsonResponse({ error: "Service unavailable" }, 503, { ...cors, "Cache-Control": "no-store" });
   }
   try {
     const client = new ConvexHttpClient(convexUrl);
@@ -5232,10 +5232,10 @@ async function handler(req) {
       source: safeSource
     });
     const emailSent = await sendNotificationEmail(safeName, email.trim(), safeOrg, safePhone, safeMsg);
-    return jsonResponse({ status: "sent", emailSent }, 200, cors);
+    return jsonResponse({ status: "sent", emailSent }, 200, { ...cors, "Cache-Control": "no-store" });
   } catch (err) {
     console.error("[contact] error:", err);
-    return jsonResponse({ error: "Failed to send message" }, 500, cors);
+    return jsonResponse({ error: "Failed to send message" }, 500, { ...cors, "Cache-Control": "no-store" });
   }
 }
 export {

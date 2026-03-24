@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0e14; color: #c8d8e8; padding: 40px; max-width: 900px; margin: auto; line-height: 1.7; font-size: 14px; }
+h1 { color: #fff; border-bottom: 2px solid #00d4ff; padding-bottom: 8px; }
+h2 { color: #00d4ff; margin-top: 32px; }
+h3 { color: #ff6b35; }
+code { background: #161d28; padding: 2px 6px; border-radius: 3px; font-size: 13px; color: #00d4ff; }
+pre { background: #10161f; border: 1px solid #1e2a38; border-radius: 6px; padding: 16px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+th { background: #161d28; color: #00d4ff; padding: 10px 14px; text-align: left; border: 1px solid #1e2a38; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+td { padding: 8px 14px; border: 1px solid #1e2a38; font-size: 13px; }
+tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+a { color: #00d4ff; }
+strong { color: #fff; }
+ul { padding-left: 20px; }
+li { margin: 4px 0; }
+hr { border: none; border-top: 1px solid #1e2a38; margin: 32px 0; }
+blockquote { border-left: 3px solid #00d4ff; padding-left: 16px; color: #5a7a9a; }
+</style></head><body><h1>Build Plan: 25 Free Toronto Data Layers — Expanded Set (Round 2)</h1>
+<p><strong>Variant:</strong> <code>toronto</code> (toronto.worldmonitor.app)
+<strong>Date:</strong> 2026-03-24
+<strong>Supersedes:</strong> Overlaps with <code>PLAN-toronto-20-layers.md</code> — see cross-reference below</p>
+<hr>
+<h2>Cross-Reference with Round 1 Plan</h2>
+<p>The 25-layer doc overlaps significantly with the 20-layer doc. This plan covers <strong>only the net-new layers</strong> not already ticketed in Round 1.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Layer</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Already in Round 1</strong></td>
+<td>EV Charging Stations</td>
+<td>T2-1</td>
+</tr>
+<tr>
+<td><strong>Already in Round 1</strong></td>
+<td>Cycling Network (Bikeways)</td>
+<td>T2-2</td>
+</tr>
+<tr>
+<td><strong>Already in Round 1</strong></td>
+<td>Ravine Protection Areas</td>
+<td>T2-3</td>
+</tr>
+<tr>
+<td><strong>Already in Round 1</strong></td>
+<td>Green Roof Permits</td>
+<td>T3-5</td>
+</tr>
+<tr>
+<td><strong>Already exists in codebase</strong></td>
+<td>DineSafe</td>
+<td><code>toronto-dinesafe.ts</code> + panel</td>
+</tr>
+<tr>
+<td><strong>Already exists</strong></td>
+<td>Building Permits</td>
+<td><code>toronto-permits.ts</code> + panel</td>
+</tr>
+<tr>
+<td><strong>Already exists</strong></td>
+<td>311 Service Requests</td>
+<td><code>toronto-311.ts</code> + panel</td>
+</tr>
+<tr>
+<td><strong>Already exists</strong></td>
+<td>Toronto Earthquakes</td>
+<td><code>canada-earthquakes.ts</code></td>
+</tr>
+<tr>
+<td><strong>Already exists</strong></td>
+<td>TRCA Floods</td>
+<td><code>trca-floods.ts</code> + panel</td>
+</tr>
+<tr>
+<td><strong>Already exists</strong></td>
+<td>Ontario Weather Alerts</td>
+<td><code>eccc-alerts.ts</code> + Edge Function</td>
+</tr>
+<tr>
+<td><strong>Already exists</strong></td>
+<td>Ontario Roads (511)</td>
+<td><code>ontario-roads.ts</code> + <code>ontario-511.js</code></td>
+</tr>
+<tr>
+<td><strong>Already exists</strong></td>
+<td>Shelter Capacity</td>
+<td><code>toronto-shelter.ts</code> + <code>ShelterGaugePanel</code></td>
+</tr>
+<tr>
+<td><strong>Already exists</strong></td>
+<td>Toronto Fire</td>
+<td><code>toronto-fire.ts</code> + Edge Function</td>
+</tr>
+<tr>
+<td><strong>Already exists</strong></td>
+<td>TTC Health</td>
+<td><code>ttc-health.ts</code> (GTFS-RT alerts)</td>
+</tr>
+<tr>
+<td><strong>Already exists</strong></td>
+<td>Air Traffic (OpenSky)</td>
+<td><code>toronto-airtraffic.ts</code> + <code>opensky.js</code></td>
+</tr>
+<tr>
+<td><strong>Already exists</strong></td>
+<td>Toronto Crime</td>
+<td><code>toronto-crime.ts</code> + <code>TorontoCrimePanel</code></td>
+</tr>
+<tr>
+<td><strong>Already exists</strong></td>
+<td>Development Pipeline</td>
+<td><code>toronto-development.ts</code> + panel</td>
+</tr>
+<tr>
+<td><strong>NEW — this plan</strong></td>
+<td>TTC Real-Time Vehicle Positions</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>TTC Service Alerts (GTFS-RT)</td>
+<td>Enhancement to TTC Health</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Toronto Police Crime Incidents (MCI ArcGIS)</td>
+<td>Net new (differs from existing crime panel)</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>TPS Police Division Boundaries</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>City Council Votes &amp; Ward Boundaries</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Election Data &amp; Polling Locations</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Neighbourhood Profiles &amp; Demographics</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Federal Riding Boundaries</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Court &amp; Judicial Facility Locations</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>ML&amp;S Violations (beyond DineSafe)</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Traffic Signals &amp; Signal Locations</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Road Construction &amp; Closures</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Toronto Hydro Power Outages</td>
+<td>Net new (reverse-engineer)</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>ECCC Air Quality Health Index (AQHI)</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Flooding Composite (311 + TRCA)</td>
+<td>Enhancement to existing floods</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Tree Canopy &amp; Green Space GIS</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Great Lakes Water Levels (Lake Ontario)</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Ontario Wildfire &amp; Fire Risk</td>
+<td>Net new (enhancement to existing <code>fires</code>)</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Toronto Urban Heat Island</td>
+<td>Net new (research data)</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Bike Share (GBFS)</td>
+<td>Net new</td>
+</tr>
+<tr>
+<td><strong>NEW</strong></td>
+<td>Protest &amp; Demonstration Events</td>
+<td>Net new (custom pipeline)</td>
+</tr>
+<tr>
+<td><strong>SKIPPED</strong></td>
+<td>Green P Parking</td>
+<td>Already in Round 1 (T1-4)</td>
+</tr>
+<tr>
+<td><strong>SKIPPED</strong></td>
+<td>Development Applications</td>
+<td>Retired, no API</td>
+</tr>
+<tr>
+<td><strong>SKIPPED</strong></td>
+<td>Watermain Breaks</td>
+<td>Data frozen 2016</td>
+</tr>
+<tr>
+<td><strong>SKIPPED</strong></td>
+<td>Solid Waste Schedule</td>
+<td>Not geospatial</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Net-New Layers: 20 Tickets</h2>
+<h3>Tier 1 — Plug &amp; Play (native GeoJSON/JSON, CORS, minimal work)</h3>
+<p><strong>Effort: ~3–4 days</strong> | 5 layers</p>
+<hr>
+<h3>N1: Toronto Police Crime Incidents (MCI ArcGIS)</h3>
+<p><strong>Type:</strong> Dynamic Data Layer | <strong>Priority:</strong> P1
+<strong>Source:</strong> TPS ArcGIS Portal — <code>services.arcgis.com/.../Major_Crime_Indicators_Open_Data/FeatureServer/0</code>
+<strong>Endpoint:</strong> <code>https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/Major_Crime_Indicators_Open_Data/FeatureServer/0/query?where=1%3D1&amp;outFields=*&amp;f=geojson</code>
+<strong>Format:</strong> GeoJSON (native) | <strong>CORS:</strong> Supported | <strong>Refresh:</strong> Quarterly</p>
+<p><strong>Why this is different from existing <code>toronto-crime.ts</code>:</strong> Existing crime service shows aggregated category deltas in a panel. This adds actual <strong>point-level crime incident markers on the map</strong> with MCI category, date, and neighbourhood — enabling spatial heatmap/cluster visualization.</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>src/services/toronto-crime-incidents.ts</code> — fetch from TPS ArcGIS, LocalStorage cache</li>
+<li><input disabled="" type="checkbox"> Create <code>api/toronto-crime-incidents.js</code> — Edge Function with Redis cache (24h TTL)</li>
+<li><input disabled="" type="checkbox"> Add <code>crimeIncidents: boolean</code> to <code>MapLayers</code> in <code>src/types/index.ts</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>true</code>, others: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>ScatterplotLayer</code> with color by MCI_CATEGORY (Assault=red, B&amp;E=orange, Auto Theft=yellow, Robbery=purple, Theft Over=blue)</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG circles</li>
+<li><input disabled="" type="checkbox"> Add click handler → popup with date, category, division, neighbourhood</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 6-hour interval (quarterly data, poll conservatively)</li>
+<li><input disabled="" type="checkbox"> Add help text with category color legend</li>
+<li><input disabled="" type="checkbox"> Add time filter (last 30 days, 90 days, 1 year) in layer options</li>
+</ul>
+<p><strong>Gotcha:</strong> Locations deliberately offset to nearest road intersection for privacy. Document in help text.</p>
+<p><strong>Rollback:</strong> Remove layer key, delete service + Edge Function, remove map rendering.</p>
+<hr>
+<h3>N2: TPS Police Division Boundaries</h3>
+<p><strong>Type:</strong> Geographic Feature Layer | <strong>Priority:</strong> P2
+<strong>Source:</strong> TPS ArcGIS Portal
+<strong>Endpoint:</strong> <code>https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/Police_Divisions/FeatureServer/0/query?where=1%3D1&amp;outFields=*&amp;f=geojson</code>
+<strong>Format:</strong> GeoJSON (native) | <strong>CORS:</strong> Supported | <strong>Refresh:</strong> Static</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>src/services/police-divisions.ts</code> — fetch ArcGIS GeoJSON, cache locally</li>
+<li><input disabled="" type="checkbox"> Add <code>policeDivisions: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>GeoJsonLayer</code> with semi-transparent blue fill, division labels</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — D3 SVG polygons</li>
+<li><input disabled="" type="checkbox"> Click → popup with division name, area name</li>
+<li><input disabled="" type="checkbox"> Joinable with N1 (crime incidents) via DIVISION field for aggregate stats</li>
+<li><input disabled="" type="checkbox"> Add help text: &quot;16 TPS divisions — click for area info&quot;</li>
+</ul>
+<hr>
+<h3>N3: Federal Riding Boundaries</h3>
+<p><strong>Type:</strong> Geographic Feature Layer | <strong>Priority:</strong> P3
+<strong>Source:</strong> Elections Canada Open Data
+<strong>Format:</strong> Shapefile → GeoJSON (pre-process) | <strong>CORS:</strong> N/A (static download) | <strong>Refresh:</strong> Static (redistricting cycle)</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Download SHP from Elections Canada, filter to Ontario + Toronto bounding box, convert to GeoJSON (one-time, commit to <code>src/config/</code>)</li>
+<li><input disabled="" type="checkbox"> Create <code>src/config/federal-ridings.ts</code> — typed interface + static GeoJSON data</li>
+<li><input disabled="" type="checkbox"> Add <code>federalRidings: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code>, full variant: maybe <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>GeoJsonLayer</code> with light boundary lines</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — D3 SVG paths</li>
+<li><input disabled="" type="checkbox"> Add riding name labels</li>
+<li><input disabled="" type="checkbox"> Add help text: &quot;343 federal electoral districts (2023 Representation Order)&quot;</li>
+</ul>
+<p><strong>Gotcha:</strong> Nationwide file (~10MB). Must filter + reproject from NAD83 Lambert to WGS84. Use <code>ogr2ogr</code> or <code>mapshaper</code> for preprocessing.</p>
+<hr>
+<h3>N4: Court &amp; Judicial Facility Locations</h3>
+<p><strong>Type:</strong> Static Asset Layer | <strong>Priority:</strong> P4
+<strong>Source:</strong> Manual compilation from ontario.ca/courts + ontariocourts.ca
+<strong>Format:</strong> Hand-built GeoJSON | <strong>CORS:</strong> N/A | <strong>Refresh:</strong> Rarely</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Manually compile ~15 Toronto-area court locations into <code>src/config/court-facilities.ts</code></li>
+<li><input disabled="" type="checkbox"> Fields: name, address, court type (Superior, Provincial, Small Claims, Family), lat/lng</li>
+<li><input disabled="" type="checkbox"> Add <code>courtFacilities: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>IconLayer</code> with ⚖️ icon</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG markers</li>
+<li><input disabled="" type="checkbox"> Click → popup with court name, type, address</li>
+</ul>
+<p><strong>Effort:</strong> ~1 hour for data compilation. Small layer.</p>
+<hr>
+<h3>N5: ML&amp;S Investigation Activity</h3>
+<p><strong>Type:</strong> Dynamic Data Layer | <strong>Priority:</strong> P3
+<strong>Source:</strong> Toronto CKAN — <code>municipal-licensing-and-standards-investigation-activity</code>
+<strong>Endpoint:</strong> CKAN datastore_search + ArcGIS
+<strong>Format:</strong> JSON/CSV | <strong>CORS:</strong> CKAN needs proxy | <strong>Refresh:</strong> Monthly</p>
+<p><strong>Note:</strong> This extends beyond DineSafe to cover bylaw enforcement (noise, zoning, property standards, etc.).</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>api/mls-investigations.js</code> — Edge Function proxy to CKAN datastore</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/mls-investigations.ts</code> — typed interface, geocode addresses via <code>toronto-geocode.js</code></li>
+<li><input disabled="" type="checkbox"> Add <code>mlsInvestigations: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>ScatterplotLayer</code> colored by investigation type</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG circles</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 7-day interval</li>
+<li><input disabled="" type="checkbox"> Add help text: &quot;Bylaw enforcement activity — noise, property standards, zoning&quot;</li>
+</ul>
+<hr>
+<h3>Tier 2 — API Integration or Moderate Work</h3>
+<p><strong>Effort: ~4–5 days</strong> | 5 layers</p>
+<hr>
+<h3>N6: TTC Real-Time Vehicle Positions (GTFS-RT)</h3>
+<p><strong>Type:</strong> Dynamic Data Layer | <strong>Priority:</strong> P1 (highest-value new layer)
+<strong>Source:</strong> TTC GTFS-RT — <code>https://gtfsrt.ttc.ca/vehiclepositions</code>
+<strong>Format:</strong> Protocol Buffers (binary) | <strong>CORS:</strong> N/A (protobuf) | <strong>Refresh:</strong> 15–30 seconds</p>
+<p><strong>Why P1:</strong> This is the single best real-time feed in the Toronto data ecosystem. Live moving vehicles on the map.</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Add <code>gtfs-rt-bindings</code> dependency (JS protobuf parser)</li>
+<li><input disabled="" type="checkbox"> Create <code>api/ttc-vehicles.js</code> — Edge Function: fetch protobuf, decode to JSON, cache 30s Redis TTL, return vehicle positions array</li>
+<li><input disabled="" type="checkbox"> Requires matching against static GTFS schedule for route names — fetch <code>stops.txt</code> and <code>routes.txt</code> at startup</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/ttc-vehicles.ts</code> — typed interface (vehicle_id, trip_id, route_id, lat, lng, bearing, speed, timestamp)</li>
+<li><input disabled="" type="checkbox"> Add <code>ttcVehicles: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>true</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>ScatterplotLayer</code> with heading arrow, color by route type (subway=red, streetcar=green, bus=blue)</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG circles (simplified for mobile)</li>
+<li><input disabled="" type="checkbox"> Wire into <code>RefreshScheduler</code> — 15-second polling (watch Redis cache TTL)</li>
+<li><input disabled="" type="checkbox"> Add help text: &quot;Real-time TTC vehicle positions — buses and streetcars. Updated every 15s.&quot;</li>
+<li><input disabled="" type="checkbox"> Add zoom threshold (show at zoom &gt;= 13 — too dense at city-wide zoom)</li>
+<li><input disabled="" type="checkbox"> Optionally: filter by route ID in layer options</li>
+</ul>
+<p><strong>Architecture note:</strong> Protobuf decoding MUST happen server-side (Edge Function). Browser cannot parse protobuf directly from CORS-blocked endpoint.</p>
+<p><strong>Rollback:</strong> Remove layer + Edge Function + dependency.</p>
+<hr>
+<h3>N7: ECCC Air Quality Health Index (AQHI)</h3>
+<p><strong>Type:</strong> Dynamic Data Layer | <strong>Priority:</strong> P2
+<strong>Source:</strong> ECCC OGC API
+<strong>Endpoint:</strong> <code>https://api.weather.gc.ca/collections/aqhi-observations-realtime</code>
+<strong>Format:</strong> GeoJSON via OGC API | <strong>CORS:</strong> Likely supported | <strong>Refresh:</strong> Hourly</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>src/services/aqhi.ts</code> — fetch OGC API, filter for Toronto stations (onaq-001, onaq-018), cache</li>
+<li><input disabled="" type="checkbox"> Create <code>api/aqhi.js</code> — Edge Function with Redis cache (1h TTL)</li>
+<li><input disabled="" type="checkbox"> Add <code>aqhi: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>true</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>ScatterplotLayer</code> with color by AQHI category (1-3=green, 4-6=yellow, 7-10=orange, 10+=red), size by value</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG circles</li>
+<li><input disabled="" type="checkbox"> Click → popup with station name, AQHI value, category, timestamp</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — hourly</li>
+<li><input disabled="" type="checkbox"> Add help text: &quot;Air Quality Health Index — hourly readings. 1=Low risk, 10+=Very High risk.&quot;</li>
+<li><input disabled="" type="checkbox"> Optionally: panel with all Toronto station readings + trend chart</li>
+<li><input disabled="" type="checkbox"> Optionally: IDW interpolation for continuous AQHI surface (advanced)</li>
+</ul>
+<p><strong>Gotcha:</strong> Limited station density in Toronto. Note in help text that values are point observations, not area averages.</p>
+<hr>
+<h3>N8: Great Lakes Water Levels (Lake Ontario at Toronto)</h3>
+<p><strong>Type:</strong> Dynamic Data Layer | <strong>Priority:</strong> P2
+<strong>Source:</strong> Canadian Hydrographic Service IWLS API
+<strong>Endpoint:</strong> <code>https://api-iwls.dfo-mpo.gc.ca/api/v1/stations/13320/data</code> (Toronto station)
+<strong>Format:</strong> JSON | <strong>CORS:</strong> Likely supported | <strong>Refresh:</strong> 3–5 minutes</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>src/services/lake-ontario-level.ts</code> — fetch time series from CHS, cache recent readings</li>
+<li><input disabled="" type="checkbox"> Create <code>api/lake-ontario-level.js</code> — Edge Function with Redis cache (5min TTL)</li>
+<li><input disabled="" type="checkbox"> Add <code>lakeOntarioLevel: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — single marker at station 13320 with tooltip showing current level</li>
+<li><input disabled="" type="checkbox"> Click → popup with water level (m), datum reference (IGLD 1985), timestamp</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 5-minute interval</li>
+<li><input disabled="" type="checkbox"> Implement retry/backoff on 429 (CHS rate limits)</li>
+<li><input disabled="" type="checkbox"> Add help text: &quot;Lake Ontario water level — station 13320. Reference: IGLD 1985 datum.&quot;</li>
+</ul>
+<p><strong>Note:</strong> Extends existing <code>toronto-water-level.ts</code> (which likely covers a different source). Coordinate with existing water level panel.</p>
+<hr>
+<h3>N9: Neighbourhood Profiles &amp; Demographics (Choropleth)</h3>
+<p><strong>Type:</strong> Geographic Feature Layer | <strong>Priority:</strong> P2
+<strong>Source:</strong> Toronto CKAN — <code>neighbourhoods</code> (boundaries) + <code>neighbourhood-profiles</code> (2021 Census data)
+<strong>Format:</strong> GeoJSON (boundaries) + CSV/XLSX (profiles) | <strong>CORS:</strong> CKAN proxy needed | <strong>Refresh:</strong> Static (5-year census cycle)</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Download neighbourhood boundary GeoJSON from CKAN, preprocess into <code>src/config/neighbourhoods.ts</code></li>
+<li><input disabled="" type="checkbox"> Pre-process key demographic metrics from profiles CSV (population, median income, dwelling types, etc.) into a lookup by neighbourhood ID</li>
+<li><input disabled="" type="checkbox"> Add <code>neighbourhoods: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>true</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>GeoJsonLayer</code> with choropleth fill (selectable metric: population density, median income, etc.)</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG polygons with fill</li>
+<li><input disabled="" type="checkbox"> Add metric selector in layer options</li>
+<li><input disabled="" type="checkbox"> Click → popup with full neighbourhood profile stats</li>
+<li><input disabled="" type="checkbox"> Add help text: &quot;2021 Census neighbourhood profiles — 158 neighbourhoods. Select metric from layer options.&quot;</li>
+</ul>
+<p><strong>Gotcha:</strong> Profiles CSV has 2,600+ columns. Pre-process server-side, select ~20 useful metrics.</p>
+<hr>
+<h3>N10: City Council Votes &amp; Ward Boundaries</h3>
+<p><strong>Type:</strong> Geographic Feature + Tabular Data | <strong>Priority:</strong> P3
+<strong>Source:</strong> CKAN — <code>members-of-toronto-city-council-voting-record</code> + <code>city-wards</code>
+<strong>Format:</strong> GeoJSON (wards) + Datastore JSON (votes) | <strong>CORS:</strong> CKAN proxy | <strong>Refresh:</strong> Per council meeting</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Download 25-ward boundary GeoJSON from CKAN, preprocess into <code>src/config/city-wards.ts</code></li>
+<li><input disabled="" type="checkbox"> Create <code>api/council-votes.js</code> — Edge Function proxy to CKAN datastore for voting records</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/council-votes.ts</code> — fetch recent votes, join to ward boundaries</li>
+<li><input disabled="" type="checkbox"> Add <code>cityWards: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>GeoJsonLayer</code> for ward boundaries, color by recent vote alignment</li>
+<li><input disabled="" type="checkbox"> Click → popup with councillor name, recent votes</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 24-hour interval</li>
+<li><input disabled="" type="checkbox"> Add help text: &quot;25 city wards with council voting records (2022–2026 term)&quot;</li>
+</ul>
+<hr>
+<h3>Tier 3 — Significant Preprocessing / Reverse Engineering</h3>
+<p><strong>Effort: ~5–7 days</strong> | 10 layers</p>
+<hr>
+<h3>N11: Road Construction &amp; Closures (Reverse-Engineered)</h3>
+<p><strong>Type:</strong> Dynamic Data Layer | <strong>Priority:</strong> P2
+<strong>Source:</strong> City of Toronto Road Restrictions Map (RoDARS backend)
+<strong>Format:</strong> JSON (reverse-engineered XHR endpoint) | <strong>CORS:</strong> City servers | <strong>Refresh:</strong> 60–300 seconds</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Reverse-engineer the backend JSON endpoint from the Road Restrictions Map XHR requests</li>
+<li><input disabled="" type="checkbox"> Create <code>api/road-restrictions.js</code> — Edge Function proxy with aggressive caching (5min Redis)</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/road-restrictions.ts</code> — typed interface (restriction type, street, intersections, dates, impact)</li>
+<li><input disabled="" type="checkbox"> Add <code>roadRestrictions: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>true</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>ScatterplotLayer</code> for point restrictions, <code>PathLayer</code> for linear closures</li>
+<li><input disabled="" type="checkbox"> Color by type: construction=orange, event=purple, closure=red</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 5-minute interval</li>
+<li><input disabled="" type="checkbox"> Add help text: &quot;~400+ active road restrictions. Updated daily for planned, near-real-time for RESCU incidents.&quot;</li>
+<li><input disabled="" type="checkbox"> <strong>Fragility warning:</strong> Reverse-engineered endpoint may change without notice. Build resilient fallback (show last cached data on error).</li>
+</ul>
+<p><strong>Note:</strong> Critical for FIFA World Cup 2026 (May–July 2026 in Toronto) — expect 2-3x normal restriction volume.</p>
+<hr>
+<h3>N12: Toronto Hydro Power Outages (Reverse-Engineered)</h3>
+<p><strong>Type:</strong> Dynamic Data Layer | <strong>Priority:</strong> P3
+<strong>Source:</strong> Toronto Hydro Outage Map (<code>outagemap.torontohydro.com</code>)
+<strong>Format:</strong> JSON (reverse-engineered from JS app XHR) | <strong>CORS:</strong> Unknown | <strong>Refresh:</strong> 5 minutes</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Reverse-engineer the internal JSON endpoint from Toronto Hydro&#39;s outage map</li>
+<li><input disabled="" type="checkbox"> Create <code>api/toronto-hydro-outages.js</code> — Edge Function proxy with Redis cache (5min TTL)</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/toronto-hydro-outages.ts</code> — typed interface (outage area, customers affected, cause, ETA, status)</li>
+<li><input disabled="" type="checkbox"> Add <code>powerOutages: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>true</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>PolygonLayer</code> or <code>ScatterplotLayer</code> for outage zones</li>
+<li><input disabled="" type="checkbox"> Color: red (active), orange (restoring), green (resolved)</li>
+<li><input disabled="" type="checkbox"> Click → popup with affected customers, cause, estimated restoration</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 5-minute interval</li>
+<li><input disabled="" type="checkbox"> Implement graceful degradation: if endpoint changes, show last cached data with &quot;data may be stale&quot; warning</li>
+<li><input disabled="" type="checkbox"> <strong>ToS risk:</strong> Scraping may violate ToS. Document risk. Consider using <code>poweroutage.com/ca/province/ontario</code> as alternative.</li>
+</ul>
+<hr>
+<h3>N13: Traffic Signal Locations</h3>
+<p><strong>Type:</strong> Static Asset Layer | <strong>Priority:</strong> P3
+<strong>Source:</strong> Toronto CKAN — <code>traffic-signals-tabular</code>
+<strong>Format:</strong> CSV/JSON | <strong>CORS:</strong> CKAN proxy | <strong>Refresh:</strong> Static</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>api/traffic-signals.js</code> — Edge Function proxy to CKAN</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/traffic-signals.ts</code> — fetch signal locations, geocode if needed</li>
+<li><input disabled="" type="checkbox"> Add <code>trafficSignals: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>ScatterplotLayer</code> with small dots</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 30-day refresh</li>
+<li><input disabled="" type="checkbox"> Note: no real-time congestion data available publicly (see gotcha)</li>
+</ul>
+<hr>
+<h3>N14: Tree Canopy &amp; Green Space GIS</h3>
+<p><strong>Type:</strong> Geographic / Raster Layer | <strong>Priority:</strong> P4
+<strong>Source:</strong> Toronto CKAN — <code>forest-and-land-cover</code>
+<strong>Format:</strong> Raster (GeoPackage) | <strong>CORS:</strong> N/A | <strong>Refresh:</strong> Static (next update ~2028)</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Download Forest &amp; Land Cover GeoPackage, pre-process into vector tileset (Tippecanoe) or static GeoJSON summary</li>
+<li><input disabled="" type="checkbox"> For web rendering, create simplified canopy percentage per neighbourhood polygon (join with N9 boundaries)</li>
+<li><input disabled="" type="checkbox"> Add <code>treeCanopy: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>GeoJsonLayer</code> with green choropleth (canopy % per area)</li>
+<li><input disabled="" type="checkbox"> If full raster needed: serve as XYZ tile layer from CDN</li>
+<li><input disabled="" type="checkbox"> Add help text: &quot;Forest &amp; Land Cover (2018 snapshot). Tree canopy % by area.&quot;</li>
+</ul>
+<p><strong>Gotcha:</strong> Raster files are large. Browser cannot render raw GeoPackage. Must pre-process to vector tiles or simplified polygons. Street tree inventory dataset is &quot;Retired&quot; — confirm current source.</p>
+<hr>
+<h3>N15: Ontario Wildfire &amp; Fire Risk Zones</h3>
+<p><strong>Type:</strong> Dynamic Data Layer | <strong>Priority:</strong> P2 (seasonal)
+<strong>Source:</strong> CWFIS / NRCan — <code>cwfis.cfs.nrcan.gc.ca</code>
+<strong>Endpoints:</strong></p>
+<ul>
+<li>WMS: <code>https://cwfis.cfs.nrcan.gc.ca/geoserver/public/wms?layers=activefires_current</code></li>
+<li>CSV: <code>https://cwfis.cfs.nrcan.gc.ca/downloads/activefires/</code>
+<strong>Format:</strong> WMS tiles + CSV | <strong>CORS:</strong> Varies | <strong>Refresh:</strong> Daily (fires), 15-60 min (hotspots)</li>
+</ul>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>api/wildfire-ontario.js</code> — Edge Function: fetch active fires CSV, filter for Ontario bounding box, parse lat/lng</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/wildfire-ontario.ts</code> — typed interface (fire name, agency, lat, lng, size ha, stage)</li>
+<li><input disabled="" type="checkbox"> Add <code>ontarioWildfires: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (full: <code>true</code>, Toronto: <code>true</code> — smoke/affects GTA)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>ScatterplotLayer</code> with fire icon, size by area, color by stage (of fire=red, being held=orange, under control=yellow)</li>
+<li><input disabled="" type="checkbox"> Click → popup with fire name, size, agency, start date</li>
+<li><input disabled="" type="checkbox"> Optionally: add WMS tile overlay for fire danger index raster</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 1-hour interval</li>
+<li><input disabled="" type="checkbox"> Add help text: &quot;Active Ontario wildfires + CWFIS fire danger. May affect GTA air quality.&quot;</li>
+</ul>
+<p><strong>Note:</strong> Extends existing <code>wildfires</code> layer which covers global fires. This adds Ontario-specific detail.</p>
+<hr>
+<h3>N16: Flooding Composite (Enhancement)</h3>
+<p><strong>Type:</strong> Dynamic + Geographic | <strong>Priority:</strong> P2
+<strong>Source:</strong> Multiple — 311 flooding complaints + TRCA flood zones + basement study areas</p>
+<p><strong>This enhances existing <code>ontario_floods</code> / <code>trca-floods.ts</code>:</strong></p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Extend <code>api/trca-floods.js</code> to also fetch TRCA flood plain polygons from ArcGIS Hub</li>
+<li><input disabled="" type="checkbox"> Add 311 flooding complaint overlay — filter 311 service requests for &quot;Flooding&quot; / &quot;Basement Flooding&quot; types</li>
+<li><input disabled="" type="checkbox"> Geocode 311 flooding complaints (address-based) via <code>toronto-geocode.js</code></li>
+<li><input disabled="" type="checkbox"> Render flood zone polygons (static) + complaint points (dynamic) in separate sub-layers</li>
+<li><input disabled="" type="checkbox"> Add complaint spike detection — alert when 311 flooding complaints exceed baseline (e.g., during storms)</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — complaint overlay 1-hour, flood zone polygons 30-day</li>
+</ul>
+<hr>
+<h3>N17: Election Data &amp; Polling Locations</h3>
+<p><strong>Type:</strong> Static Asset Layer | <strong>Priority:</strong> P4 (event-driven)
+<strong>Source:</strong> Mixed — Elections Canada SHP, City CKAN voter stats, polling station web pages (scrape)</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Federal ridings: reuse N3 boundary data</li>
+<li><input disabled="" type="checkbox"> Create <code>api/election-data.js</code> — Edge Function: fetch CKAN voter statistics, parse</li>
+<li><input disabled="" type="checkbox"> Polling locations: scrape City election page or create manual GeoJSON (~500+ locations)</li>
+<li><input disabled="" type="checkbox"> Add <code>electionData: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (<code>false</code> — enable during election periods)</li>
+<li><input disabled="" type="checkbox"> Render ridings + polling station markers</li>
+<li><input disabled="" type="checkbox"> Auto-show during election periods (Oct 2025 municipal, future federal)</li>
+</ul>
+<p><strong>Note:</strong> Low ongoing value, high value during election periods. Consider as a seasonal feature toggle.</p>
+<hr>
+<h3>N18: Protest &amp; Demonstration Events (Custom Pipeline)</h3>
+<p><strong>Type:</strong> Dynamic Data Layer | <strong>Priority:</strong> P3
+<strong>Source:</strong> Custom pipeline — ACLED, GDELT, TPS news releases, City events calendar</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Create <code>api/protests.js</code> — Edge Function: aggregate from multiple sources<ul>
+<li>ACLED API (registration required) — filter for Toronto protest events</li>
+<li>GDELT events database — filter by location=Toronto, event type=protest</li>
+<li>TPS news releases — scrape <code>/media-centre/news-releases/</code> for demonstration-related posts</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/protests.ts</code> — normalize events from multiple sources</li>
+<li><input disabled="" type="checkbox"> Add <code>protests: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>ScatterplotLayer</code> with protest icon</li>
+<li><input disabled="" type="checkbox"> Click → popup with event description, date, source, attendees (if available)</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 1-hour interval</li>
+<li><input disabled="" type="checkbox"> <strong>Warning:</strong> ACLED requires registration. GDELT coverage is uneven. Low confidence on completeness.</li>
+</ul>
+<hr>
+<h3>N19: Bike Share (GBFS)</h3>
+<p><strong>Type:</strong> Dynamic Data Layer | <strong>Priority:</strong> P3
+<strong>Source:</strong> Bike Share Toronto / PBSC — GBFS feed
+<strong>Format:</strong> JSON (GBFS v2.x) | <strong>CORS:</strong> Likely supported | <strong>Refresh:</strong> 1–5 minutes</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Locate Bike Share Toronto GBFS endpoint (standard: <code>gbfs.{domain}/gbfs.json</code> → discovery → <code>station_information.json</code> + <code>station_status.json</code>)</li>
+<li><input disabled="" type="checkbox"> Create <code>src/services/bike-share.ts</code> — fetch station info + live status, merge</li>
+<li><input disabled="" type="checkbox"> Create <code>api/bike-share.js</code> — Edge Function with Redis cache (2min TTL)</li>
+<li><input disabled="" type="checkbox"> Add <code>bikeShare: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>true</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>ScatterplotLayer</code> with size by bike count, color by availability (green=has bikes, red=empty, grey=offline)</li>
+<li><input disabled="" type="checkbox"> Render in <code>Map.ts</code> — SVG circles</li>
+<li><input disabled="" type="checkbox"> Add to <code>RefreshScheduler</code> — 2-minute interval</li>
+<li><input disabled="" type="checkbox"> Add help text: &quot;Live Bike Share Toronto station status — available bikes and docks.&quot;</li>
+<li><input disabled="" type="checkbox"> Add zoom threshold (zoom &gt;= 14)</li>
+</ul>
+<hr>
+<h3>N20: Toronto Urban Heat Island</h3>
+<p><strong>Type:</strong> Static / Research Layer | <strong>Priority:</strong> P4
+<strong>Source:</strong> U of T School of Cities, HealthyPlan.City, NRCan thermal studies
+<strong>Format:</strong> Research raster outputs (no standard API) | <strong>CORS:</strong> Varies | <strong>Refresh:</strong> Static snapshots</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Request or download heat vulnerability raster from U of T School of Cities</li>
+<li><input disabled="" type="checkbox"> Pre-process into vector tileset or simplified polygon GeoJSON</li>
+<li><input disabled="" type="checkbox"> Alternative: derive proxy UHI layer from tree canopy (N14) + land cover + building density</li>
+<li><input disabled="" type="checkbox"> Add <code>urbanHeatIsland: boolean</code> to <code>MapLayers</code></li>
+<li><input disabled="" type="checkbox"> Add defaults (Toronto: <code>false</code>)</li>
+<li><input disabled="" type="checkbox"> Render in <code>DeckGLMap.ts</code> — <code>GeoJsonLayer</code> with heat choropleth (blue=cool, red=hot)</li>
+<li><input disabled="" type="checkbox"> Add help text: &quot;Urban Heat Island vulnerability — research data snapshot. Not real-time.&quot;</li>
+<li><input disabled="" type="checkbox"> Document data provenance and date prominently</li>
+</ul>
+<p><strong>Risk:</strong> No official City API. Data access requires contacting research owners. Low reliability.</p>
+<hr>
+<h2>Enhancement Tickets (Existing Layers)</h2>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>E-5</strong> — TTC Health panel: Add vehicle position sub-layer (connect to N6 GTFS-RT)</li>
+<li><input disabled="" type="checkbox"> <strong>E-6</strong> — Toronto Crime panel: Add map point layer from N1 (MCI ArcGIS) alongside existing delta panel</li>
+<li><input disabled="" type="checkbox"> <strong>E-7</strong> — Existing <code>fires</code> layer: Add Ontario wildfire detail from N15 (CWFIS)</li>
+<li><input disabled="" type="checkbox"> <strong>E-8</strong> — TRCA Floods: Add flood zone polygons + 311 complaint overlay from N16</li>
+<li><input disabled="" type="checkbox"> <strong>E-9</strong> — Weather Alerts: Add AQHI station readings alongside ECCC alerts (connect to N7)</li>
+<li><input disabled="" type="checkbox"> <strong>E-10</strong> — Development Pipeline: Add Green Roof Permit data from Round 1 T3-5</li>
+</ul>
+<hr>
+<h2>Polling Interval Summary (Combined)</h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Interval</th>
+<th>Protocol</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TTC Vehicle Positions</td>
+<td>15 seconds</td>
+<td>Protobuf → JSON (server)</td>
+</tr>
+<tr>
+<td>OpenSky Flights (existing)</td>
+<td>15 seconds</td>
+<td>REST (existing)</td>
+</tr>
+<tr>
+<td>ECCC Weather Alerts (existing)</td>
+<td>1–5 min</td>
+<td>CAP-CP XML (existing)</td>
+</tr>
+<tr>
+<td>Ontario 511 (existing)</td>
+<td>30 seconds</td>
+<td>REST JSON (existing)</td>
+</tr>
+<tr>
+<td>Road Restrictions</td>
+<td>5 minutes</td>
+<td>Reverse-engineered JSON</td>
+</tr>
+<tr>
+<td>Toronto Hydro Outages</td>
+<td>5 minutes</td>
+<td>Reverse-engineered JSON</td>
+</tr>
+<tr>
+<td>CHS Lake Ontario Level</td>
+<td>5 minutes</td>
+<td>REST JSON</td>
+</tr>
+<tr>
+<td>Bike Share (GBFS)</td>
+<td>2 minutes</td>
+<td>GBFS JSON</td>
+</tr>
+<tr>
+<td>ECCC AQHI</td>
+<td>1 hour</td>
+<td>OGC API GeoJSON</td>
+</tr>
+<tr>
+<td>Wildfire Hotspots</td>
+<td>1 hour</td>
+<td>CSV + WMS tiles</td>
+</tr>
+<tr>
+<td>Crime Incidents (MCI)</td>
+<td>6 hours</td>
+<td>ArcGIS GeoJSON</td>
+</tr>
+<tr>
+<td>311 / Shelter / DineSafe (existing)</td>
+<td>1 hour</td>
+<td>CKAN datastore</td>
+</tr>
+<tr>
+<td>Neighbourhood Demographics</td>
+<td>30 days</td>
+<td>Static GeoJSON</td>
+</tr>
+<tr>
+<td>Tree Canopy</td>
+<td>Never</td>
+<td>Static raster/tiles</td>
+</tr>
+<tr>
+<td>Urban Heat Island</td>
+<td>Never</td>
+<td>Static raster/tiles</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Effort Estimate (Net-New Only)</h2>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Tickets</th>
+<th>Est. Days</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tier 1 (Plug &amp; Play)</td>
+<td>N1–N5</td>
+<td>3–4</td>
+</tr>
+<tr>
+<td>Tier 2 (API / Moderate)</td>
+<td>N6–N10</td>
+<td>4–5</td>
+</tr>
+<tr>
+<td>Tier 3 (Preprocess / Reverse-Engineer)</td>
+<td>N11–N20</td>
+<td>5–7</td>
+</tr>
+<tr>
+<td>Enhancements</td>
+<td>E-5–E-10</td>
+<td>2–3</td>
+</tr>
+<tr>
+<td><strong>Total (Round 2 net-new)</strong></td>
+<td><strong>20 + 6 enhancements</strong></td>
+<td><strong>~14–19 days</strong></td>
+</tr>
+</tbody></table>
+<p><strong>Combined with Round 1:</strong> ~26–34 days total for 32 new layers + 10 enhancements across both plans.</p>
+<hr>
+<h2>Implementation Order (Recommended)</h2>
+<p><strong>Week 1 — Highest impact:</strong></p>
+<ol>
+<li><strong>N6</strong> TTC Vehicle Positions (P1 — best real-time feed, high user value)</li>
+<li><strong>N1</strong> Crime Incidents MCI (P1 — map-level crime visualization)</li>
+<li><strong>N7</strong> ECCC AQHI (P2 — public health relevance)</li>
+<li><strong>N11</strong> Road Restrictions (P2 — FIFA 2026 prep)</li>
+</ol>
+<p><strong>Week 2 — Infrastructure &amp; context:</strong>
+5. <strong>N2</strong> TPS Division Boundaries (pairs with N1)
+6. <strong>N9</strong> Neighbourhood Demographics (choropleth value)
+7. <strong>N8</strong> Lake Ontario Water Level (complements existing water level panel)
+8. <strong>N15</strong> Ontario Wildfires (seasonal priority)
+9. <strong>N19</strong> Bike Share GBFS (high user interest)</p>
+<p><strong>Week 3 — Remaining civic layers:</strong>
+10. <strong>N5</strong> ML&amp;S Investigations
+11. <strong>N10</strong> Council Votes &amp; Wards
+12. <strong>N3</strong> Federal Riding Boundaries
+13. <strong>N16</strong> Flooding Composite (enhancement)
+14. <strong>N13</strong> Traffic Signals</p>
+<p><strong>Week 4 — Reverse-engineering &amp; research:</strong>
+15. <strong>N12</strong> Toronto Hydro Outages
+16. <strong>N18</strong> Protest Events (custom pipeline)
+17. <strong>N4</strong> Court Facilities (quick)
+18. <strong>N17</strong> Election Data
+19. <strong>N14</strong> Tree Canopy
+20. <strong>N20</strong> Urban Heat Island</p>
+<hr>
+<h2>Known Risks</h2>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Impact</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Road Restrictions endpoint changes</td>
+<td>N11 breaks</td>
+<td>Cache aggressively, graceful fallback</td>
+</tr>
+<tr>
+<td>Toronto Hydro blocks scraping</td>
+<td>N12 fails</td>
+<td>Use <code>poweroutage.com</code> as fallback</td>
+</tr>
+<tr>
+<td>GTFS-RT protobuf schema changes</td>
+<td>N6 breaks</td>
+<td>Pin gtfs-rt-bindings version, monitor</td>
+</tr>
+<tr>
+<td>ACLED/GDELT API changes or rate limits</td>
+<td>N18 unreliable</td>
+<td>Multiple source aggregation</td>
+</tr>
+<tr>
+<td>CKAN &quot;Retired&quot; datasets disappear</td>
+<td>Multiple layers</td>
+<td>Verify via <code>package_show</code> API before each build</td>
+</tr>
+<tr>
+<td>Research data unavailable (UHI)</td>
+<td>N20 blocked</td>
+<td>Derive proxy from canopy + land cover</td>
+</tr>
+<tr>
+<td>FIFA 2026 road restriction volume spike</td>
+<td>N11 performance</td>
+<td>Pre-scale Redis cache, add pagination</td>
+</tr>
+</tbody></table>
+</body></html>

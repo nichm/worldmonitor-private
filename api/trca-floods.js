@@ -228,7 +228,8 @@ async function handler(_req) {
       },
       200,
       {
-        "Cache-Control": `public, max-age=${CACHE_TTL}, s-maxage=${CACHE_TTL}, stale-while-revalidate=300`
+        "Cache-Control": `public, max-age=${CACHE_TTL}, s-maxage=${CACHE_TTL}, stale-while-revalidate=300`,
+        "Access-Control-Allow-Origin": "*"
       }
     );
   } catch (error) {
@@ -243,7 +244,8 @@ async function handler(_req) {
       },
       200,
       {
-        "Cache-Control": "public, max-age=30, stale-while-revalidate=10"
+        "Cache-Control": "public, max-age=30, stale-while-revalidate=10",
+        "Access-Control-Allow-Origin": "*"
       }
     );
   }

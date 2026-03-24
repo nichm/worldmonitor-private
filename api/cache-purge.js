@@ -130,38 +130,38 @@ async function timingSafeEqual(a, b) {
 async function handler(req) {
   const corsHeaders = getCorsHeaders(req, "POST, OPTIONS");
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return new Response(null, { status: 204, headers: { ...corsHeaders, "Cache-Control": "no-store" } });
   }
   if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405, corsHeaders);
+    return jsonResponse({ error: "Method not allowed" }, 405, { ...corsHeaders, "Cache-Control": "no-store" });
   }
   const auth = req.headers.get("authorization") || "";
   const secret = process.env.RELAY_SHARED_SECRET;
   if (!secret || !await timingSafeEqual(auth, `Bearer ${secret}`)) {
-    return jsonResponse({ error: "Unauthorized" }, 401, corsHeaders);
+    return jsonResponse({ error: "Unauthorized" }, 401, { ...corsHeaders, "Cache-Control": "no-store" });
   }
   let body;
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, 422, corsHeaders);
+    return jsonResponse({ error: "Invalid JSON body" }, 422, { ...corsHeaders, "Cache-Control": "no-store" });
   }
   const { keys: explicitKeys, patterns, dryRun = false } = body || {};
   const hasKeys = Array.isArray(explicitKeys) && explicitKeys.length > 0;
   const hasPatterns = Array.isArray(patterns) && patterns.length > 0;
   if (!hasKeys && !hasPatterns) {
-    return jsonResponse({ error: 'At least one of "keys" or "patterns" required' }, 422, corsHeaders);
+    return jsonResponse({ error: 'At least one of "keys" or "patterns" required' }, 422, { ...corsHeaders, "Cache-Control": "no-store" });
   }
   if (hasKeys && explicitKeys.length > MAX_EXPLICIT_KEYS) {
-    return jsonResponse({ error: `"keys" exceeds max of ${MAX_EXPLICIT_KEYS}` }, 422, corsHeaders);
+    return jsonResponse({ error: `"keys" exceeds max of ${MAX_EXPLICIT_KEYS}` }, 422, { ...corsHeaders, "Cache-Control": "no-store" });
   }
   if (hasPatterns && patterns.length > MAX_PATTERNS) {
-    return jsonResponse({ error: `"patterns" exceeds max of ${MAX_PATTERNS}` }, 422, corsHeaders);
+    return jsonResponse({ error: `"patterns" exceeds max of ${MAX_PATTERNS}` }, 422, { ...corsHeaders, "Cache-Control": "no-store" });
   }
   if (hasPatterns) {
     for (const p of patterns) {
       if (typeof p !== "string" || !p.endsWith("*") || p === "*") {
-        return jsonResponse({ error: `Invalid pattern "${p}": must end with "*" and cannot be bare "*"` }, 422, corsHeaders);
+        return jsonResponse({ error: `Invalid pattern "${p}": must end with "*" and cannot be bare "*"` }, 422, { ...corsHeaders, "Cache-Control": "no-store" });
       }
     }
   }
@@ -194,11 +194,11 @@ async function handler(req) {
   const ts = (/* @__PURE__ */ new Date()).toISOString();
   if (dryRun) {
     console.log("[cache-purge]", { mode: "dry-run", matched: keyList.length, deleted: 0, truncated, dryRun: true, ip, ts });
-    return jsonResponse({ matched: keyList.length, deleted: 0, keys: keyList, dryRun: true, truncated }, 200, corsHeaders);
+    return jsonResponse({ matched: keyList.length, deleted: 0, keys: keyList, dryRun: true, truncated }, 200, { ...corsHeaders, "Cache-Control": "no-store" });
   }
   if (keyList.length === 0) {
     console.log("[cache-purge]", { mode: "purge", matched: 0, deleted: 0, truncated, dryRun: false, ip, ts });
-    return jsonResponse({ matched: 0, deleted: 0, keys: [], dryRun: false, truncated }, 200, corsHeaders);
+    return jsonResponse({ matched: 0, deleted: 0, keys: [], dryRun: false, truncated }, 200, { ...corsHeaders, "Cache-Control": "no-store" });
   }
   let deleted = 0;
   try {
@@ -207,10 +207,10 @@ async function handler(req) {
     deleted = results.reduce((sum, r) => sum + (r.result || 0), 0);
   } catch (err) {
     console.log("[cache-purge]", { mode: "purge-error", matched: keyList.length, error: err.message, ip, ts });
-    return jsonResponse({ error: "Redis pipeline failed" }, 502, corsHeaders);
+    return jsonResponse({ error: "Redis pipeline failed" }, 502, { ...corsHeaders, "Cache-Control": "no-store" });
   }
   console.log("[cache-purge]", { mode: "purge", matched: keyList.length, deleted, truncated, dryRun: false, ip, ts });
-  return jsonResponse({ matched: keyList.length, deleted, keys: keyList, dryRun: false, truncated }, 200, corsHeaders);
+  return jsonResponse({ matched: keyList.length, deleted, keys: keyList, dryRun: false, truncated }, 200, { ...corsHeaders, "Cache-Control": "no-store" });
 }
 export {
   config,

@@ -146,7 +146,8 @@ async function handler(_req) {
       },
       200,
       {
-        "Cache-Control": `public, max-age=${CACHE_TTL}, s-maxage=${CACHE_TTL}, stale-if-error=3600`
+        "Cache-Control": `public, max-age=${CACHE_TTL}, s-maxage=${CACHE_TTL}, stale-if-error=3600`,
+        "Access-Control-Allow-Origin": "*"
       }
     );
   } catch (error) {
@@ -156,7 +157,8 @@ async function handler(_req) {
       200,
       // Return 200 with empty data to avoid breaking the app
       {
-        "Cache-Control": "public, max-age=300, stale-if-error=600"
+        "Cache-Control": "public, max-age=300, stale-if-error=600",
+        "Access-Control-Allow-Origin": "*"
       }
     );
   }
